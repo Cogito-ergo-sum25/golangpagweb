@@ -2,8 +2,7 @@ package handlers
 
 import (
 	"net/http"
-
-	"github.com/Cogito-ergo-sum25/curso-go/render"
+	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/render"
 )
 
 // Home is the handler for the home page

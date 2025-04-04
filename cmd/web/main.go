@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/Cogito-ergo-sum25/curso-go/pkg/handlers"
+	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/handlers"
 )
 
 const portNumber = ":8080"
