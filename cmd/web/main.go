@@ -20,14 +20,12 @@ var session *scs.SessionManager
 func main() {
 	// change this to true when in production
 	app.InProduction = false
-
 	// set up the session
 	session = scs.New()
 	session.Lifetime = 24 * time.Hour
 	session.Cookie.Persist = true
 	session.Cookie.SameSite = http.SameSiteLaxMode
 	session.Cookie.Secure = app.InProduction
-
 	app.Session = session
 
 	tc, err := render.CreateTemplateCache()

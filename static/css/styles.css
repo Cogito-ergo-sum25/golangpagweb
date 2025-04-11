@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter');
+
+body {
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+.verde {
+    background-color: #88ab3e !important;
+    color: white !important;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.verde-header {
+    background-color: #88ab3e !important;
+    color: black !important;
+}
+
+.verde:hover {
+    background-color: #769933 !important;
+    color: white !important;
+}
+
+.hero-about {
+    background: linear-gradient(135deg, #88ab3e 0%, #769933 100%);
+    color: white;
+    padding: 5rem 0;
+    margin-bottom: 3rem;
+}
+.mission-card {
+    border-left: 5px solid #88ab3e;
+    transition: transform 0.3s;
+}
+.mission-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.highlight-text {
+    color: #88ab3e;
+    font-weight: 600;
+}
+
+footer {
+    text-align: center;
+    padding: 3px;
+    background-color: DarkSalmon;
+    color: white;
+  }

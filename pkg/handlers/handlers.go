@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/config"
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/models"
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/render"
@@ -33,13 +32,12 @@ func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "home.page.tmpl", &models.TemplateData{})
 }
 
-// About is the handler for the about page
-func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
-	//logica
-	stringMap := make(map[string]string)
-	stringMap["test"]="hello"
-	//mandar datos
-	render.RenderTemplate(w, "about.page.tmpl", &models.TemplateData{
-		StringMap: stringMap,
-	})
+// Catalogo is the handler for the catalogo page
+func (m *Repository) Catalogo(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "catalogo.page.tmpl", &models.TemplateData{})
+}
+
+// Crear is the handler for the crear page
+func (m *Repository) Crear(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "crear.page.tmpl", &models.TemplateData{})
 }
