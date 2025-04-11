@@ -32,6 +32,11 @@ func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "home.page.tmpl", &models.TemplateData{})
 }
 
+// Inventario is the handler for the inventario page
+func (m *Repository) Inventario(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "inventario.page.tmpl", &models.TemplateData{})
+}
+
 // Catalogo is the handler for the catalogo page
 func (m *Repository) Catalogo(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "catalogo.page.tmpl", &models.TemplateData{})
