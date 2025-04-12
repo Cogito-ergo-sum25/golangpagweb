@@ -1,14 +1,14 @@
 {{template "base" .}}
 {{define "content"}}
     <div class="container">
-        <a name="" id="" class="btn btn-primary btn-outline-success verde" href="/crear" role="button">Agregar Producto</a>
+        <a name="" id="" class="btn btn-primary mt-3 btn-outline-success verde" href="/crear" role="button">Agregar Producto</a>
         <table class="table">
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Marca</th>
                     <th>Tipo</th>
-                    <th>Sku</th>
+                    <th>SKU</th>
                     <th>Nombre</th>
                     <th>Descripción</th>
                     <th>Cantidad</th>
@@ -16,17 +16,25 @@
                 </tr>
             </thead>
             <tbody>
+                {{range .Productos}}
                 <tr>
-                    <td>1</td>
-                    <td>2</td>
-                    <td>3</td>
-                    <td>4</td>
-                    <td>5</td>
-                    <td>6</td>
-                    <td>7</td>
-                    <td>Editar | Borrar</td>
+                    <td>{{.IDProducto}}</td>
+                    <td>{{.Marca}}</td>
+                    <td>{{.Tipo}}</td>
+                    <td>{{.SKU}}</td>
+                    <td>{{.Nombre}}</td>
+                    <td>{{.Descripcion}}</td>
+                    <td>{{.Cantidad}}</td>
+                    <td>
+                        <a href="/editar/{{.IDProducto}}" class="btn btn-sm btn-warning">Editar</a>
+                        <form action="/eliminar/{{.IDProducto}}" method="POST" onsubmit="return confirm('¿Borrar producto?')">
+                            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                            <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
+                        </form>
+                    </td>
                 </tr>
+                {{end}}
             </tbody>
-          </table>
+        </table>
     </div>
-{{end}}
+{{end}} 

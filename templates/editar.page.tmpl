@@ -1,0 +1,37 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container">
+    <div class="card-header">Editar Producto</div>
+    <div class="card-body">
+        <form method="POST" action="/editar/{{.Producto.IDProducto}}">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="form-group">
+                <label for="marca">Marca*</label>
+                <input type="text" class="form-control" name="marca" id="marca" value="{{.Producto.Marca}}" required>
+            </div>
+            <div class="form-group">
+                <label for="tipo">Tipo</label>
+                <input type="text" class="form-control" name="tipo" id="tipo" value="{{.Producto.Tipo}}" required>
+            </div>
+            <div class="form-group">
+                <label for="sku">SKU</label>
+                <input type="text" class="form-control" name="sku" id="sku" value="{{.Producto.SKU}}" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre">Nombre*</label>
+                <input type="text" class="form-control" name="nombre" id="nombre" value="{{.Producto.Nombre}}" required>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                <textarea class="form-control" name="descripcion" id="descripcion" rows="3">{{.Producto.Descripcion}}</textarea> <!-- Corregido -->
+            </div>
+            <div class="form-group">
+                <label for="cantidad">Cantidad*</label>
+                <input type="number" class="form-control" name="cantidad" id="cantidad" required min="0" value="{{.Producto.Cantidad}}" required>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3 btn-outline-success verde">Guardar Cambios</button>
+            <a href="/inventario" class="btn btn-secondary mt-3 btn-danger ">Cancelar</a>
+        </form>
+    </div>
+</div>
+{{end}}

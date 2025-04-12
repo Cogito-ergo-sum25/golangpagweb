@@ -9,4 +9,6 @@ type TemplateData struct {
 	Flash		string
 	Warning		string
 	Error		string
+	Productos []Producto
+	Producto   Producto   // Para editar un solo producto (ej. en /editar/{id})
 }

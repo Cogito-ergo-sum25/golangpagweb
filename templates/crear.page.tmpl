@@ -1,37 +1,37 @@
 {{template "base" .}}
 {{define "content"}}
 <div class="container">
-
-    <div class="card-header">   Productos     </div>
+    <div class="card-header">Agregar Nuevo Producto</div>
     <div class="card-body">
-        <form method="post" action="/insert">
+        <form method="POST" action="/crear" enctype="application/x-www-form-urlencoded">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
             <div class="form-group">
-              <label for="">Marca</label>
-              <input type="text"
-                class="form-control" name="" id="" aria-describedby="helpId" placeholder="">
+                <label for="marca">Marca*</label>
+                <input type="text" class="form-control" name="marca" id="marca" required>
             </div>
             <div class="form-group">
-              <label for="">Tipo</label>
-              <input type="text" class="form-control" name="" id="" aria-describedby="helpId" placeholder="">
+                <label for="tipo">Tipo</label>
+                <input type="text" class="form-control" name="tipo" id="tipo">
             </div>
             <div class="form-group">
-                <label for="">Sku</label>
-                <input type="text" class="form-control" name="" id="" aria-describedby="helpId" placeholder="">
+                <label for="sku">SKU</label>
+                <input type="text" class="form-control" name="sku" id="sku">
             </div>
             <div class="form-group">
-                <label for="">Nombre</label>
-                <input type="text" class="form-control" name="" id="" aria-describedby="helpId" placeholder="">
+                <label for="nombre">Nombre*</label>
+                <input type="text" class="form-control" name="nombre" id="nombre" required>
             </div>
             <div class="form-group">
-                <label for="">Descripción</label>
-                <input type="text" class="form-control" name="" id="" aria-describedby="helpId" placeholder="">
+                <label for="descripcion">Descripción</label>
+                <textarea class="form-control" name="descripcion" id="descripcion" rows="3"></textarea>
             </div>
             <div class="form-group">
-                <label for="">Cantidad</label>
-                <input type="text" class="form-control" name="" id="" aria-describedby="helpId" placeholder="">
+                <label for="cantidad">Cantidad*</label>
+                <input type="number" class="form-control" name="cantidad" id="cantidad" required min="0">
             </div>
+            <button type="submit" class="btn btn-primary mt-3 btn-outline-success verde">Guardar Producto</button>
+            <a href="/inventario" class="btn btn-secondary mt-3 btn-danger ">Cancelar</a>
         </form>
     </div>
-
 </div>
 {{end}}

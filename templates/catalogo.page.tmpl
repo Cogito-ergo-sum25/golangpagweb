@@ -1,6 +1,11 @@
 {{template "base" .}}
 {{define "content"}}
-    <h1>
-        PAGINA DE CATALOGO
-    </h1>
-{{end}}
+<div class="container">
+    <form method="GET" action="/catalogo" class="mb-4">
+        <input type="text" name="marca" placeholder="Marca">
+        <input type="text" name="tipo" placeholder="Tipo">
+        <input type="text" name="sku" placeholder="SKU">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+    </form>
+</div>
+{{end}} 

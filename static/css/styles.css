@@ -21,6 +21,13 @@ body {
     color: white !important;
 }
 
+.rojo {
+    background-color: #ff2d00 !important;
+    color: white !important;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
 .hero-about {
     background: linear-gradient(135deg, #88ab3e 0%, #769933 100%);
     color: white;
