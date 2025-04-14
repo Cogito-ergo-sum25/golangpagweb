@@ -11,6 +11,22 @@ body {
     border-radius: 4px;
 }
 
+.card-header.azul {
+    background-color: #3E88AB !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.azul-table {
+    background-color: #3E88AB !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(62, 136, 171, 0.1) !important;
+}
+
 .verde-header {
     background-color: #88ab3e !important;
     color: black !important;

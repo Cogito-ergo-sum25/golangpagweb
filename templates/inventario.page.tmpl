@@ -1,17 +1,22 @@
 {{template "base" .}}
 {{define "content"}}
-    <div class="container">
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Inventario de Productos</h2>
         <a name="" id="" class="btn btn-primary mt-3 btn-outline-success verde" href="/crear" role="button">Agregar Producto</a>
-        <table class="table">
-            <thead>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="azul-table">
                 <tr>
                     <th>ID</th>
+                    <th>Clasificación</th>
                     <th>Marca</th>
-                    <th>Tipo</th>
-                    <th>SKU</th>
                     <th>Nombre</th>
-                    <th>Descripción</th>
+                    <th>SKU</th>
                     <th>Cantidad</th>
+                    <th>Precio</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -19,22 +24,27 @@
                 {{range .Productos}}
                 <tr>
                     <td>{{.IDProducto}}</td>
+                    <td>{{.Clasificacion}}</td>
                     <td>{{.Marca}}</td>
-                    <td>{{.Tipo}}</td>
-                    <td>{{.SKU}}</td>
                     <td>{{.Nombre}}</td>
-                    <td>{{.Descripcion}}</td>
-                    <td>{{.Cantidad}}</td>
+                    <td>{{.SKU}}</td>
+                    <td class="{{if lt .Cantidad 5}}text-danger fw-bold{{end}}">
+                        {{.Cantidad}}
+                    </td>
+                    <td>${{printf "%.2f" .PrecioLista}}</td>
                     <td>
-                        <a href="/editar/{{.IDProducto}}" class="btn btn-sm btn-warning">Editar</a>
-                        <form action="/eliminar/{{.IDProducto}}" method="POST" onsubmit="return confirm('¿Borrar producto?')">
-                            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-                            <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
-                        </form>
+                        <div class="d-flex gap-2">
+                            <a href="/editar/{{.IDProducto}}" class="btn btn-sm btn-warning">Editar</a>
+                            <form action="/eliminar/{{.IDProducto}}" method="POST" onsubmit="return confirm('¿Borrar producto?')">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <button type="submit" class="btn btn-sm btn-danger">Borrar</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {{end}}
             </tbody>
         </table>
     </div>
-{{end}} 
+</div>
+{{end}}

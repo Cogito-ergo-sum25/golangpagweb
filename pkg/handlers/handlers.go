@@ -37,25 +37,45 @@ func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "home.page.tmpl", &models.TemplateData{})
 }
 
-// Inventario is the handler for the inventario page
+// Catalogo is the handler for the catalogo page
+func (m *Repository) Catalogo(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "catalogo.page.tmpl", &models.TemplateData{})
+}
+
+
+// TODO LO DE INVENTARIO
+
+// PANTALLA INICIO INVENTARIO
 func (m *Repository) Inventario(w http.ResponseWriter, r *http.Request) {
-	rows, err := m.App.DB.Query(`SELECT id_producto, marca, tipo, sku, nombre, descripcion, cantidad FROM productos`)
-	if err != nil {
+    rows, err := m.App.DB.Query(`
+        SELECT 
+            id_producto, 
+            COALESCE(clasificacion, '') as clasificacion,
+            COALESCE(marca, '') as marca,
+            COALESCE(nombre, '') as nombre,
+            COALESCE(sku, '') as sku, 
+            COALESCE(cantidad, 0) as cantidad,
+            COALESCE(precio_lista, 0) as precio_lista
+        FROM productos
+        ORDER BY id_producto DESC`)
+    
+    if err != nil {
         http.Error(w, "Error al consultar productos: "+err.Error(), http.StatusInternalServerError)
         return
     }
     defer rows.Close()
-	var productos []models.Producto
+    
+    var productos []models.Producto
     for rows.Next() {
         var p models.Producto
         err := rows.Scan(
             &p.IDProducto,
+            &p.Clasificacion,
             &p.Marca,
-            &p.Tipo,
-            &p.SKU,
             &p.Nombre,
-            &p.Descripcion,
+            &p.SKU,
             &p.Cantidad,
+            &p.PrecioLista,
         )
         if err != nil {
             http.Error(w, "Error al leer producto: "+err.Error(), http.StatusInternalServerError)
@@ -64,7 +84,6 @@ func (m *Repository) Inventario(w http.ResponseWriter, r *http.Request) {
         productos = append(productos, p)
     }
 
-    // Verificar errores después de iterar
     if err = rows.Err(); err != nil {
         http.Error(w, "Error después de leer productos: "+err.Error(), http.StatusInternalServerError)
         return
@@ -72,24 +91,13 @@ func (m *Repository) Inventario(w http.ResponseWriter, r *http.Request) {
 
     data := &models.TemplateData{
         Productos: productos,
-        CSRFToken: nosurf.Token(r), // ¡Añade esto!
+        CSRFToken: nosurf.Token(r),
     }
-	render.RenderTemplate(w, "inventario.page.tmpl", data)
+    
+    render.RenderTemplate(w, "inventario.page.tmpl", data)
 }
 
-// Catalogo is the handler for the catalogo page
-func (m *Repository) Catalogo(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, "catalogo.page.tmpl", &models.TemplateData{})
-}
-
-// Muestra el formulario de creación
-func (m *Repository) MostrarFormularioCrear(w http.ResponseWriter, r *http.Request) {
-    data := &models.TemplateData{
-        CSRFToken: nosurf.Token(r), // Añade el token CSRF
-    }
-    render.RenderTemplate(w, "crear.page.tmpl", data)
-}
-
+// handler para todo el crear
 func (m *Repository) CrearProducto(w http.ResponseWriter, r *http.Request) {
     // 1. Verificar método HTTP
     if r.Method != http.MethodPost {
@@ -104,7 +112,7 @@ func (m *Repository) CrearProducto(w http.ResponseWriter, r *http.Request) {
     }
 
     // 3. Validar campos requeridos
-    requiredFields := []string{"marca", "nombre", "cantidad"}
+    requiredFields := []string{"marca", "nombre", "sku", "cantidad", "precio_lista", "clasificacion"}
     for _, field := range requiredFields {
         if r.Form.Get(field) == "" {
             http.Error(w, "El campo "+field+" es requerido", http.StatusBadRequest)
@@ -112,21 +120,59 @@ func (m *Repository) CrearProducto(w http.ResponseWriter, r *http.Request) {
         }
     }
 
-    // 4. Convertir cantidad
+    // 4. Convertir tipos numéricos y booleanos
     cantidad, err := strconv.Atoi(r.Form.Get("cantidad"))
     if err != nil {
         http.Error(w, "La cantidad debe ser un número válido", http.StatusBadRequest)
         return
     }
 
+    precioLista, err := strconv.ParseFloat(r.Form.Get("precio_lista"), 64)
+    if err != nil {
+        http.Error(w, "El precio debe ser un número válido", http.StatusBadRequest)
+        return
+    }
+
+    precioMinimo, _ := strconv.ParseFloat(r.Form.Get("precio_minimo"), 64) // Opcional
+    stockMinimo, _ := strconv.Atoi(r.Form.Get("stock_minimo")) // Opcional
+    tiempoEntrega, _ := strconv.Atoi(r.Form.Get("tiempo_entrega")) // Opcional
+
+    // Convertir checkboxes a booleanos
+    requiereInstalacion := r.Form.Get("requiere_instalacion") == "on"
+    enPromocion := r.Form.Get("en_promocion") == "on"
+
     // 5. Insertar en la base de datos
-    _, err = m.App.DB.Exec(`INSERT INTO productos (marca, tipo, sku, nombre, descripcion, cantidad) VALUES (?, ?, ?, ?, ?, ?)`,
+    _, err = m.App.DB.Exec(`
+        INSERT INTO productos (
+            marca, tipo, sku, nombre, descripcion, cantidad,
+            imagen_url, ficha_tecnica_url, modelo, codigo_fabricante,
+            precio_lista, precio_minimo, clasificacion, serie,
+            pais_origen, certificaciones, requiere_instalacion,
+            tiempo_entrega, stock_minimo, en_promocion,
+            clave_producto_sat, unidad_medida_sat
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         r.Form.Get("marca"),
         r.Form.Get("tipo"),
         r.Form.Get("sku"),
         r.Form.Get("nombre"),
         r.Form.Get("descripcion"),
         cantidad,
+        r.Form.Get("imagen_url"),
+        r.Form.Get("ficha_tecnica_url"),
+        r.Form.Get("modelo"),
+        r.Form.Get("codigo_fabricante"),
+        precioLista,
+        precioMinimo,
+        r.Form.Get("clasificacion"),
+        r.Form.Get("serie"),
+        r.Form.Get("pais_origen"),
+        r.Form.Get("certificaciones"),
+        requiereInstalacion,
+        tiempoEntrega,
+        stockMinimo,
+        enPromocion,
+        r.Form.Get("clave_producto_sat"),
+        r.Form.Get("unidad_medida_sat"),
     )
 
     if err != nil {
@@ -140,45 +186,16 @@ func (m *Repository) CrearProducto(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/inventario", http.StatusSeeOther)
 }
 
-func (m *Repository) MostrarFormularioEditar(w http.ResponseWriter, r *http.Request) {
-    // Extraer el ID del producto de la URL
-    idStr := chi.URLParam(r, "id")
-    id, err := strconv.Atoi(idStr)
-    if err != nil {
-        http.Error(w, "ID inválido", http.StatusBadRequest)
-        return
-    }
-
-    // Obtener el producto de la base de datos
-    var producto models.Producto
-    err = m.App.DB.QueryRow(`
-        SELECT id_producto, marca, tipo, sku, nombre, descripcion, cantidad 
-        FROM productos 
-        WHERE id_producto = ?`, id).Scan(
-            &producto.IDProducto,
-            &producto.Marca,
-            &producto.Tipo,
-            &producto.SKU,
-            &producto.Nombre,
-            &producto.Descripcion,
-            &producto.Cantidad,
-    )
-    if err != nil {
-        http.Error(w, "Producto no encontrado", http.StatusNotFound)
-        return
-    }
-
-    // Renderizar el formulario de edición con los datos del producto
+// Muestra el formulario de creación
+func (m *Repository) MostrarFormularioCrear(w http.ResponseWriter, r *http.Request) {
     data := &models.TemplateData{
-        Producto: producto,  // Pasas un solo producto
-        CSRFToken: nosurf.Token(r), // Asegúrate de incluir el token CSRF
+        CSRFToken: nosurf.Token(r), // Añade el token CSRF
     }
-    
-    render.RenderTemplate(w, "editar.page.tmpl", data)
+    render.RenderTemplate(w, "crear.page.tmpl", data)
 }
 
+// handler para todo el editar
 func (m *Repository) EditarProducto(w http.ResponseWriter, r *http.Request) {
-    // Extraer el ID del producto
     idStr := chi.URLParam(r, "id")
     id, err := strconv.Atoi(idStr)
     if err != nil {
@@ -186,28 +203,65 @@ func (m *Repository) EditarProducto(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    // Parsear el formulario
     if err := r.ParseForm(); err != nil {
         http.Error(w, "Error al procesar el formulario", http.StatusBadRequest)
         return
     }
 
     // Validar campos requeridos
-    if r.Form.Get("marca") == "" || r.Form.Get("nombre") == "" || r.Form.Get("cantidad") == "" {
-        http.Error(w, "Campos requeridos faltantes", http.StatusBadRequest)
+    requiredFields := []string{"marca", "nombre", "sku", "cantidad", "precio_lista", "clasificacion"}
+    for _, field := range requiredFields {
+        if r.Form.Get(field) == "" {
+            http.Error(w, "El campo "+field+" es requerido", http.StatusBadRequest)
+            return
+        }
+    }
+
+    // Convertir tipos
+    cantidad, err := strconv.Atoi(r.Form.Get("cantidad"))
+    if err != nil {
+        http.Error(w, "Cantidad debe ser un número válido", http.StatusBadRequest)
         return
     }
 
-    cantidad, err := strconv.Atoi(r.Form.Get("cantidad"))
+    precioLista, err := strconv.ParseFloat(r.Form.Get("precio_lista"), 64)
     if err != nil {
-        http.Error(w, "Cantidad debe ser un número", http.StatusBadRequest)
+        http.Error(w, "Precio debe ser un número válido", http.StatusBadRequest)
         return
     }
+
+    precioMinimo, _ := strconv.ParseFloat(r.Form.Get("precio_minimo"), 64)
+    stockMinimo, _ := strconv.Atoi(r.Form.Get("stock_minimo"))
+    tiempoEntrega, _ := strconv.Atoi(r.Form.Get("tiempo_entrega"))
+    requiereInstalacion := r.Form.Get("requiere_instalacion") == "on"
+    enPromocion := r.Form.Get("en_promocion") == "on"
 
     // Actualizar en la base de datos
     _, err = m.App.DB.Exec(`
-        UPDATE productos 
-        SET marca = ?, tipo = ?, sku = ?, nombre = ?, descripcion = ?, cantidad = ?, updated_at = NOW()
+        UPDATE productos SET
+            marca = ?,
+            tipo = ?,
+            sku = ?,
+            nombre = ?,
+            descripcion = ?,
+            cantidad = ?,
+            imagen_url = ?,
+            ficha_tecnica_url = ?,
+            modelo = ?,
+            codigo_fabricante = ?,
+            precio_lista = ?,
+            precio_minimo = ?,
+            clasificacion = ?,
+            serie = ?,
+            pais_origen = ?,
+            certificaciones = ?,
+            requiere_instalacion = ?,
+            tiempo_entrega = ?,
+            stock_minimo = ?,
+            en_promocion = ?,
+            clave_producto_sat = ?,
+            unidad_medida_sat = ?,
+            updated_at = NOW()
         WHERE id_producto = ?`,
         r.Form.Get("marca"),
         r.Form.Get("tipo"),
@@ -215,22 +269,107 @@ func (m *Repository) EditarProducto(w http.ResponseWriter, r *http.Request) {
         r.Form.Get("nombre"),
         r.Form.Get("descripcion"),
         cantidad,
+        r.Form.Get("imagen_url"),
+        r.Form.Get("ficha_tecnica_url"),
+        r.Form.Get("modelo"),
+        r.Form.Get("codigo_fabricante"),
+        precioLista,
+        precioMinimo,
+        r.Form.Get("clasificacion"),
+        r.Form.Get("serie"),
+        r.Form.Get("pais_origen"),
+        r.Form.Get("certificaciones"),
+        requiereInstalacion,
+        tiempoEntrega,
+        stockMinimo,
+        enPromocion,
+        r.Form.Get("clave_producto_sat"),
+        r.Form.Get("unidad_medida_sat"),
         id,
     )
+
     if err != nil {
         log.Println("Error al actualizar producto:", err)
         http.Error(w, "Error al guardar cambios", http.StatusInternalServerError)
         return
     }
 
-    // Redirigir al listado con mensaje de éxito
     m.App.Session.Put(r.Context(), "flash", "Producto actualizado correctamente")
     http.Redirect(w, r, "/inventario", http.StatusSeeOther)
 }
 
+// Muestra el formulario de editar
+func (m *Repository) MostrarFormularioEditar(w http.ResponseWriter, r *http.Request) {
+    idStr := chi.URLParam(r, "id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    var producto models.Producto
+    err = m.App.DB.QueryRow(`
+    SELECT 
+        id_producto, marca, tipo, sku, nombre, descripcion, cantidad,
+        COALESCE(imagen_url, '') as imagen_url,
+        COALESCE(ficha_tecnica_url, '') as ficha_tecnica_url,
+        COALESCE(modelo, '') as modelo,
+        COALESCE(codigo_fabricante, '') as codigo_fabricante,
+        COALESCE(precio_lista, 0) as precio_lista,
+        COALESCE(precio_minimo, 0) as precio_minimo,
+        COALESCE(clasificacion, '') as clasificacion,
+        COALESCE(serie, '') as serie,
+        COALESCE(pais_origen, '') as pais_origen,
+        COALESCE(certificaciones, '') as certificaciones,
+        requiere_instalacion,
+        COALESCE(tiempo_entrega, 0) as tiempo_entrega,
+        COALESCE(stock_minimo, 0) as stock_minimo,
+        en_promocion,
+        COALESCE(clave_producto_sat, '') as clave_producto_sat,
+        COALESCE(unidad_medida_sat, 'PIEZA') as unidad_medida_sat
+    FROM productos 
+    WHERE id_producto = ?`, id).Scan(
+        &producto.IDProducto,
+        &producto.Marca,
+        &producto.Tipo,
+        &producto.SKU,
+        &producto.Nombre,
+        &producto.Descripcion,
+        &producto.Cantidad,
+        &producto.ImagenURL,
+        &producto.FichaTecnicaURL,
+        &producto.Modelo,
+        &producto.CodigoFabricante,
+        &producto.PrecioLista,
+        &producto.PrecioMinimo,
+        &producto.Clasificacion,
+        &producto.Serie,
+        &producto.PaisOrigen,
+        &producto.Certificaciones,
+        &producto.RequiereInstalacion,
+        &producto.TiempoEntrega,
+        &producto.StockMinimo,
+        &producto.EnPromocion,
+        &producto.ClaveProductoSAT,
+        &producto.UnidadMedidaSAT,
+    )
+
+    if err != nil {
+        log.Println("Error al obtener producto:", err)
+        http.Error(w, "Producto no encontrado", http.StatusNotFound)
+        return
+    }
+
+    data := &models.TemplateData{
+        Producto:   producto,
+        CSRFToken: nosurf.Token(r),
+    }
+    
+    render.RenderTemplate(w, "editar.page.tmpl", data)
+}
+
+// Handler para eliminar producto
 func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {
-    log.Println("Token CSRF recibido:", r.FormValue("csrf_token")) // Verifica si llega
-    log.Println("Token CSRF esperado:", nosurf.Token(r))          // Compara con el válido
     // Verifica el método HTTP
     if r.Method != http.MethodPost {
         http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
