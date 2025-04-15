@@ -1,11 +1,94 @@
 {{template "base" .}}
 {{define "content"}}
-<div class="container">
-    <form method="GET" action="/catalogo" class="mb-4">
-        <input type="text" name="marca" placeholder="Marca">
-        <input type="text" name="tipo" placeholder="Tipo">
-        <input type="text" name="sku" placeholder="SKU">
-        <button type="submit" class="btn btn-primary">Filtrar</button>
-    </form>
+<div class="container mt-4">
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="/catalogo" class="row g-3 align-items-end">
+                <!-- Filtro por Marca -->
+                <div class="col-md-3">
+                    <label class="form-label">Marca</label>
+                    <select class="form-select" name="marca">
+                        <option value="">Todas</option>
+                        {{range .Data.Marcas}}
+                        <option value="{{.}}" {{if eq . $.Data.Filtros.Marca}}selected{{end}}>{{.}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                
+                <!-- Filtro por Clasificación -->
+                <div class="col-md-2">
+                    <label class="form-label">Clasificación</label>
+                    <select class="form-select" name="clasificacion">
+                        <option value="">Todas</option>
+                        {{range .Data.Clasificaciones}}
+                        <option value="{{.}}" {{if eq . $.Data.Filtros.Clasificacion}}selected{{end}}>{{.}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                
+                <!-- Filtro de Promoción -->
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="en_promocion" id="en_promocion" 
+                               value="true" {{if .Data.Filtros.EnPromocion}}checked{{end}}>
+                        <label class="form-check-label" for="en_promocion">
+                            En promoción
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Buscador -->
+                <div class="col-md-3">
+                    <label class="form-label">Buscar</label>
+                    <input type="text" class="form-control" name="busqueda" 
+                           placeholder="Nombre del producto..." value="{{.Data.Filtros.Busqueda}}">
+                </div>
+                
+                <!-- Botones -->
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100 azul">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Resultados -->
+    <div class="row">
+        {{range .Productos}}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {{if .ImagenURL}}
+                <img src="{{.ImagenURL}}" class="card-img-top" alt="{{.Nombre}}" style="height: 180px; object-fit: contain;">
+                {{else}}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                </div>
+                {{end}}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h5 class="card-title">{{.Nombre}}</h5>
+                        {{if .EnPromocion}}
+                        <span class="badge bg-danger">Promoción</span>
+                        {{end}}
+                    </div>
+                    <p class="card-text text-muted">{{.Marca}}</p>
+                    <p class="h5 text-primary">${{printf "%.2f" .PrecioLista}}</p>
+                </div>
+                <div class="card-footer bg-white">
+                    <a href="/producto/{{.IDProducto}}" class="btn btn-sm btn-outline-primary w-100">
+                        Ver detalles
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{else}}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No se encontraron productos con los filtros seleccionados.
+            </div>
+        </div>
+        {{end}}
+    </div>
 </div>
-{{end}} 
+{{end}}

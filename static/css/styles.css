@@ -17,6 +17,12 @@ body {
     font-weight: bold !important;
 }
 
+.azul {
+    background-color: #3E88AB !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
 .azul-table {
     background-color: #3E88AB !important;
     color: white !important;

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
@@ -36,12 +37,6 @@ func NewHandlers(r *Repository) {
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "home.page.tmpl", &models.TemplateData{})
 }
-
-// Catalogo is the handler for the catalogo page
-func (m *Repository) Catalogo(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, "catalogo.page.tmpl", &models.TemplateData{})
-}
-
 
 // TODO LO DE INVENTARIO
 
@@ -395,4 +390,176 @@ func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {
     // Redirige con mensaje de éxito
     m.App.Session.Put(r.Context(), "flash", "Producto eliminado")
     http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+}
+
+
+
+
+
+// TODO LO CATALOGO
+func (m *Repository) Catalogo(w http.ResponseWriter, r *http.Request) {
+    // Obtener parámetros de los filtros
+    marca := r.URL.Query().Get("marca")
+    clasificacion := r.URL.Query().Get("clasificacion")
+    busqueda := r.URL.Query().Get("busqueda")
+    enPromocion := r.URL.Query().Get("en_promocion") == "true"
+
+    // Consulta SQL con filtros
+    query := "SELECT id_producto, marca, nombre, imagen_url, precio_lista, en_promocion FROM productos WHERE 1=1"
+    var args []interface{}
+
+    if marca != "" {
+        query += " AND marca = ?"
+        args = append(args, marca)
+    }
+
+    if clasificacion != "" {
+        query += " AND clasificacion = ?"
+        args = append(args, clasificacion)
+    }
+
+    if busqueda != "" {
+        query += " AND nombre LIKE ?"
+        args = append(args, "%"+busqueda+"%")
+    }
+
+    if enPromocion {
+        query += " AND en_promocion = TRUE"
+    }
+
+    // Ejecutar consulta
+    rows, err := m.App.DB.Query(query, args...)
+    if err != nil {
+        http.Error(w, "Error al obtener productos: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+    defer rows.Close()
+
+    var productos []models.Producto
+    for rows.Next() {
+        var p models.Producto
+        var promocion bool
+        err := rows.Scan(&p.IDProducto, &p.Marca, &p.Nombre, &p.ImagenURL, &p.PrecioLista, &promocion)
+        if err != nil {
+            http.Error(w, "Error al leer producto: "+err.Error(), http.StatusInternalServerError)
+            return
+        }
+        p.EnPromocion = promocion
+        productos = append(productos, p)
+    }
+
+    // Obtener opciones para los selectores de filtro
+    marcas, _ := m.obtenerDatosUnicos("SELECT DISTINCT marca FROM productos WHERE marca != ''")
+    clasificaciones, _ := m.obtenerDatosUnicos("SELECT DISTINCT clasificacion FROM productos WHERE clasificacion != ''")
+
+    // Preparar datos para la plantilla usando tu estructura TemplateData
+    data := &models.TemplateData{
+        Productos: productos, // Esto ya está en tu struct
+        Data: map[string]interface{}{
+            "Marcas":          marcas,
+            "Clasificaciones": clasificaciones,
+            "Filtros": map[string]interface{}{
+                "Marca":         marca,
+                "Clasificacion": clasificacion,
+                "Busqueda":      busqueda,
+                "EnPromocion":   enPromocion,
+            },
+        },
+        CSRFToken: nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "catalogo.page.tmpl", data)
+}
+
+func (m *Repository) obtenerDatosUnicos(query string) ([]string, error) {
+    rows, err := m.App.DB.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var resultados []string
+    for rows.Next() {
+        var valor string
+        if err := rows.Scan(&valor); err != nil {
+            return nil, err
+        }
+        resultados = append(resultados, valor)
+    }
+    return resultados, nil
+}
+
+func (m *Repository) VerProducto(w http.ResponseWriter, r *http.Request) {
+    // Obtener ID del producto de la URL
+    idStr := chi.URLParam(r, "id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID de producto inválido", http.StatusBadRequest)
+        return
+    }
+
+    // Consulta SQL para obtener todos los detalles del producto
+    var producto models.Producto
+    err = m.App.DB.QueryRow(`
+        SELECT 
+            id_producto, marca, tipo, sku, nombre, descripcion, cantidad,
+            COALESCE(imagen_url, '') as imagen_url,
+            COALESCE(ficha_tecnica_url, '') as ficha_tecnica_url,
+            COALESCE(modelo, '') as modelo,
+            COALESCE(codigo_fabricante, '') as codigo_fabricante,
+            precio_lista,
+            COALESCE(precio_minimo, 0) as precio_minimo,
+            COALESCE(clasificacion, '') as clasificacion,
+            COALESCE(serie, '') as serie,
+            COALESCE(pais_origen, '') as pais_origen,
+            COALESCE(certificaciones, '') as certificaciones,
+            requiere_instalacion,
+            COALESCE(tiempo_entrega, 0) as tiempo_entrega,
+            COALESCE(stock_minimo, 0) as stock_minimo,
+            en_promocion,
+            COALESCE(clave_producto_sat, '') as clave_producto_sat,
+            COALESCE(unidad_medida_sat, '') as unidad_medida_sat
+        FROM productos 
+        WHERE id_producto = ?`, id).Scan(
+            &producto.IDProducto,
+            &producto.Marca,
+            &producto.Tipo,
+            &producto.SKU,
+            &producto.Nombre,
+            &producto.Descripcion,
+            &producto.Cantidad,
+            &producto.ImagenURL,
+            &producto.FichaTecnicaURL,
+            &producto.Modelo,
+            &producto.CodigoFabricante,
+            &producto.PrecioLista,
+            &producto.PrecioMinimo,
+            &producto.Clasificacion,
+            &producto.Serie,
+            &producto.PaisOrigen,
+            &producto.Certificaciones,
+            &producto.RequiereInstalacion,
+            &producto.TiempoEntrega,
+            &producto.StockMinimo,
+            &producto.EnPromocion,
+            &producto.ClaveProductoSAT,
+            &producto.UnidadMedidaSAT,
+    )
+
+    if err != nil {
+        if err == sql.ErrNoRows {
+            http.Error(w, "Producto no encontrado", http.StatusNotFound)
+        } else {
+            log.Println("Error al obtener producto:", err)
+            http.Error(w, "Error interno al obtener el producto", http.StatusInternalServerError)
+        }
+        return
+    }
+
+    // Preparar datos para la plantilla
+    data := &models.TemplateData{
+        Producto:   producto,
+        CSRFToken: nosurf.Token(r),
+    }
+        render.RenderTemplate(w, "ver_producto.page.tmpl", data)
 }

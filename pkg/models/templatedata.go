@@ -10,5 +10,5 @@ type TemplateData struct {
 	Warning		string
 	Error		string
 	Productos []Producto
-	Producto   Producto   // Para editar un solo producto (ej. en /editar/{id})
+	Producto   Producto
 }

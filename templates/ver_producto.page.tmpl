@@ -1,0 +1,107 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container py-4">
+    <div class="row">        
+        <!-- Columna de imagen -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                {{if .Producto.ImagenURL}}
+                <img src="{{.Producto.ImagenURL}}" class="card-img-top img-fluid" alt="{{.Producto.Nombre}}" style="max-height: 500px; object-fit: contain;">
+                {{else}}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <i class="fas fa-image fa-5x text-muted"></i>
+                </div>
+                {{end}}
+                
+                {{if .Producto.FichaTecnicaURL}}
+                <div class="card-footer text-center">
+                    <a href="{{.Producto.FichaTecnicaURL}}" class="btn btn-outline-primary" target="_blank">
+                        <i class="fas fa-file-pdf me-2"></i>Descargar Ficha Técnica
+                    </a>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        
+        <!-- Columna de detalles - VERSIÓN CORREGIDA -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <!-- Encabezado -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="h3">{{.Producto.Nombre}}</h1>
+                            <h2 class="h5 text-muted">{{.Producto.Marca}}</h2>
+                        </div>
+                        <div>
+                            {{if .Producto.EnPromocion}}
+                            <span class="badge bg-danger">EN PROMOCIÓN</span>
+                            {{end}}
+                            <span class="badge bg-info">{{.Producto.Clasificacion}}</span>
+                        </div>
+                    </div>
+                    
+                    
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <span class="h3">Precio lista</span>
+                        <div class="h3 text-primary fw-bold">${{printf "%.2f" .Producto.PrecioLista}}</div>
+                    </div>
+
+                    <!-- Descripción (CORRECCIÓN: Eliminé el col-md-6 que rompía la estructura) -->
+                    <div class="mb-4">
+                        <h5 class="card-title">Descripción</h5>
+                        <p class="card-text">{{.Producto.Descripcion}}</p>
+                    </div>
+                    
+                    <!-- Detalles técnicos -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <strong>SKU:</strong> {{.Producto.SKU}}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <strong>Tiempo de entrega:</strong> {{.Producto.TiempoEntrega}} días
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <strong>Pais de origen:</strong> {{.Producto.PaisOrigen}}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <strong>Certificaciones:</strong> {{.Producto.Certificaciones}}
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    {{if .Producto.RequiereInstalacion}}
+                    <div class="alert alert-warning mt-4">
+                        <i class="fas fa-tools me-2"></i> Este producto requiere instalación profesional
+                    </div>
+                    {{end}}
+                </div> <!-- Cierra card-body -->
+                
+                <!-- Footer -->
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between">
+                        <a href="/catalogo" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Volver al catálogo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

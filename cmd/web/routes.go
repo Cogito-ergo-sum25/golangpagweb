@@ -25,6 +25,12 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/editar/{id}", handlers.Repo.MostrarFormularioEditar)   // Muestra formulario de edición (GET)
 	mux.Post("/editar/{id}", handlers.Repo.EditarProducto)            // Procesa la edición (POST)
 	mux.Post("/eliminar/{id}", handlers.Repo.EliminarProducto)   // Elimina un producto (POST)
+
+	// CATALOGO 
+	mux.Get("/catalogo", handlers.Repo.Catalogo) 
+	mux.Get("/producto/{id}", handlers.Repo.VerProducto)// Para la vista detallada
+
+
 	    	
 	fileServer := http.FileServer(http.Dir("./static/"))
 	mux.Handle("/static/*",http.StripPrefix("/static",fileServer))
