@@ -11,6 +11,16 @@ body {
     border-radius: 4px;
 }
 
+.verde-header {
+    background-color: #88ab3e !important;
+    color: black !important;
+}
+
+.verde:hover {
+    background-color: #769933 !important;
+    color: white !important;
+}
+
 .card-header.azul {
     background-color: #3E88AB !important;
     color: white !important;
@@ -33,21 +43,21 @@ body {
     background-color: rgba(62, 136, 171, 0.1) !important;
 }
 
-.verde-header {
-    background-color: #88ab3e !important;
-    color: black !important;
-}
-
-.verde:hover {
-    background-color: #769933 !important;
-    color: white !important;
-}
-
 .rojo {
     background-color: #ff2d00 !important;
     color: white !important;
     padding: 8px 12px;
     border-radius: 4px;
+}
+
+.rojo-header {
+    background-color: #ff2d00 !important;
+    color: white !important;
+}
+
+.rojo:hover {
+    background-color: #d62600 !important;  /* Un rojo un poco más oscuro al hacer hover */
+    color: white !important;
 }
 
 .hero-about {

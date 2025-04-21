@@ -18,17 +18,19 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Use(SessionLoad)
 
 	mux.Get("/",handlers.Repo.Home)
-	mux.Get("/catalogo",handlers.Repo.Catalogo)
+
+
+
 	mux.Get("/inventario",handlers.Repo.Inventario)
-	mux.Get("/crear", handlers.Repo.MostrarFormularioCrear)  // Muestra el formulario
-    mux.Post("/crear", handlers.Repo.CrearProducto)        // Procesa el formulario
-	mux.Get("/editar/{id}", handlers.Repo.MostrarFormularioEditar)   // Muestra formulario de edición (GET)
-	mux.Post("/editar/{id}", handlers.Repo.EditarProducto)            // Procesa la edición (POST)
+	mux.Get("/crear-producto", handlers.Repo.MostrarFormularioCrear)  // Muestra el formulario
+    mux.Post("/crear-producto", handlers.Repo.CrearProducto)        // Procesa el formulario
+	mux.Get("/editar-producto/{id}", handlers.Repo.MostrarFormularioEditar)   // Muestra formulario de edición (GET)
+	mux.Post("/editar-producto/{id}", handlers.Repo.EditarProducto)            // Procesa la edición (POST)
 	mux.Post("/eliminar/{id}", handlers.Repo.EliminarProducto)   // Elimina un producto (POST)
 
 	// CATALOGO 
-	mux.Get("/catalogo", handlers.Repo.Catalogo) 
-	mux.Get("/producto/{id}", handlers.Repo.VerProducto)// Para la vista detallada
+	//mux.Get("/catalogo", handlers.Repo.Catalogo) 
+	//mux.Get("/producto/{id}", handlers.Repo.VerProducto)// Para la vista detallada
 
 
 	    	

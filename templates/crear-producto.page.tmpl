@@ -1,0 +1,222 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container">
+    <h2 class="my-4">Nuevo Producto</h2>
+    
+    {{with .Flash}}
+    <div class="alert alert-success">{{.}}</div>
+    {{end}}
+    
+    {{with .Error}}
+    <div class="alert alert-danger">{{.}}</div>
+    {{end}}
+    
+    <form method="POST" action="/crear-producto" class="needs-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        
+        <div class="row">
+            <!-- Columna izquierda - Información básica -->
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-header azul">
+                        Información Básica
+                    </div>
+                    <div class="card-body">
+                        <!-- SKU -->
+                        <div class="mb-3">
+                            <label for="sku" class="form-label">SKU *</label>
+                            <input type="text" class="form-control" id="sku" name="sku" required>
+                            <div class="invalid-feedback">Por favor ingresa el SKU</div>
+                        </div>
+                        
+                        <!-- Nombre -->
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required>
+                            <div class="invalid-feedback">Por favor ingresa el nombre</div>
+                        </div>
+                        
+                        <!-- Nombre Corto -->
+                        <div class="mb-3">
+                            <label for="nombre_corto" class="form-label">Nombre Corto</label>
+                            <input type="text" class="form-control" id="nombre_corto" name="nombre_corto">
+                        </div>
+                        
+                        <!-- Descripción -->
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Especificaciones técnicas -->
+                <div class="card mb-4">
+                    <div class="card-header azul">
+                        Especificaciones Técnicas
+                    </div>
+                    <div class="card-body">
+                        <!-- Modelo -->
+                        <div class="mb-3">
+                            <label for="modelo" class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="modelo" name="modelo">
+                        </div>
+                        
+                        <!-- Versión -->
+                        <div class="mb-3">
+                            <label for="version" class="form-label">Versión</label>
+                            <input type="text" class="form-control" id="version" name="version">
+                        </div>
+                        
+                        <!-- Serie -->
+                        <div class="mb-3">
+                            <label for="serie" class="form-label">Serie</label>
+                            <input type="text" class="form-control" id="serie" name="serie">
+                        </div>
+                        
+                        <!-- Código Fabricante -->
+                        <div class="mb-3">
+                            <label for="codigo_fabricante" class="form-label">Código del Fabricante</label>
+                            <input type="text" class="form-control" id="codigo_fabricante" name="codigo_fabricante">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Columna derecha - Relaciones y documentos -->
+            <div class="col-md-6">
+                <!-- Relaciones -->
+                <div class="card mb-4">
+                    <div class="card-header azul">
+                        Clasificación y Origen
+                    </div>
+                    <div class="card-body">
+                        <!-- Marca -->
+                        <div class="mb-3">
+                            <label for="id_marca" class="form-label">Marca *</label>
+                            <select class="form-select" id="id_marca" name="id_marca" required>
+                                <option value="">Selecciona una marca</option>
+                                {{range .Marcas}}
+                                <option value="{{.IDMarca}}">{{.Nombre}}</option>
+                                {{end}}
+                            </select>
+                            <div class="invalid-feedback">Por favor selecciona una marca</div>
+                        </div>
+                        
+                        <!-- Tipo de Producto -->
+                        <div class="mb-3">
+                            <label for="id_tipo" class="form-label">Tipo de Producto *</label>
+                            <select class="form-select" id="id_tipo" name="id_tipo" required>
+                                <option value="">Selecciona un tipo</option>
+                                {{range .TiposProducto}}
+                                <option value="{{.IDTipo}}">{{.Nombre}}</option>
+                                {{end}}
+                            </select>
+                            <div class="invalid-feedback">Por favor selecciona un tipo</div>
+                        </div>
+                        
+                        <!-- Clasificación -->
+                        <div class="mb-3">
+                            <label for="id_clasificacion" class="form-label">Clasificación *</label>
+                            <select class="form-select" id="id_clasificacion" name="id_clasificacion" required>
+                                <option value="">Selecciona una clasificación</option>
+                                {{range .Clasificaciones}}
+                                <option value="{{.IDClasificacion}}">{{.Nombre}}</option>
+                                {{end}}
+                            </select>
+                            <div class="invalid-feedback">Por favor selecciona una clasificación</div>
+                        </div>
+                        
+                        <!-- País de Origen -->
+                        <div class="mb-3">
+                            <label for="id_pais_origen" class="form-label">País de Origen *</label>
+                            <select class="form-select" id="id_pais_origen" name="id_pais_origen" required>
+                                <option value="">Selecciona un país</option>
+                                {{range .Paises}}
+                                <option value="{{.IDPais}}">{{.Nombre}}</option>
+                                {{end}}
+                            </select>
+                            <div class="invalid-feedback">Por favor selecciona un país</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Certificaciones -->
+                <div class="card mb-4">
+                    <div class="card-header azul">
+                        Certificaciones
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {{range .Certificaciones}}
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="cert_{{.IDCertificacion}}" 
+                                           name="certificaciones" 
+                                           value="{{.IDCertificacion}}">
+                                    <label class="form-check-label" for="cert_{{.IDCertificacion}}">
+                                        {{.Nombre}}
+                                    </label>
+                                    <small class="text-muted d-block">{{.OrganismoEmisor}}</small>
+                                </div>
+                            </div>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Documentación -->
+                <div class="card mb-4">
+                    <div class="card-header azul">
+                        Documentación
+                    </div>
+                    <div class="card-body">
+                        <!-- Imagen URL -->
+                        <div class="mb-3">
+                            <label for="imagen_url" class="form-label">URL de Imagen</label>
+                            <input type="url" class="form-control" id="imagen_url" name="imagen_url">
+                        </div>
+                        
+                        <!-- Ficha Técnica URL -->
+                        <div class="mb-3">
+                            <label for="ficha_tecnica_url" class="form-label">URL de Ficha Técnica</label>
+                            <input type="url" class="form-control" id="ficha_tecnica_url" name="ficha_tecnica_url">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="d-flex justify-content-end gap-2 mb-4">
+            <button type="submit" class="btn btn-secondary verde">Guardar Producto</button>
+            <a href="/inventario" class="btn btn-secondary rojo">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Validación del formulario -->
+<script>
+// Ejemplo de JavaScript para deshabilitar el envío de formularios si hay campos no válidos
+(function() {
+  'use strict'
+  
+  // Obtener todos los formularios a los que queremos aplicar estilos de validación de Bootstrap personalizados
+  var forms = document.querySelectorAll('.needs-validation')
+  
+  // Bucle sobre ellos y evitar el envío
+  Array.prototype.slice.call(forms)
+    .forEach(function(form) {
+      form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+        
+        form.classList.add('was-validated')
+      }, false)
+    })
+})()
+</script>
+{{end}}

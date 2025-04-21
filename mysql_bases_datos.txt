@@ -1,0 +1,76 @@
+-- Tabla marcas
+CREATE TABLE marcas (
+  id_marca INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla tipos_producto
+CREATE TABLE tipos_producto (
+  id_tipo INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla clasificaciones
+CREATE TABLE clasificaciones (
+  id_clasificacion INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla paises
+CREATE TABLE paises (
+  id_pais INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL,
+  codigo VARCHAR(3) NOT NULL
+);
+
+-- Tabla certificaciones
+CREATE TABLE certificaciones (
+  id_certificacion INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  organismo_emisor VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Tabla productos
+CREATE TABLE productos (
+  id_producto INT AUTO_INCREMENT PRIMARY KEY,
+  id_marca INT NOT NULL,
+  id_tipo INT NOT NULL,
+  id_clasificacion INT NOT NULL,
+  id_pais_origen INT NOT NULL,
+  
+  sku VARCHAR(255) UNIQUE NOT NULL,
+  nombre VARCHAR(255) NOT NULL,
+  nombre_corto VARCHAR(255),
+  modelo VARCHAR(100),
+  version VARCHAR(255),
+  serie VARCHAR(100),
+  codigo_fabricante VARCHAR(100),
+  descripcion TEXT,
+  
+  imagen_url VARCHAR(255),
+  ficha_tecnica_url VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (id_marca) REFERENCES marcas(id_marca),
+  FOREIGN KEY (id_tipo) REFERENCES tipos_producto(id_tipo),
+  FOREIGN KEY (id_clasificacion) REFERENCES clasificaciones(id_clasificacion),
+  FOREIGN KEY (id_pais_origen) REFERENCES paises(id_pais)
+);
+
+-- Tabla producto_certificaciones (tabla puente)
+CREATE TABLE producto_certificaciones (
+  id_producto INT NOT NULL,
+  id_certificacion INT NOT NULL,
+  PRIMARY KEY (id_producto, id_certificacion),
+  FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
+  FOREIGN KEY (id_certificacion) REFERENCES certificaciones(id_certificacion)
+);
