@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/config"
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/models"
@@ -21,7 +24,7 @@ type Repository struct {
 }
 
 // NewRepo creates a new repository
-func NewRepo(a *config.AppConfig) *Repository {
+func NewRepo(a *config.AppConfig) *Repository {	
 	return &Repository{
 		App: a,
 	}
@@ -480,6 +483,294 @@ func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/inventario", http.StatusSeeOther)
 }
 
+// TODO LO DE PROYECTOS
+func (m *Repository) ProyectosVista(w http.ResponseWriter, r *http.Request) {
+	proyectos, err := m.obtenerProyectosConRelaciones()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener proyectos: "+err.Error())
+		log.Println("Error al obtener proyectos:", err)
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	data := &models.TemplateData{
+		Proyectos: proyectos,
+		CSRFToken: nosurf.Token(r),
+	}
+
+	render.RenderTemplate(w, "proyectos-vista.page.tmpl", data)
+}
+
+func (m *Repository) MostrarNuevoProyecto(w http.ResponseWriter, r *http.Request) {
+    // Obtener productos
+    productosQuery := `
+    SELECT 
+        p.id_producto,
+        p.sku,
+        m.nombre as marca,
+        c.nombre as clasificacion,
+        p.nombre_corto,
+        p.modelo,
+        p.nombre,
+        p.version,
+        p.serie,
+        p.codigo_fabricante,
+        p.descripcion
+    FROM productos p
+    LEFT JOIN marcas m ON p.id_marca = m.id_marca
+    LEFT JOIN clasificaciones c ON p.id_clasificacion = c.id_clasificacion
+    ORDER BY p.id_producto DESC
+    `
+
+    rows, err := m.App.DB.Query(productosQuery)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+    defer rows.Close()
+
+    var productos []models.Producto
+    for rows.Next() {
+        var p models.Producto
+        err := rows.Scan(
+            &p.IDProducto,
+            &p.SKU,
+            &p.Marca,
+            &p.Clasificacion,
+            &p.NombreCorto,
+            &p.Modelo,
+            &p.Nombre,
+            &p.Version,
+            &p.Serie,
+            &p.CodigoFabricante,
+            &p.Descripcion,
+        )
+        if err != nil {
+            m.App.Session.Put(r.Context(), "error", "Error leyendo producto: "+err.Error())
+            http.Redirect(w, r, "/", http.StatusSeeOther)
+            return
+        }
+        productos = append(productos, p)
+    }
+
+    // Obtener licitaciones
+    licitacionesQuery := `
+        SELECT id_licitacion, nombre, num_contratacion
+        FROM licitaciones
+        ORDER BY id_licitacion DESC
+    `
+    rows2, err := m.App.DB.Query(licitacionesQuery)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo licitaciones: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+    defer rows2.Close()
+
+    var licitaciones []models.Licitacion
+    for rows2.Next() {
+        var l models.Licitacion
+        err := rows2.Scan(&l.ID, &l.Nombre, &l.NumContratacion)
+        if err != nil {
+            m.App.Session.Put(r.Context(), "error", "Error leyendo licitaciones: "+err.Error())
+            http.Redirect(w, r, "/", http.StatusSeeOther)
+            return
+        }
+        licitaciones = append(licitaciones, l)
+    }
+
+    data := &models.TemplateData{
+        Productos:    productos,
+        Licitaciones: licitaciones,
+        CSRFToken:    nosurf.Token(r),
+    }
+    render.RenderTemplate(w, "nuevo-proyecto.page.tmpl", data)
+}
+
+func (m *Repository) NuevoProyecto(w http.ResponseWriter, r *http.Request) {
+    // 1. Verificar método HTTP
+    if r.Method != http.MethodPost {
+        m.App.Session.Put(r.Context(), "error", "Método no permitido")
+        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+        return
+    }
+
+    // 2. Parsear formulario
+    err := r.ParseForm()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+        return
+    }
+
+    // 3. Validar campos requeridos
+    requiredFields := []string{"nombre", "descripcion", "id_licitacion", "fecha_inicio"}
+    for _, field := range requiredFields {
+        if r.Form.Get(field) == "" {
+            m.App.Session.Put(r.Context(), "error", "El campo "+field+" es requerido")
+            http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+            return
+        }
+    }
+
+    // 4. Convertir IDs a enteros
+    idLicitacion, err := strconv.Atoi(r.Form.Get("id_licitacion"))
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "ID de licitación inválido")
+        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+        return
+    }
+
+    // 5. Validar que la licitación exista
+    if !m.ExisteID("licitaciones", idLicitacion) {
+        m.App.Session.Put(r.Context(), "error", "La licitación seleccionada no existe")
+        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+        return
+    }
+
+    // 6. Procesar fechas
+    fechaInicio, err := time.Parse("2006-01-02", r.Form.Get("fecha_inicio"))
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Formato de fecha de inicio inválido")
+        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+        return
+    }
+
+    var fechaFin time.Time
+    if fechaFinStr := r.Form.Get("fecha_fin"); fechaFinStr != "" {
+        fechaFin, err = time.Parse("2006-01-02", fechaFinStr)
+        if err != nil {
+            m.App.Session.Put(r.Context(), "error", "Formato de fecha fin inválido")
+            http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+            return
+        }
+    }
+
+    // 7. Insertar el proyecto
+    stmt := `
+        INSERT INTO proyectos (
+            nombre, descripcion, id_licitacion, 
+            fecha_inicio, fecha_fin, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`
+
+    result, err := m.App.DB.Exec(stmt,
+        r.Form.Get("nombre"),
+        r.Form.Get("descripcion"),
+        idLicitacion,
+        fechaInicio,
+        fechaFin,
+        time.Now(),
+        time.Now(),
+    )
+
+    if err != nil {
+        log.Println("Error al insertar proyecto:", err)
+        m.App.Session.Put(r.Context(), "error", "Error al crear el proyecto")
+        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+        return
+    }
+
+    // 8. Obtener ID del proyecto insertado
+    idProyecto, err := result.LastInsertId()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al obtener ID del proyecto")
+        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+        return
+    }
+
+    // 9. Procesar productos seleccionados
+    if err := m.procesarProductosProyecto(r, idProyecto); err != nil {
+        log.Println("Error al procesar productos:", err)
+        m.App.Session.Put(r.Context(), "error", "Error al guardar los productos del proyecto")
+        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
+        return
+    }
+
+    // 10. Redireccionar con mensaje de éxito
+    m.App.Session.Put(r.Context(), "flash", "Proyecto creado exitosamente!")
+    http.Redirect(w, r, fmt.Sprintf("/proyectos/%d", idProyecto), http.StatusSeeOther)
+}
+
+// Función auxiliar para procesar productos del proyecto
+func (m *Repository) procesarProductosProyecto(r *http.Request, idProyecto int64) error {
+    // Obtener todos los valores del formulario para productos
+    productos := make([]struct {
+        IDProducto      string
+        Cantidad       string
+        PrecioUnitario string
+        Especificaciones string
+    }, 0)
+
+    // Recorrer todos los productos del formulario
+    for key, values := range r.Form {
+        if strings.HasPrefix(key, "productos[") && strings.Contains(key, "][id_producto]") {
+            // Extraer el índice del producto (ej: "productos[0][id_producto]" -> "0")
+            idx := strings.Split(key, "[")[1]
+            idx = strings.Split(idx, "]")[0]
+
+            producto := struct {
+                IDProducto      string
+                Cantidad       string
+                PrecioUnitario string
+                Especificaciones string
+            }{
+                IDProducto:      values[0],
+                Cantidad:       r.Form.Get(fmt.Sprintf("productos[%s][cantidad]", idx)),
+                PrecioUnitario: r.Form.Get(fmt.Sprintf("productos[%s][precio_unitario]", idx)),
+                Especificaciones: r.Form.Get(fmt.Sprintf("productos[%s][especificaciones]", idx)),
+            }
+
+            // Solo agregar si se seleccionó un producto
+            if producto.IDProducto != "" {
+                productos = append(productos, producto)
+            }
+        }
+    }
+
+    // Insertar cada producto asociado al proyecto
+    for _, p := range productos {
+        idProducto, err := strconv.Atoi(p.IDProducto)
+        if err != nil {
+            continue // Saltar si el ID no es válido
+        }
+
+        cantidad, err := strconv.Atoi(p.Cantidad)
+        if err != nil || cantidad <= 0 {
+            continue // Saltar si la cantidad no es válida
+        }
+
+        precioUnitario, err := strconv.ParseFloat(p.PrecioUnitario, 64)
+        if err != nil || precioUnitario <= 0 {
+            continue // Saltar si el precio no es válido
+        }
+
+        // Verificar que el producto exista
+        if !m.ExisteID("productos", idProducto) {
+            continue
+        }
+
+        // Insertar en la tabla de relación
+        _, err = m.App.DB.Exec(`
+            INSERT INTO productos_proyecto (
+                id_proyecto, id_producto, cantidad, 
+                precio_unitario, especificaciones, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            idProyecto,
+            idProducto,
+            cantidad,
+            precioUnitario,
+            p.Especificaciones,
+            time.Now(),
+        )
+        if err != nil {
+            return err
+        }
+    }
+
+    return nil
+}
+
 // TODO LO CATALOGO
 /*
 
@@ -651,3 +942,6 @@ func (m *Repository) VerProducto(w http.ResponseWriter, r *http.Request) {
 }
 
 */
+
+
+// TODO LO DE LICITACIONES

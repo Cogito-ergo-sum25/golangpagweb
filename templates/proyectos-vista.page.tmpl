@@ -1,0 +1,64 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Proyectos</h2>
+        <a href="/nuevo-proyecto" class="btn btn-primary mt-3 btn-outline-success verde" role="button">
+            <i class="fas fa-plus"></i> Nuevo Proyecto
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID Proyecto</th>
+                            <th>Nombre</th>
+                            <th>Productos</th>
+                            <th>Licitación</th>
+                            <th>Entidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Proyectos}}
+                        <tr>
+                            <td>{{.IDProyecto}}</td>
+                            <td>{{.Nombre}}</td>
+                            <td>
+                                <ul class="list-unstyled">
+                                    {{range .Productos}}
+                                    <li>
+                                        <small>{{.Cantidad}}x {{.ProductoNombre}} (${{formatPrice .PrecioUnitario}})</small>                                    </li>
+                                    {{end}}
+                                </ul>
+                            </td>
+                            <td>
+                                {{.LicitacionNombre}}<br>
+                                <small class="text-muted">{{.NumContratacion}}</small>
+                            </td>
+                            <td>{{.EntidadNombre}}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="/proyectos/editar/{{.IDProyecto}}" class="btn btn-sm btn-warning">Editar</a>
+                                    <form action="/proyectos/eliminar/{{.IDProyecto}}" method="POST" class="d-inline">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                    </form>
+                                </div>
+                            </td>                            
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No hay proyectos registrados</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,180 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container mt-4">
+    <h2 class="mb-4">Nuevo Proyecto</h2>
+    
+    <form action="/proyectos/crear" method="POST">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        
+        <!-- Datos Básicos -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                Información Básica del Proyecto
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre del Proyecto *</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" required 
+                           placeholder="Ej: Implementación Sistema de Gestión">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="descripcion" class="form-label">Descripción *</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion" 
+                              rows="3" required></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_licitacion" class="form-label">Licitación Relacionada *</label>
+                    <select class="form-select" id="id_licitacion" name="id_licitacion" required>
+                        <option value="">-- Seleccione una licitación --</option>
+                        {{range .Licitaciones}}
+                        <option value="{{.ID}}">{{.Nombre}} ({{.NumContratacion}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="fecha_inicio" class="form-label">Fecha de Inicio *</label>
+                        <input type="date" class="form-control" id="fecha_inicio" 
+                               name="fecha_inicio" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="fecha_fin" class="form-label">Fecha de Fin (Opcional)</label>
+                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de Productos -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                Productos del Proyecto
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="productos-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40%">Producto</th>
+                                <th width="15%">Cantidad</th>
+                                <th width="15%">Precio Unitario</th>
+                                <th width="25%">Especificaciones</th>
+                                <th width="5%"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="productos-body">
+                            <!-- Fila inicial vacía -->
+                            <tr class="producto-row">
+                                <td>
+                                    <select class="form-select producto-select" name="productos[0][id_producto]" required>
+                                        <option value="">-- Seleccione producto --</option>
+                                        {{range .Productos}}
+                                        <option value="{{.IDProducto}}">
+                                            {{.Nombre}} 
+                                            {{if .Modelo}}(Modelo: {{.Modelo}}){{end}}
+                                            {{if .SKU}}(SKU: {{.SKU}}){{end}}
+                                        </option>
+                                        {{end}}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control" name="productos[0][cantidad]" min="1" value="1" required>
+                                </td>
+                                <td>
+                                    <input type="number" step="0.01" class="form-control" name="productos[0][precio_unitario]" required>
+                                </td>
+                                <td>
+                                    <textarea class="form-control" name="productos[0][especificaciones]" rows="1"></textarea>
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="quitarFila(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <button type="button" class="btn btn-success mt-3" onclick="agregarProducto()">
+                    <i class="bi bi-plus-circle"></i> Agregar Otro Producto
+                </button>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-save"></i> Guardar Proyecto
+            </button>
+        </div>
+    </form>
+</div>
+{{end}}
+
+
+
+
+
+
+
+{{define "js"}}
+<script>
+// Contador para filas de productos
+let contadorProductos = 1;
+
+function agregarProducto() {
+    const tbody = document.getElementById('productos-body');
+    const newRow = document.createElement('tr');
+    newRow.className = 'producto-row';
+    
+    newRow.innerHTML = `
+        <td>
+            <select class="form-select producto-select" name="productos[${contadorProductos}][id_producto]" required>
+                <option value="">-- Seleccione producto --</option>
+                {{range .Productos}}
+                <option value="{{.IDProducto}}">
+                    {{.Nombre}} 
+                    {{if .Modelo}}(Modelo: {{.Modelo}}){{end}}
+                    {{if .SKU}}(SKU: {{.SKU}}){{end}}
+                </option>
+                {{end}}
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control" name="productos[${contadorProductos}][cantidad]" min="1" value="1" required>
+        </td>
+        <td>
+            <input type="number" step="0.01" class="form-control" name="productos[${contadorProductos}][precio_unitario]" required>
+        </td>
+        <td>
+            <textarea class="form-control" name="productos[${contadorProductos}][especificaciones]" rows="1"></textarea>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-danger btn-sm" onclick="quitarFila(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    contadorProductos++;
+}
+
+function quitarFila(boton) {
+    const fila = boton.closest('tr');
+    // No permitir eliminar la última fila
+    if (document.querySelectorAll('.producto-row').length > 1) {
+        fila.remove();
+    } else {
+        // Limpiar los campos de la última fila en lugar de eliminarla
+        fila.querySelector('.producto-select').value = '';
+        fila.querySelector('input[type="number"]').value = '1';
+        fila.querySelector('input[type="number"][step="0.01"]').value = '';
+        fila.querySelector('textarea').value = '';
+    }
+}
+</script>
+{{end}}

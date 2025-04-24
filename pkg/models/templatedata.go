@@ -15,9 +15,20 @@ type TemplateData struct {
 	Warning string
 	Error   string
 	
-	// Datos de productos
-	Productos []Producto
-	Producto  Producto
+	// --- Datos de productos ---
+    Productos []Producto
+    Producto  Producto
+    
+    // --- Datos de proyectos ---
+    Proyectos []Proyecto
+    Proyecto  Proyecto
+    
+    // --- Datos de licitaciones ---
+    Licitaciones []Licitacion
+    Licitacion   Licitacion
+    
+    // --- Datos de entidades ---
+    Entidades []Entidad
 	
 	// Listas para formularios
 	Marcas          []Marca
@@ -29,4 +40,12 @@ type TemplateData struct {
 	// Para edición de productos
 	CertificacionesProducto []Certificacion // Certificaciones asignadas al producto
 	TodasCertificaciones   []Certificacion // Todas las certificaciones disponibles
+
+	// Filtros comunes
+    Filtro struct {
+        Estatus string
+        EntidadID int
+        TipoLicitacion string
+    }
+
 }

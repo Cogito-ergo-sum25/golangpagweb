@@ -28,6 +28,12 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Post("/editar-producto/{id}", handlers.Repo.EditarProducto)            // Procesa la edición (POST)
 	mux.Post("/eliminar/{id}", handlers.Repo.EliminarProducto)   // Elimina un producto (POST)
 
+	// PROYECTOS
+	mux.Get("/proyectos-vista",handlers.Repo.ProyectosVista)
+	mux.Get("/nuevo-proyecto",handlers.Repo.MostrarNuevoProyecto)
+	mux.Post("/nuevo-proyecto",handlers.Repo.NuevoProyecto)
+
+
 	// CATALOGO 
 	//mux.Get("/catalogo", handlers.Repo.Catalogo) 
 	//mux.Get("/producto/{id}", handlers.Repo.VerProducto)// Para la vista detallada

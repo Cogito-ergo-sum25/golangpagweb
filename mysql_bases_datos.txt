@@ -74,3 +74,63 @@ CREATE TABLE producto_certificaciones (
   FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
   FOREIGN KEY (id_certificacion) REFERENCES certificaciones(id_certificacion)
 );
+
+-- Tabla entidades
+CREATE TABLE entidades (
+  id_entidad INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(255) NOT NULL,
+  tipo VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)
+
+-- Tabla licitaciones (depende de entidades)
+CREATE TABLE licitaciones (
+  id_licitacion INT AUTO_INCREMENT PRIMARY KEY,
+  id_entidad INT NOT NULL,
+  num_contratacion VARCHAR(255),
+  caracter VARCHAR(255),
+  nombre VARCHAR(255) NOT NULL,
+  estatus VARCHAR(100),
+  tipo VARCHAR(100),
+  lugar VARCHAR(100),
+  privada TINYINT(1) DEFAULT 0,
+  fecha_junta DATE,
+  fecha_propuestas DATE,
+  fecha_fallo DATE,
+  fecha_entrega DATE,
+  tiempo_entrega VARCHAR(255),
+  revisada TINYINT(1) DEFAULT 0,
+  intevi TINYINT(1) DEFAULT 0,
+  estado VARCHAR(100),
+  observaciones_generales TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_entidad) REFERENCES entidades(id_entidad)
+)
+
+-- Tabla proyectos (depende de licitaciones)
+CREATE TABLE proyectos (
+  id_proyecto INT AUTO_INCREMENT PRIMARY KEY,
+  id_licitacion INT UNIQUE, -- Unique para relación 1:1
+  nombre VARCHAR(255) NOT NULL,
+  descripcion TEXT,
+  fecha_inicio DATE,
+  fecha_fin DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_licitacion) REFERENCES licitaciones(id_licitacion)
+)
+
+-- Tabla producto_proyecto (tabla puente entre productos y proyecto muchos a muchos)
+CREATE TABLE producto_proyecto (
+  id_producto INT NOT NULL,
+  id_proyecto INT NOT NULL,
+  cantidad INT NOT NULL DEFAULT 1,
+  precio_unitario DECIMAL(10,2) NOT NULL,
+  especificaciones TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_producto, id_proyecto),
+  FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE,
+  FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE CASCADE
+)

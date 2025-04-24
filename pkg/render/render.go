@@ -2,10 +2,14 @@ package render
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
+
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/config"
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/models"
 )
@@ -20,9 +24,49 @@ func isCertSelected(certID int, productCerts []models.Certificacion) bool {
 	return false
 }
 
+func formatPrice(price float64) string {
+    s := fmt.Sprintf("%.2f", price)
+    parts := strings.Split(s, ".")
+    intPart := parts[0]
+    decPart := parts[1]
+
+    // Insertar comas
+    n := len(intPart)
+    if n <= 3 {
+        return intPart + "." + decPart
+    }
+
+    var result strings.Builder
+    pre := n % 3
+    if pre > 0 {
+        result.WriteString(intPart[:pre])
+        if n > pre {
+            result.WriteString(",")
+        }
+    }
+
+    for i := pre; i < n; i += 3 {
+        result.WriteString(intPart[i : i+3])
+        if i+3 < n {
+            result.WriteString(",")
+        }
+    }
+
+    return result.String() + "." + decPart
+}
+
+// Función que convierte cualquier valor a JSON
+func toJson(v interface{}) template.JS {
+    a, _ := json.Marshal(v)
+    return template.JS(a)
+}
+
+
 // Mapa de funciones para los templates
 var functions = template.FuncMap{
-	"isCertSelected": isCertSelected, // Registramos la función
+	"isCertSelected": isCertSelected,
+	"formatPrice": formatPrice,
+	"toJson": toJson,
 }
 
 var app *config.AppConfig
