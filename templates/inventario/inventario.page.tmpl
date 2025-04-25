@@ -10,9 +10,9 @@
             <tr>
                 <th>SKU</th>
                 <th>Marca</th>
-                <th>Clasificación</th>
-                <th>Nombre Corto</th>
                 <th>Modelo</th>
+                <th>Version</th>
+                <th>Nombre</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -21,9 +21,9 @@
             <tr>
                 <td>{{.SKU}}</td>
                 <td>{{.Marca}}</td>
-                <td>{{.Clasificacion}}</td>
-                <td>{{.NombreCorto}}</td>
                 <td>{{.Modelo}}</td>
+                <td>{{.Version}}</td>
+                <td>{{.Nombre}}</td>
                 <td>
                     <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm btn-warning">Editar</a>
                     <form action="/eliminar/{{.IDProducto}}" method="POST" class="d-inline">

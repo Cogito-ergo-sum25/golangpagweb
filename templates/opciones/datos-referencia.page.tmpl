@@ -1,0 +1,295 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Datos de Referencia</h2>
+    </div>
+    <!-- Selector para elegir la tabla a mostrar -->
+    <div class="mb-3">
+        <label for="tablaSeleccionada" class="form-label">Selecciona la tabla</label>
+        <select class="form-select" id="tablaSeleccionada" name="tablaSeleccionada" onchange="cambiarTabla()">
+            <option value="marcas">Marcas</option>
+            <option value="tipos_producto">Tipos de Producto</option>
+            <option value="clasificaciones">Clasificaciones</option>
+            <option value="paises">Países</option>
+            <option value="certificaciones">Certificaciones</option>
+        </select>
+    </div>
+
+    <!-- Contenedor para las tablas -->
+    <div id="tablaMarcas" class="tabla-container">
+        <h3>Marcas</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Marcas}}
+                    <tr>
+                        <td>{{.Nombre}}</td>
+                        <td>
+                            <form action="/eliminar-referencia/{{.IDMarca}}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <input type="hidden" name="tabla" value="marcas">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tablaTiposProducto" class="tabla-container" style="display:none">
+        <h3>Tipos de Producto</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .TiposProducto}}
+                    <tr>
+                        <td>{{.Nombre}}</td>
+                        <td>
+                            <form action="/eliminar-referencia/{{.IDTipo}}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <input type="hidden" name="tabla" value="tipos_producto">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tablaClasificaciones" class="tabla-container" style="display:none">
+        <h3>Clasificaciones</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Clasificaciones}}
+                    <tr>
+                        <td>{{.Nombre}}</td>
+                        <td>
+                            <form action="/eliminar-referencia/{{.IDClasificacion}}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <input type="hidden" name="tabla" value="clasificaciones">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tablaPaises" class="tabla-container" style="display:none">
+        <h3>Paises</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Código</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Paises}}
+                    <tr>
+                        <td>{{.Nombre}}</td>
+                        <td>{{.Codigo}}</td>
+                        <td>
+                            <form action="/eliminar-referencia/{{.IDPais}}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <input type="hidden" name="tabla" value="paises"> <!-- Valor fijo según la tabla -->
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="tablaCertificaciones" class="tabla-container" style="display:none">
+        <h3>Cerficicaciones</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Organismo Emisor</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Certificaciones}}
+                    <tr>
+                        <td>{{.Nombre}}</td>
+                        <td>{{.OrganismoEmisor}}</td>
+                        <td>
+                            <form action="/eliminar-referencia/{{.IDCertificacion}}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <input type="hidden" name="tabla" value="certificaciones">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    <div class="d-flex justify-content-center mt-4">
+        <button id="btnNuevo" class="btn btn-success btn-lg">
+            <i class="fas fa-plus-circle me-2"></i> Nuevo
+        </button>
+        
+    </div>
+</div>
+
+
+<div class="modal fade" id="modalAgregar" tabindex="-1" aria-labelledby="modalAgregarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="formAgregar" method="POST" action="/datos-referencia">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAgregarLabel">Agregar nuevo</h5>
+                    <!-- Botón de cierre (equis) -->
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body" id="modalBodyContent">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" name="tabla" id="tablaSeleccionadaHidden">
+                    <!-- Botón de cancelar -->
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <!-- Botón de guardar -->
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+
+{{end}}
+
+{{define "js"}}
+<script>
+    function cambiarTabla() {
+        // Depuración: Verifica qué valor se ha seleccionado
+        var tablaSeleccionada = document.getElementById("tablaSeleccionada").value;
+        console.log("Tabla seleccionada:", tablaSeleccionada);
+        
+        // Ocultar todas las tablas
+        var tablas = document.querySelectorAll('.tabla-container');
+        tablas.forEach(function(tabla) {
+            tabla.style.display = "none"; // Aseguramos que todas las tablas se oculten
+        });
+
+        // Mostrar la tabla seleccionada
+        if (tablaSeleccionada === "marcas") {
+            document.getElementById("tablaMarcas").style.display = "block";
+        } else if (tablaSeleccionada === "tipos_producto") {
+            document.getElementById("tablaTiposProducto").style.display = "block";
+        } else if (tablaSeleccionada === "clasificaciones") {
+            document.getElementById("tablaClasificaciones").style.display = "block";
+        } else if (tablaSeleccionada === "paises") {
+            document.getElementById("tablaPaises").style.display = "block";
+        } else if (tablaSeleccionada === "certificaciones") {
+            document.getElementById("tablaCertificaciones").style.display = "block";
+        }
+    }
+
+    function cambiarTabla() {
+        var tablaSeleccionada = document.getElementById("tablaSeleccionada").value;
+        console.log("Tabla seleccionada:", tablaSeleccionada);
+        
+        var tablas = document.querySelectorAll('.tabla-container');
+        tablas.forEach(function(tabla) {
+            tabla.style.display = "none";
+        });
+
+        if (tablaSeleccionada === "marcas") {
+            document.getElementById("tablaMarcas").style.display = "block";
+        } else if (tablaSeleccionada === "tipos_producto") {
+            document.getElementById("tablaTiposProducto").style.display = "block";
+        } else if (tablaSeleccionada === "clasificaciones") {
+            document.getElementById("tablaClasificaciones").style.display = "block";
+        } else if (tablaSeleccionada === "paises") {
+            document.getElementById("tablaPaises").style.display = "block";
+        } else if (tablaSeleccionada === "certificaciones") {
+            document.getElementById("tablaCertificaciones").style.display = "block";
+        }
+    }
+
+    function mostrarModal() {
+    const tabla = document.getElementById("tablaSeleccionada").value;
+    document.getElementById("tablaSeleccionadaHidden").value = tabla; // Establece la tabla seleccionada en el campo oculto
+
+    let contenido = '';
+    
+    if (tabla === "paises") {
+        contenido = `
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" name="nombre" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Código</label>
+                <input type="text" class="form-control" name="codigo" required>
+            </div>
+        `;
+    } else if (tabla === "certificaciones") {
+        contenido = `
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" name="nombre" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Organismo Emisor</label>
+                <input type="text" class="form-control" name="organismo_emisor" required>
+            </div>
+        `;
+    } else {
+        contenido = `
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" name="nombre" required>
+            </div>
+        `;
+    }
+
+    // Llena el contenido del modal con el formulario correspondiente
+    document.getElementById("modalBodyContent").innerHTML = contenido;
+
+    // Muestra el modal
+    let modal = new bootstrap.Modal(document.getElementById('modalAgregar'));
+    modal.show();
+}
+
+window.onload = function() {
+    console.log("Página cargada, llamando a cambiarTabla()");
+    cambiarTabla();
+
+    // 🔥 Aquí enlazamos el botón "Nuevo"
+    document.getElementById("btnNuevo").addEventListener("click", mostrarModal);
+};
+
+</script>
+{{end}}

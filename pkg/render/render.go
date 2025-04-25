@@ -97,6 +97,9 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 		}
 	}
 
+	// Normalizar la clave para buscarla en el mapa
+	tmpl = filepath.ToSlash(tmpl) // ← esto estandariza "home\home.page.tmpl" a "home/home.page.tmpl"
+
 	t, ok := tc[tmpl]
 	if !ok {
 		log.Println("No se pudo encontrar el template:", tmpl)
@@ -105,7 +108,6 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 	}
 
 	buf := new(bytes.Buffer)
-
 	td = AddDefaultData(td)
 
 	err = t.Execute(buf, td)
@@ -122,37 +124,46 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 	}
 }
 
+
 // CreateTemplateCache crea un cache de templates
 func CreateTemplateCache() (map[string]*template.Template, error) {
 	myCache := map[string]*template.Template{}
 
-	pages, err := filepath.Glob("./templates/*.page.tmpl")
+	// Buscar todos los archivos .page.tmpl en subdirectorios
+	pages, err := filepath.Glob("./templates/**/*.page.tmpl")
 	if err != nil {
 		return myCache, err
 	}
 
 	for _, page := range pages {
 		name := filepath.Base(page)
-		
-		// Parseamos el template con las funciones registradas
+
+		// Crear template con funciones
 		ts, err := template.New(name).Funcs(functions).ParseFiles(page)
 		if err != nil {
 			return myCache, err
 		}
 
-		matches, err := filepath.Glob("./templates/*.layout.tmpl")
+		// Agregar layouts si existen
+		layouts, err := filepath.Glob("./templates/base/*.layout.tmpl")
 		if err != nil {
 			return myCache, err
 		}
-
-		if len(matches) > 0 {
-			ts, err = ts.ParseGlob("./templates/*.layout.tmpl")
+		if len(layouts) > 0 {
+			ts, err = ts.ParseGlob("./templates/base/*.layout.tmpl")
 			if err != nil {
 				return myCache, err
 			}
 		}
 
-		myCache[name] = ts
+		// Clave relativa: sin "templates/", usando `/`
+		relPath, err := filepath.Rel("templates", page)
+		if err != nil {
+			return myCache, err
+		}
+		relPath = filepath.ToSlash(relPath) // estandariza a "home/home.page.tmpl"
+
+		myCache[relPath] = ts
 	}
 
 	return myCache, nil

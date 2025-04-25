@@ -249,3 +249,62 @@ ORDER BY
     return proyectos, nil
 }
 
+// AgregarMarca inserta una nueva marca en la base de datos
+func (m *Repository) AgregarMarca(nombre string) error {
+    _, err := m.App.DB.Exec("INSERT INTO marcas (nombre) VALUES (?)", nombre)
+    return err
+}
+
+// AgregarTipoProducto inserta un nuevo tipo de producto en la base de datos
+func (m *Repository) AgregarTipoProducto(nombre string) error {
+    _, err := m.App.DB.Exec("INSERT INTO tipos_producto (nombre) VALUES (?)", nombre)
+    return err
+}
+
+// AgregarClasificacion inserta una nueva clasificación en la base de datos
+func (m *Repository) AgregarClasificacion(nombre string) error {
+    _, err := m.App.DB.Exec("INSERT INTO clasificaciones (nombre) VALUES (?)", nombre)
+    return err
+}
+
+// AgregarPais inserta un nuevo país en la base de datos
+func (m *Repository) AgregarPais(nombre, codigo string) error {
+    _, err := m.App.DB.Exec("INSERT INTO paises (nombre, codigo) VALUES (?, ?)", nombre, codigo)
+    return err
+}
+
+// AgregarCertificacion inserta una nueva certificación en la base de datos
+func (m *Repository) AgregarCertificacion(nombre, organismoEmisor string) error {
+    _, err := m.App.DB.Exec("INSERT INTO certificaciones (nombre, organismo_emisor) VALUES (?, ?)", nombre, organismoEmisor)
+    return err
+}
+
+func (m *Repository) EliminarMarca(id string) error {
+    // Ejecutar la consulta SQL para eliminar la marca con el ID especificado
+    _, err := m.App.DB.Exec("DELETE FROM marcas WHERE id_marca = ?", id)
+    return err
+}
+
+func (m *Repository) EliminarTipoProducto(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM tipos_producto WHERE id_tipo = ?", id)
+    return err
+}
+
+func (m *Repository) EliminarClasificacion(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM clasificaciones WHERE id_clasificacion = ?", id)
+    return err
+}
+
+func (m *Repository) EliminarPais(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM paises WHERE id_pais = ?", id)
+    return err
+}
+
+func (m *Repository) EliminarCertificacion(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM certificaciones WHERE id_certificacion = ?", id)
+    return err
+}
+
+
+
+

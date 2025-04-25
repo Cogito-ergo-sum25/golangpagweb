@@ -37,7 +37,7 @@ func NewHandlers(r *Repository) {
 
 // Home is the handler for the home page
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, "home.page.tmpl", &models.TemplateData{})
+	render.RenderTemplate(w, "home/home.page.tmpl", &models.TemplateData{})
 }
 
 // TODO LO DE INVENTARIO
@@ -104,7 +104,7 @@ func (m *Repository) Inventario(w http.ResponseWriter, r *http.Request) {
         CSRFToken: nosurf.Token(r),
     }
     
-    render.RenderTemplate(w, "inventario.page.tmpl", data)
+    render.RenderTemplate(w, "inventario/inventario.page.tmpl", data)
 }
 
 // Muestra el formulario de creación
@@ -154,7 +154,7 @@ func (m *Repository) MostrarFormularioCrear(w http.ResponseWriter, r *http.Reque
 		CSRFToken:       nosurf.Token(r),
 	}
 	
-	render.RenderTemplate(w, "crear-producto.page.tmpl", data)
+	render.RenderTemplate(w, "inventario/crear-producto.page.tmpl", data)
 }
 
 // handler para crear producto
@@ -331,7 +331,7 @@ func (m *Repository) MostrarFormularioEditar(w http.ResponseWriter, r *http.Requ
         CSRFToken:       nosurf.Token(r),
     }
     
-    render.RenderTemplate(w, "editar-producto.page.tmpl", data)
+    render.RenderTemplate(w, "inventario/editar-producto.page.tmpl", data)
 }
 
 // Handler para actualizar producto
@@ -498,7 +498,7 @@ func (m *Repository) ProyectosVista(w http.ResponseWriter, r *http.Request) {
 		CSRFToken: nosurf.Token(r),
 	}
 
-	render.RenderTemplate(w, "proyectos-vista.page.tmpl", data)
+	render.RenderTemplate(w, "proyectos/proyectos-vista.page.tmpl", data)
 }
 
 func (m *Repository) MostrarNuevoProyecto(w http.ResponseWriter, r *http.Request) {
@@ -585,7 +585,7 @@ func (m *Repository) MostrarNuevoProyecto(w http.ResponseWriter, r *http.Request
         Licitaciones: licitaciones,
         CSRFToken:    nosurf.Token(r),
     }
-    render.RenderTemplate(w, "nuevo-proyecto.page.tmpl", data)
+    render.RenderTemplate(w, "proyectos/nuevo-proyecto.page.tmpl", data)
 }
 
 func (m *Repository) NuevoProyecto(w http.ResponseWriter, r *http.Request) {
@@ -945,3 +945,177 @@ func (m *Repository) VerProducto(w http.ResponseWriter, r *http.Request) {
 
 
 // TODO LO DE LICITACIONES
+func (m *Repository) Licitaciones(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "licitaciones/licitaciones.page.tmpl", &models.TemplateData{})
+}
+
+// TODO LO DE OPCIONES
+
+func (m *Repository) Opciones(w http.ResponseWriter, r *http.Request) {
+	render.RenderTemplate(w, "opciones/opciones.page.tmpl", &models.TemplateData{})
+}
+
+// DATOS REFERENCIA
+func (m *Repository) DatosReferencia(w http.ResponseWriter, r *http.Request) {
+    marcas, err := m.ObtenerMarcas()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener marcas")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+	tipos, err := m.ObtenerTiposProducto()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener tipos de producto")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+	clasificaciones, err := m.ObtenerClasificaciones()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener clasificaciones")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+	paises, err := m.ObtenerPaises()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener países")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+	certificaciones, err := m.ObtenerCertificaciones()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener certificaciones")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+	data := &models.TemplateData{
+		Marcas:          marcas,
+		TiposProducto:   tipos,
+		Clasificaciones: clasificaciones,
+		Paises:          paises,
+		Certificaciones: certificaciones,
+		CSRFToken:       nosurf.Token(r),
+	}
+
+    render.RenderTemplate(w, "opciones/datos-referencia.page.tmpl", data)
+}
+
+func (m *Repository) AgregarDato(w http.ResponseWriter, r *http.Request) {
+    // Recibe la tabla seleccionada
+    tabla := r.FormValue("tabla")
+    var err error
+
+    // Dependiendo de la tabla, realizamos diferentes operaciones
+    switch tabla {
+    case "marcas":
+        nombre := r.FormValue("nombre")
+        if nombre == "" {
+            m.App.Session.Put(r.Context(), "error", "El nombre de la marca es obligatorio")
+            fmt.Println("Error: El nombre de la marca es obligatorio")
+            http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+            return
+        }
+        err = m.AgregarMarca(nombre)        
+    case "tipos_producto":
+        nombre := r.FormValue("nombre")
+        if nombre == "" {
+            m.App.Session.Put(r.Context(), "error", "El nombre del tipo de producto es obligatorio")
+            fmt.Println("Error: El nombre del tipo de producto es obligatorio")
+            http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+            return
+        }
+        err = m.AgregarTipoProducto(nombre)
+
+    case "clasificaciones":
+        nombre := r.FormValue("nombre")
+        if nombre == "" {
+            m.App.Session.Put(r.Context(), "error", "El nombre de la clasificación es obligatorio")
+            fmt.Println("Error: El nombre de la clasificación es obligatorio")
+            http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+            return
+        }
+        err = m.AgregarClasificacion(nombre)
+
+    case "paises":
+        nombre := r.FormValue("nombre")
+        codigo := r.FormValue("codigo")
+        if nombre == "" || codigo == "" {
+            m.App.Session.Put(r.Context(), "error", "El nombre y el código del país son obligatorios")
+            fmt.Println("Error: El nombre y el código del país son obligatorios")
+            http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+            return
+        }
+        err = m.AgregarPais(nombre, codigo)
+
+    case "certificaciones":
+        nombre := r.FormValue("nombre")
+        organismoEmisor := r.FormValue("organismo_emisor")
+        if nombre == "" || organismoEmisor == "" {
+            m.App.Session.Put(r.Context(), "error", "El nombre y el organismo emisor son obligatorios")
+            fmt.Println("Error: El nombre y el organismo emisor son obligatorios")
+            http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+            return
+        }
+        err = m.AgregarCertificacion(nombre, organismoEmisor)
+
+    default:
+        m.App.Session.Put(r.Context(), "error", "Tabla no válida")
+        fmt.Println("Error: Tabla no válida")
+        http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+        return
+    }
+
+    // Verificamos si ocurrió algún error durante el proceso
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al agregar el dato")
+        fmt.Println("Error al agregar el dato:", err)
+        http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+        return
+    }
+
+    // Si todo salió bien
+    m.App.Session.Put(r.Context(), "success", "Dato agregado correctamente")
+    http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+}
+
+func (m *Repository) EliminarDatoReferencia(w http.ResponseWriter, r *http.Request) {
+    // Obtener el nombre de la tabla desde la URL
+    tabla := r.FormValue("tabla")
+    id := chi.URLParam(r, "id")
+
+    var err error
+    switch tabla {
+    case "marcas":
+        err = m.EliminarMarca(id)
+    case "tipos_producto":
+        err = m.EliminarTipoProducto(id)
+    case "clasificaciones":
+        err = m.EliminarClasificacion(id)
+    case "paises":
+        err = m.EliminarPais(id)
+    case "certificaciones":
+        err = m.EliminarCertificacion(id)
+    default:
+        fmt.Println("Error: tabla no válida")
+        m.App.Session.Put(r.Context(), "error", "Tabla no válida")
+        http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+        return
+    }
+
+    if err != nil {
+        fmt.Println("Error al eliminar el dato:", err)
+        m.App.Session.Put(r.Context(), "error", "Error al eliminar el dato")
+        http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+        return
+    }
+    m.App.Session.Put(r.Context(), "success", "Dato eliminado correctamente")
+    http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+}
+
+
+
+

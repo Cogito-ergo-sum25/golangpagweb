@@ -47,5 +47,4 @@ type TemplateData struct {
         EntidadID int
         TipoLicitacion string
     }
-
 }

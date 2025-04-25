@@ -20,7 +20,7 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/",handlers.Repo.Home)
 
 
-
+	// INVENTARIO
 	mux.Get("/inventario",handlers.Repo.Inventario)
 	mux.Get("/crear-producto", handlers.Repo.MostrarFormularioCrear)  // Muestra el formulario
     mux.Post("/crear-producto", handlers.Repo.CrearProducto)        // Procesa el formulario
@@ -37,6 +37,21 @@ func routes(app *config.AppConfig) http.Handler {
 	// CATALOGO 
 	//mux.Get("/catalogo", handlers.Repo.Catalogo) 
 	//mux.Get("/producto/{id}", handlers.Repo.VerProducto)// Para la vista detallada
+
+
+	// LICITACIONES
+	mux.Get("/licitaciones",handlers.Repo.Licitaciones)
+	
+
+
+
+	// OPCIONES
+	mux.Get("/opciones",handlers.Repo.Opciones)
+	mux.Get("/datos-referencia",handlers.Repo.DatosReferencia)
+	mux.Post("/datos-referencia", handlers.Repo.AgregarDato)
+	mux.Post("/eliminar-referencia/{id}", handlers.Repo.EliminarDatoReferencia)   // Elimina un producto (POST)
+ 
+	     
 
 
 	    	
