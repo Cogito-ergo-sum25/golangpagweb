@@ -94,7 +94,6 @@ CREATE TABLE licitaciones (
   estatus VARCHAR(100),
   tipo VARCHAR(100),
   lugar VARCHAR(100),
-  privada TINYINT(1) DEFAULT 0,
   fecha_junta DATE,
   fecha_propuestas DATE,
   fecha_fallo DATE,

@@ -3,23 +3,39 @@ package models
 import "time"
 
 type Licitacion struct {
-    ID             int       `json:"id_licitacion"`
-    IDEntidad      int       `json:"id_entidad"`
-    Nombre         string    `json:"nombre"`
+    IDLicitacion    int       `json:"id_licitacion"`
+    IDEntidad       int       `json:"id_entidad"`
     NumContratacion string   `json:"num_contratacion"`
-    Estatus        string    `json:"estatus"`
-    FechaPropuestas time.Time `json:"fecha_propuestas"`
-    
+    Caracter         string    `json:"caracter"`
+    Nombre           string    `json:"nombre"`
+    Estatus          string    `json:"estatus"`
+    Tipo             string    `json:"tipo"`
+    Lugar            string    `json:"lugar"`
+    FechaJunta       time.Time `json:"fecha_junta"`
+    FechaPropuestas  time.Time `json:"fecha_propuestas"`
+    FechaFallo       time.Time `json:"fecha_fallo"`
+    FechaEntrega     time.Time `json:"fecha_entrega"`
+    TiempoEntrega    string    `json:"tiempo_entrega"`
+    Revisada         bool      `json:"revisada"`
+    Intevi           bool      `json:"intevi"`
+    Estado           string    `json:"estado"`
+    ObservacionesGenerales string `json:"observaciones_generales"`
+
     // Datos entidad para mostrar
-    EntidadNombre  string    `json:"entidad_nombre"`
-    
+    EntidadNombre    string    `json:"entidad_nombre"`
+    EntidadTipo      string    `json:"entidad_tipo"`
+
+    // Relación con proyecto (1:1)
+    Proyecto         *Proyecto `json:"proyecto,omitempty"`
+
     CreatedAt      time.Time `json:"created_at"`
     UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type Entidad struct {
-    ID             int       `json:"id_entidad"`
+    IDEntidad      int       `json:"id_entidad"`
     Nombre         string    `json:"nombre"`
     Tipo           string    `json:"tipo"`
     CreatedAt      time.Time `json:"created_at"`
+    UpdatedAt      time.Time `json:"updated_at"`
 }

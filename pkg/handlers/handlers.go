@@ -485,7 +485,7 @@ func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {
 
 // TODO LO DE PROYECTOS
 func (m *Repository) ProyectosVista(w http.ResponseWriter, r *http.Request) {
-	proyectos, err := m.obtenerProyectosConRelaciones()
+	proyectos, err := m.ObtenerProyectosConRelaciones()
 	if err != nil {
 		m.App.Session.Put(r.Context(), "error", "Error al obtener proyectos: "+err.Error())
 		log.Println("Error al obtener proyectos:", err)
@@ -503,81 +503,19 @@ func (m *Repository) ProyectosVista(w http.ResponseWriter, r *http.Request) {
 
 func (m *Repository) MostrarNuevoProyecto(w http.ResponseWriter, r *http.Request) {
     // Obtener productos
-    productosQuery := `
-    SELECT 
-        p.id_producto,
-        p.sku,
-        m.nombre as marca,
-        c.nombre as clasificacion,
-        p.nombre_corto,
-        p.modelo,
-        p.nombre,
-        p.version,
-        p.serie,
-        p.codigo_fabricante,
-        p.descripcion
-    FROM productos p
-    LEFT JOIN marcas m ON p.id_marca = m.id_marca
-    LEFT JOIN clasificaciones c ON p.id_clasificacion = c.id_clasificacion
-    ORDER BY p.id_producto DESC
-    `
-
-    rows, err := m.App.DB.Query(productosQuery)
+    productos, err := m.ObtenerTodosProductos()
     if err != nil {
         m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
         http.Redirect(w, r, "/", http.StatusSeeOther)
         return
     }
-    defer rows.Close()
-
-    var productos []models.Producto
-    for rows.Next() {
-        var p models.Producto
-        err := rows.Scan(
-            &p.IDProducto,
-            &p.SKU,
-            &p.Marca,
-            &p.Clasificacion,
-            &p.NombreCorto,
-            &p.Modelo,
-            &p.Nombre,
-            &p.Version,
-            &p.Serie,
-            &p.CodigoFabricante,
-            &p.Descripcion,
-        )
-        if err != nil {
-            m.App.Session.Put(r.Context(), "error", "Error leyendo producto: "+err.Error())
-            http.Redirect(w, r, "/", http.StatusSeeOther)
-            return
-        }
-        productos = append(productos, p)
-    }
 
     // Obtener licitaciones
-    licitacionesQuery := `
-        SELECT id_licitacion, nombre, num_contratacion
-        FROM licitaciones
-        ORDER BY id_licitacion DESC
-    `
-    rows2, err := m.App.DB.Query(licitacionesQuery)
+    licitaciones, err := m.ObtenerLicitacionesParaSelect()
     if err != nil {
         m.App.Session.Put(r.Context(), "error", "Error obteniendo licitaciones: "+err.Error())
         http.Redirect(w, r, "/", http.StatusSeeOther)
         return
-    }
-    defer rows2.Close()
-
-    var licitaciones []models.Licitacion
-    for rows2.Next() {
-        var l models.Licitacion
-        err := rows2.Scan(&l.ID, &l.Nombre, &l.NumContratacion)
-        if err != nil {
-            m.App.Session.Put(r.Context(), "error", "Error leyendo licitaciones: "+err.Error())
-            http.Redirect(w, r, "/", http.StatusSeeOther)
-            return
-        }
-        licitaciones = append(licitaciones, l)
     }
 
     data := &models.TemplateData{
@@ -947,6 +885,25 @@ func (m *Repository) VerProducto(w http.ResponseWriter, r *http.Request) {
 // TODO LO DE LICITACIONES
 func (m *Repository) Licitaciones(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "licitaciones/licitaciones.page.tmpl", &models.TemplateData{})
+}
+
+func (m *Repository) MostrarNuevaLicitacion(w http.ResponseWriter, r *http.Request) {
+    // Obtener todas las entidades para el select
+    entidades, err := m.ObtenerTodasEntidades()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo entidades: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    data := &models.TemplateData{
+        Entidades:  entidades,
+        CSRFToken:  nosurf.Token(r),
+        Data: map[string]interface{}{
+            "tipos": []string{"Directa", "Apoyo", "Estudio de mercado", "Adjudicación directa", "Producto no adecuado", "No solicitan productos INTEVI"},
+        },
+    }
+    render.RenderTemplate(w, "licitaciones/nueva-licitacion.page.tmpl", data)
 }
 
 // TODO LO DE OPCIONES

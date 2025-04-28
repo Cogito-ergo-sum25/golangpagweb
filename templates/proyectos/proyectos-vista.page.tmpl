@@ -14,19 +14,23 @@
                 <table class="table table-hover">
                     <thead class="table-dark">
                         <tr>
-                            <th>ID Proyecto</th>
+                            <th>Número Contratación</th>
+                            <th>Unidad compradora</th> 
+                            <th>Lugar</th>
                             <th>Nombre</th>
                             <th>Productos</th>
-                            <th>Licitación</th>
-                            <th>Entidad</th>
+                            <th>Fechas</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{range .Proyectos}}
                         <tr>
-                            <td>{{.IDProyecto}}</td>
-                            <td>{{.Nombre}}</td>
+                            <td>{{.NumContratacion}}</td>
+                            <td>{{.EntidadNombre}}</td> 
+                            <td>{{.Lugar}}</td>
+                            <td>{{.LicitacionNombre}}</td>
                             <td>
                                 <ul class="list-unstyled">
                                     {{range .Productos}}
@@ -36,17 +40,17 @@
                                 </ul>
                             </td>
                             <td>
-                                {{.LicitacionNombre}}<br>
-                                <small class="text-muted">{{.NumContratacion}}</small>
+                                Junta: {{ .FechaJunta }}<br>
+                                Propuestas: {{ .FechaPropuestas }}<br>
+                                Fallo: {{ .FechaFallo }}<br>
+                                Entrega: {{ .FechaEntrega }}
                             </td>
-                            <td>{{.EntidadNombre}}</td>
+                            <td>
+                                {{ .EstadoLicitacion }}
+                            </td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <a href="/proyectos/editar/{{.IDProyecto}}" class="btn btn-sm btn-warning">Editar</a>
-                                    <form action="/proyectos/eliminar/{{.IDProyecto}}" method="POST" class="d-inline">
-                                        <input type="hidden" name="_method" value="DELETE">
-                                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                                    </form>
+                                    <a href="/proyectos/editar/{{.IDProyecto}}" class="btn btn-sm btn-warning">Actualizar</a>
                                 </div>
                             </td>                            
                         </tr>

@@ -1,0 +1,144 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-contract me-2"></i>Nueva Licitación</h2>
+        <a href="#" class="btn btn-outline-success">
+            <i class="fas fa-file-excel me-1"></i> IMPORTAR EXCEL
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-info-circle me-1"></i> Información Básica
+        </div>
+        <div class="card-body">
+            <form action="/licitaciones/crear" method="POST" id="form-licitacion">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                
+                <!-- Sección 1: Datos Principales -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="id_entidad" class="form-label">Entidad *</label>
+                        <select class="form-select" id="id_entidad" name="id_entidad" required>
+                            <option value="">-- Seleccione una entidad --</option>
+                            {{range .Entidades}}
+                            <option value="{{.IDEntidad}}">{{.Nombre}} - {{.Tipo}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="nombre" class="form-label">Nombre de la Licitación *</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="num_contratacion" class="form-label">Número de Contratación</label>
+                        <input type="text" class="form-control" id="num_contratacion" name="num_contratacion">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="caracter" class="form-label">Carácter</label>
+                        <input type="text" class="form-control" id="caracter" name="caracter">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="tipo" class="form-label">Tipo *</label>
+                        <select class="form-select" id="tipo" name="tipo" required>
+                            <option value="">-- Seleccione tipo --</option>
+                            {{range .Data.tipos}}
+                            <option value="{{.}}">{{.}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Sección 2: Fechas Importantes -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label for="fecha_junta" class="form-label">Fecha Junta</label>
+                        <input type="date" class="form-control" id="fecha_junta" name="fecha_junta">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fecha_propuestas" class="form-label">Fecha Propuestas</label>
+                        <input type="date" class="form-control" id="fecha_propuestas" name="fecha_propuestas">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fecha_fallo" class="form-label">Fecha Fallo</label>
+                        <input type="date" class="form-control" id="fecha_fallo" name="fecha_fallo">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fecha_entrega" class="form-label">Fecha Entrega</label>
+                        <input type="date" class="form-control" id="fecha_entrega" name="fecha_entrega">
+                    </div>
+                </div>
+
+                <!-- Sección 3: Información Adicional -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="lugar" class="form-label">Lugar</label>
+                        <input type="text" class="form-control" id="lugar" name="lugar">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="tiempo_entrega" class="form-label">Tiempo de Entrega</label>
+                        <input type="text" class="form-control" id="tiempo_entrega" name="tiempo_entrega" placeholder="Ej: 30 días">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="estado" class="form-label">Estado</label>
+                        <input type="text" class="form-control" id="estado" name="estado">
+                    </div>
+                </div>
+
+                <!-- Sección 4: Checkboxes -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="revisada" name="revisada">
+                            <label class="form-check-label" for="revisada">Revisada</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="intevi" name="intevi">
+                            <label class="form-check-label" for="intevi">INTEVI</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div class="mb-3">
+                    <label for="observaciones_generales" class="form-label">Observaciones Generales</label>
+                    <textarea class="form-control" id="observaciones_generales" name="observaciones_generales" rows="3"></textarea>
+                </div>
+
+                <!-- Botón de envío -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Guardar Licitación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "js"}}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validación básica del formulario
+    document.getElementById('form-licitacion').addEventListener('submit', function(e) {
+        const nombre = document.getElementById('nombre').value;
+        const tipo = document.getElementById('tipo').value;
+        const idEntidad = document.getElementById('id_entidad').value;
+        
+        if (!nombre || !tipo || !idEntidad) {
+            e.preventDefault();
+            alert('Por favor complete los campos requeridos');
+            return false;
+        }
+        return true;
+    });
+});
+</script>
+{{end}}

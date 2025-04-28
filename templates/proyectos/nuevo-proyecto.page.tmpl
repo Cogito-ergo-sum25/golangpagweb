@@ -29,7 +29,7 @@
                     <select class="form-select" id="id_licitacion" name="id_licitacion" required>
                         <option value="">-- Seleccione una licitación --</option>
                         {{range .Licitaciones}}
-                        <option value="{{.ID}}">{{.Nombre}} ({{.NumContratacion}})</option>
+                        <option value="{{.IDLicitacion}}">{{.Nombre}} ({{.NumContratacion}})</option>
                         {{end}}
                     </select>
                 </div>

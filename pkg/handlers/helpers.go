@@ -135,6 +135,235 @@ func (m *Repository) ObtenerCertificaciones() ([]models.Certificacion, error) {
 	return certificaciones, nil
 }
 
+// ObtenerTodosProductos devuelve todos los productos
+func (m *Repository) ObtenerTodosProductos() ([]models.Producto, error) {
+    query := `SELECT p.id_producto, p.sku, m.nombre as marca, c.nombre as clasificacion,
+              p.nombre_corto, p.modelo, p.nombre, p.version, p.serie,
+              p.codigo_fabricante, p.descripcion
+              FROM productos p
+              LEFT JOIN marcas m ON p.id_marca = m.id_marca
+              LEFT JOIN clasificaciones c ON p.id_clasificacion = c.id_clasificacion
+              ORDER BY p.id_producto DESC`
+    
+    rows, err := m.App.DB.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var productos []models.Producto
+    for rows.Next() {
+        var p models.Producto
+        err := rows.Scan(
+            &p.IDProducto, &p.SKU, &p.Marca, &p.Clasificacion,
+            &p.NombreCorto, &p.Modelo, &p.Nombre, &p.Version,
+            &p.Serie, &p.CodigoFabricante, &p.Descripcion,
+        )
+        if err != nil {
+            return nil, err
+        }
+        productos = append(productos, p)
+    }
+    return productos, nil
+}
+
+func (m *Repository) ObtenerLicitacionesParaSelect() ([]models.Licitacion, error) {
+    query := `SELECT id_licitacion, nombre, num_contratacion FROM licitaciones ORDER BY id_licitacion DESC`
+    
+    rows, err := m.App.DB.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var licitaciones []models.Licitacion
+    for rows.Next() {
+        var l models.Licitacion
+        err := rows.Scan(&l.IDLicitacion, &l.Nombre, &l.NumContratacion)
+        if err != nil {
+            return nil, err
+        }
+        licitaciones = append(licitaciones, l)
+    }
+    return licitaciones, nil
+}
+
+func (m *Repository) ObtenerProyectosConRelaciones() ([]models.Proyecto, error) {
+    query := `
+        SELECT 
+            p.id_proyecto, p.nombre, p.descripcion, p.fecha_inicio, 
+            COALESCE(p.fecha_fin, CAST('1970-01-01' AS DATE)) AS fecha_fin,
+            p.created_at, p.updated_at,
+            l.id_licitacion, l.nombre as licitacion_nombre, l.num_contratacion,
+            COALESCE(l.lugar, 'indefinido') AS lugar,
+            COALESCE(l.fecha_junta, CAST('1970-01-01' AS DATE)) AS fecha_junta,
+            COALESCE(l.fecha_propuestas, CAST('1970-01-01' AS DATE)) AS fecha_propuestas,
+            COALESCE(l.fecha_fallo, CAST('1970-01-01' AS DATE)) AS fecha_fallo,
+            COALESCE(l.fecha_entrega, CAST('1970-01-01' AS DATE)) AS fecha_entrega,
+            COALESCE(l.estado, 'indefinido') AS estado,
+            e.nombre as entidad_nombre,
+            pp.id_producto, pp.cantidad, pp.precio_unitario, pp.especificaciones,
+            pr.nombre as producto_nombre, pr.sku, pr.imagen_url, pr.modelo
+        FROM 
+            proyectos p
+        LEFT JOIN 
+            licitaciones l ON p.id_licitacion = l.id_licitacion
+        LEFT JOIN 
+            entidades e ON l.id_entidad = e.id_entidad
+        LEFT JOIN 
+            producto_proyecto pp ON p.id_proyecto = pp.id_proyecto
+        LEFT JOIN 
+            productos pr ON pp.id_producto = pr.id_producto
+        ORDER BY 
+            p.id_proyecto, pp.id_producto
+    `
+
+    rows, err := m.App.DB.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var proyectos []models.Proyecto
+    var currentProyectoID int
+    var currentProyecto *models.Proyecto
+
+    for rows.Next() {
+        var p models.Proyecto
+        var pp models.ProductoProyecto
+
+        err := rows.Scan(
+            &p.IDProyecto, &p.Nombre, &p.Descripcion, &p.FechaInicio, &p.FechaFin,
+            &p.CreatedAt, &p.UpdatedAt,
+            &p.IDLicitacion, &p.LicitacionNombre, &p.NumContratacion,
+            &p.Lugar,
+            &p.FechaJunta, &p.FechaPropuestas, &p.FechaFallo, &p.FechaEntrega,
+            &p.EstadoLicitacion,
+            &p.EntidadNombre,
+            &pp.IDProducto, &pp.Cantidad, &pp.PrecioUnitario, &pp.Especificaciones,
+            &pp.ProductoNombre, &pp.SKU, &pp.ImagenURL, &pp.Modelo,
+        )
+        
+        if err != nil {
+            return nil, err
+        }
+
+        if p.IDProyecto != currentProyectoID {
+            if currentProyecto != nil {
+                proyectos = append(proyectos, *currentProyecto)
+            }
+            currentProyectoID = p.IDProyecto
+            currentProyecto = &p
+            currentProyecto.Productos = []models.ProductoProyecto{}
+        }
+
+        if pp.IDProducto != 0 {
+            currentProyecto.Productos = append(currentProyecto.Productos, pp)
+        }
+    }
+
+    if currentProyecto != nil {
+        proyectos = append(proyectos, *currentProyecto)
+    }
+
+    return proyectos, nil
+}
+
+func (m *Repository) ObtenerTodasEntidades() ([]models.Entidad, error) {
+    query := `SELECT id_entidad, nombre, tipo FROM entidades ORDER BY nombre`
+    
+    rows, err := m.App.DB.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var entidades []models.Entidad
+    for rows.Next() {
+        var e models.Entidad
+        err := rows.Scan(&e.IDEntidad, &e.Nombre, &e.Tipo)
+        if err != nil {
+            return nil, err
+        }
+        entidades = append(entidades, e)
+    }
+    return entidades, nil
+}
+
+
+
+
+
+
+
+// AgregarMarca inserta una nueva marca en la base de datos
+func (m *Repository) AgregarMarca(nombre string) error {
+    _, err := m.App.DB.Exec("INSERT INTO marcas (nombre) VALUES (?)", nombre)
+    return err
+}
+
+// AgregarTipoProducto inserta un nuevo tipo de producto en la base de datos
+func (m *Repository) AgregarTipoProducto(nombre string) error {
+    _, err := m.App.DB.Exec("INSERT INTO tipos_producto (nombre) VALUES (?)", nombre)
+    return err
+}
+
+// AgregarClasificacion inserta una nueva clasificación en la base de datos
+func (m *Repository) AgregarClasificacion(nombre string) error {
+    _, err := m.App.DB.Exec("INSERT INTO clasificaciones (nombre) VALUES (?)", nombre)
+    return err
+}
+
+// AgregarPais inserta un nuevo país en la base de datos
+func (m *Repository) AgregarPais(nombre, codigo string) error {
+    _, err := m.App.DB.Exec("INSERT INTO paises (nombre, codigo) VALUES (?, ?)", nombre, codigo)
+    return err
+}
+
+// AgregarCertificacion inserta una nueva certificación en la base de datos
+func (m *Repository) AgregarCertificacion(nombre, organismoEmisor string) error {
+    _, err := m.App.DB.Exec("INSERT INTO certificaciones (nombre, organismo_emisor) VALUES (?, ?)", nombre, organismoEmisor)
+    return err
+}
+
+
+
+
+
+
+
+
+func (m *Repository) EliminarMarca(id string) error {
+    // Ejecutar la consulta SQL para eliminar la marca con el ID especificado
+    _, err := m.App.DB.Exec("DELETE FROM marcas WHERE id_marca = ?", id)
+    return err
+}
+
+func (m *Repository) EliminarTipoProducto(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM tipos_producto WHERE id_tipo = ?", id)
+    return err
+}
+
+func (m *Repository) EliminarClasificacion(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM clasificaciones WHERE id_clasificacion = ?", id)
+    return err
+}
+
+func (m *Repository) EliminarPais(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM paises WHERE id_pais = ?", id)
+    return err
+}
+
+func (m *Repository) EliminarCertificacion(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM certificaciones WHERE id_certificacion = ?", id)
+    return err
+}
+
+
+
+
+
+
 // ExisteID verifica si un ID existe en una tabla específica
 func (m *Repository) ExisteID(tabla string, id int) bool {
     var count int
@@ -177,134 +406,4 @@ func (m *Repository) ExisteID(tabla string, id int) bool {
     }
     return count > 0
 }
-
-func (m *Repository) obtenerProyectosConRelaciones() ([]models.Proyecto, error) {
-    query := `
-        SELECT 
-    p.id_proyecto, p.nombre, p.descripcion, p.fecha_inicio, 
-    COALESCE(p.fecha_fin, CAST('1970-01-01' AS DATE)) AS fecha_fin,
-    p.created_at, p.updated_at,
-    l.id_licitacion, l.nombre as licitacion_nombre, l.num_contratacion,
-    e.nombre as entidad_nombre,
-    pp.id_producto, pp.cantidad, pp.precio_unitario, pp.especificaciones,
-    pr.nombre as producto_nombre, pr.sku, pr.imagen_url, pr.modelo
-FROM 
-    proyectos p
-LEFT JOIN 
-    licitaciones l ON p.id_licitacion = l.id_licitacion
-LEFT JOIN 
-    entidades e ON l.id_entidad = e.id_entidad
-LEFT JOIN 
-    producto_proyecto pp ON p.id_proyecto = pp.id_proyecto
-LEFT JOIN 
-    productos pr ON pp.id_producto = pr.id_producto
-ORDER BY 
-    p.id_proyecto, pp.id_producto
-`
-
-    rows, err := m.App.DB.Query(query)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
-
-    var proyectos []models.Proyecto
-    var currentProyectoID int
-    var currentProyecto *models.Proyecto
-
-    for rows.Next() {
-        var p models.Proyecto
-        var pp models.ProductoProyecto
-
-        err := rows.Scan(
-			&p.IDProyecto, &p.Nombre, &p.Descripcion, &p.FechaInicio, &p.FechaFin, &p.CreatedAt, &p.UpdatedAt,
-			&p.IDLicitacion, &p.LicitacionNombre, &p.NumContratacion,
-			&p.EntidadNombre,
-			&pp.IDProducto, &pp.Cantidad, &pp.PrecioUnitario, &pp.Especificaciones,
-			&pp.ProductoNombre, &pp.SKU, &pp.ImagenURL, &pp.Modelo,
-		)
-		
-        if err != nil {
-            return nil, err
-        }
-
-        if p.IDProyecto != currentProyectoID {
-            if currentProyecto != nil {
-                proyectos = append(proyectos, *currentProyecto)
-            }
-            currentProyectoID = p.IDProyecto
-            currentProyecto = &p
-            currentProyecto.Productos = []models.ProductoProyecto{}
-        }
-
-        if pp.IDProducto != 0 {
-            currentProyecto.Productos = append(currentProyecto.Productos, pp)
-        }
-    }
-
-    if currentProyecto != nil {
-        proyectos = append(proyectos, *currentProyecto)
-    }
-
-    return proyectos, nil
-}
-
-// AgregarMarca inserta una nueva marca en la base de datos
-func (m *Repository) AgregarMarca(nombre string) error {
-    _, err := m.App.DB.Exec("INSERT INTO marcas (nombre) VALUES (?)", nombre)
-    return err
-}
-
-// AgregarTipoProducto inserta un nuevo tipo de producto en la base de datos
-func (m *Repository) AgregarTipoProducto(nombre string) error {
-    _, err := m.App.DB.Exec("INSERT INTO tipos_producto (nombre) VALUES (?)", nombre)
-    return err
-}
-
-// AgregarClasificacion inserta una nueva clasificación en la base de datos
-func (m *Repository) AgregarClasificacion(nombre string) error {
-    _, err := m.App.DB.Exec("INSERT INTO clasificaciones (nombre) VALUES (?)", nombre)
-    return err
-}
-
-// AgregarPais inserta un nuevo país en la base de datos
-func (m *Repository) AgregarPais(nombre, codigo string) error {
-    _, err := m.App.DB.Exec("INSERT INTO paises (nombre, codigo) VALUES (?, ?)", nombre, codigo)
-    return err
-}
-
-// AgregarCertificacion inserta una nueva certificación en la base de datos
-func (m *Repository) AgregarCertificacion(nombre, organismoEmisor string) error {
-    _, err := m.App.DB.Exec("INSERT INTO certificaciones (nombre, organismo_emisor) VALUES (?, ?)", nombre, organismoEmisor)
-    return err
-}
-
-func (m *Repository) EliminarMarca(id string) error {
-    // Ejecutar la consulta SQL para eliminar la marca con el ID especificado
-    _, err := m.App.DB.Exec("DELETE FROM marcas WHERE id_marca = ?", id)
-    return err
-}
-
-func (m *Repository) EliminarTipoProducto(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM tipos_producto WHERE id_tipo = ?", id)
-    return err
-}
-
-func (m *Repository) EliminarClasificacion(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM clasificaciones WHERE id_clasificacion = ?", id)
-    return err
-}
-
-func (m *Repository) EliminarPais(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM paises WHERE id_pais = ?", id)
-    return err
-}
-
-func (m *Repository) EliminarCertificacion(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM certificaciones WHERE id_certificacion = ?", id)
-    return err
-}
-
-
-
 

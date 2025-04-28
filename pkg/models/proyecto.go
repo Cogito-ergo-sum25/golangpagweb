@@ -4,15 +4,21 @@ import "time"
 
 type Proyecto struct {
     IDProyecto    int       `json:"id_proyecto"`
-    IDLicitacion  int       `json:"id_licitacion"`
     Nombre        string    `json:"nombre"`
     Descripcion   string    `json:"descripcion"`
     FechaInicio   time.Time `json:"fecha_inicio"`
 	FechaFin   time.Time 	`json:"fecha_fin"`
     
     // Relaciones para mostrar
+    IDLicitacion  int       `json:"id_licitacion"`
     LicitacionNombre string `json:"licitacion_nombre"`
     NumContratacion  string `json:"num_contratacion"`
+    FechaJunta       time.Time
+    FechaPropuestas  time.Time
+    FechaFallo       time.Time
+    FechaEntrega     time.Time
+    Lugar            string    `json:"lugar"`
+    EstadoLicitacion string
     EntidadNombre    string `json:"entidad_nombre"`
     
     // Productos asociados

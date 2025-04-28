@@ -34,15 +34,14 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Post("/nuevo-proyecto",handlers.Repo.NuevoProyecto)
 
 
+	// LICITACIONES
+	mux.Get("/licitaciones",handlers.Repo.Licitaciones)
+	mux.Get("/nueva-licitacion",handlers.Repo.MostrarNuevaLicitacion)
+	
+
 	// CATALOGO 
 	//mux.Get("/catalogo", handlers.Repo.Catalogo) 
 	//mux.Get("/producto/{id}", handlers.Repo.VerProducto)// Para la vista detallada
-
-
-	// LICITACIONES
-	mux.Get("/licitaciones",handlers.Repo.Licitaciones)
-	
-
 
 
 	// OPCIONES
