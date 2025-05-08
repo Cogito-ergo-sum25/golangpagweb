@@ -1,0 +1,33 @@
+-- Tabla estados_republica
+CREATE TABLE estados_republica (
+  clave_estado CHAR(2) PRIMARY KEY,
+  nombre VARCHAR(50) NOT NULL,
+  
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)
+
+CREATE TABLE compañias (
+  id_compañia INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(50) NOT NULL,
+  tipo VARCHAR(50), 
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)
+
+CREATE TABLE entidades (
+  id_entidad INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(255) NOT NULL,
+  id_compañia INT,
+  estado CHAR(2),
+  municipio VARCHAR(50),
+  codigo_postal VARCHAR(10),
+  direccion TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_compañia) REFERENCES compañias(id_compañia),
+  FOREIGN KEY (estado) REFERENCES estados_republica(clave_estado)
+);
+
+
+

@@ -135,6 +135,64 @@ func (m *Repository) ObtenerCertificaciones() ([]models.Certificacion, error) {
 	return certificaciones, nil
 }
 
+func (m *Repository) ObtenerEstados() ([]models.EstadosRepublica, error) {
+    var estados []models.EstadosRepublica
+    
+    query := `
+        SELECT clave_estado, nombre 
+        FROM estados_republica 
+        ORDER BY nombre
+    `
+    
+    rows, err := m.App.DB.Query(query)
+    if err != nil {
+        log.Println("Error al obtener estados:", err)
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var estado models.EstadosRepublica
+        err := rows.Scan(&estado.ClaveEstado, &estado.NombreEstado)
+        if err != nil {
+            log.Println("Error al escanear estado:", err)
+            continue
+        }
+        estados = append(estados, estado)
+    }
+
+    return estados, nil
+}
+
+func (m *Repository) ObtenerCompañias() ([]models.Compañias, error) {
+    var compañias []models.Compañias
+
+    query := `
+        SELECT id_compañia, nombre, tipo
+        FROM compañias
+        ORDER BY nombre
+    `
+    
+    rows, err := m.App.DB.Query(query)
+    if err != nil {
+        log.Println("Error al obtener compañias:", err)
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var compañia models.Compañias
+        err := rows.Scan(&compañia.IDCompañia, &compañia.Nombre, &compañia.Tipo)
+        if err != nil {
+            log.Println("Error al escanear compañia:", err)
+            continue
+        }
+        compañias = append(compañias, compañia)
+    }
+
+    return compañias, nil
+}
+
 // ObtenerTodosProductos devuelve todos los productos
 func (m *Repository) ObtenerTodosProductos() ([]models.Producto, error) {
     query := `SELECT p.id_producto, p.sku, m.nombre as marca, c.nombre as clasificacion,
@@ -270,10 +328,28 @@ func (m *Repository) ObtenerProyectosConRelaciones() ([]models.Proyecto, error) 
 }
 
 func (m *Repository) ObtenerTodasEntidades() ([]models.Entidad, error) {
-    query := `SELECT id_entidad, nombre, tipo FROM entidades ORDER BY nombre`
+    query := `
+        SELECT 
+            e.id_entidad, 
+            e.nombre, 
+            c.id_compañia,
+            COALESCE(c.nombre, '') AS nombre_compañia,
+            COALESCE(c.tipo, '') AS tipo_compañia,
+            e.estado AS estado_clave,
+            COALESCE(er.nombre, '') AS nombre_estado,
+            COALESCE(e.municipio, '') AS municipio,
+            COALESCE(e.codigo_postal, '') AS codigo_postal,
+            COALESCE(e.direccion, '') AS direccion,
+            e.created_at,
+            e.updated_at
+        FROM entidades e
+        LEFT JOIN estados_republica er ON e.estado = er.clave_estado
+        LEFT JOIN compañias c ON e.id_compañia = c.id_compañia
+        ORDER BY e.nombre
+    `
     
     rows, err := m.App.DB.Query(query)
-    if err != nil {
+    if (err != nil) {
         return nil, err
     }
     defer rows.Close()
@@ -281,7 +357,21 @@ func (m *Repository) ObtenerTodasEntidades() ([]models.Entidad, error) {
     var entidades []models.Entidad
     for rows.Next() {
         var e models.Entidad
-        err := rows.Scan(&e.IDEntidad, &e.Nombre, &e.Tipo)
+        
+        err := rows.Scan(
+            &e.IDEntidad,
+            &e.Nombre,
+            &e.Compañia.IDCompañia,
+            &e.Compañia.Nombre,
+            &e.Compañia.Tipo,
+            &e.Estado.ClaveEstado,
+            &e.Estado.NombreEstado,
+            &e.Municipio,
+            &e.CodigoPostal,
+            &e.Direccion,
+            &e.CreatedAt,
+            &e.UpdatedAt,
+        )        
         if err != nil {
             return nil, err
         }
@@ -326,6 +416,35 @@ func (m *Repository) AgregarCertificacion(nombre, organismoEmisor string) error 
     return err
 }
 
+func (m *Repository) AgregarCompañia(nombre, tipo string) error {
+    _, err := m.App.DB.Exec("INSERT INTO compañias (nombre, tipo) VALUES (?, ?)", nombre, tipo)
+    return err
+}
+
+func (m *Repository) InsertarEntidad(entidad models.Entidad) error {
+    query := `
+        INSERT INTO entidades (
+            nombre, id_compañia, estado, 
+            municipio, codigo_postal, direccion,
+            created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `
+    _, err := m.App.DB.Exec(query,
+        entidad.Nombre,
+        entidad.Compañia.IDCompañia,
+        entidad.Estado.ClaveEstado,
+        entidad.Municipio,
+        entidad.CodigoPostal,
+        entidad.Direccion,
+        entidad.CreatedAt,
+        entidad.UpdatedAt,
+    )
+
+    return err
+}
+
+
+
 
 
 
@@ -358,6 +477,14 @@ func (m *Repository) EliminarCertificacion(id string) error {
     _, err := m.App.DB.Exec("DELETE FROM certificaciones WHERE id_certificacion = ?", id)
     return err
 }
+
+func (m *Repository) EliminarCompañia(id string) error {
+    _, err := m.App.DB.Exec("DELETE FROM compañias WHERE id_compañia = ?", id)
+    return err
+}
+
+
+
 
 
 

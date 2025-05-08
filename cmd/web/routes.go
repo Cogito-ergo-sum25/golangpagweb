@@ -46,13 +46,14 @@ func routes(app *config.AppConfig) http.Handler {
 
 	// OPCIONES
 	mux.Get("/opciones",handlers.Repo.Opciones)
-	mux.Get("/datos-referencia",handlers.Repo.DatosReferencia)
-	mux.Post("/datos-referencia", handlers.Repo.AgregarDato)
-	mux.Post("/eliminar-referencia/{id}", handlers.Repo.EliminarDatoReferencia)   // Elimina un producto (POST)
- 
-	     
-
-
+	// OPCIONES DE DATOS REFERENCIA
+		mux.Get("/datos-referencia",handlers.Repo.DatosReferencia)
+		mux.Post("/datos-referencia", handlers.Repo.AgregarDato)
+		mux.Post("/eliminar-referencia/{id}", handlers.Repo.EliminarDatoReferencia)   // Elimina un producto (POST)
+	// OPCIONES DE ENTIDADES
+		mux.Get("/datos-entidades",handlers.Repo.Entidades)
+		mux.Get("/crear-entidad",handlers.Repo.MostrarNuevaEntidad)
+		mux.Post("/crear-entidad", handlers.Repo.CrearEntidad)
 	    	
 	fileServer := http.FileServer(http.Dir("./static/"))
 	mux.Handle("/static/*",http.StripPrefix("/static",fileServer))

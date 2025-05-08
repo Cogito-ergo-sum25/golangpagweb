@@ -31,11 +31,3 @@ type Licitacion struct {
     CreatedAt      time.Time `json:"created_at"`
     UpdatedAt      time.Time `json:"updated_at"`
 }
-
-type Entidad struct {
-    IDEntidad      int       `json:"id_entidad"`
-    Nombre         string    `json:"nombre"`
-    Tipo           string    `json:"tipo"`
-    CreatedAt      time.Time `json:"created_at"`
-    UpdatedAt      time.Time `json:"updated_at"`
-}

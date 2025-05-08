@@ -29,6 +29,15 @@ type TemplateData struct {
     
     // --- Datos de entidades ---
     Entidades []Entidad
+	Entidad   Entidad
+
+	// --- Datos de estados ---
+    Estados []EstadosRepublica
+	Estado   EstadosRepublica
+
+	// --- Datos de compañias ---
+    Compañias []Compañias
+	Compañia   Compañias
 	
 	// Listas para formularios
 	Marcas          []Marca

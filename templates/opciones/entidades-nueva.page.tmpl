@@ -1,0 +1,88 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container mt-4">
+    <h2>Crear Nueva Entidad</h2>
+    
+    <form action="/crear-entidad" method="POST" class="mt-4">
+        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+        
+        <div class="row g-3">
+            <!-- Campo Nombre -->
+            <div class="col-md-6">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" name="nombre" required>
+            </div>
+            
+            <!-- Campo Tipo -->
+            <div class="col-md-6">
+                <label class="form-label">Tipo</label>
+                <div class="form-control-plaintext" id="tipo-display">Seleccione una compañía</div>
+                <input type="hidden" name="tipo" id="tipo-input">
+            </div>
+            
+            <!-- Dropdown Compañía -->
+            <div class="col-md-6">
+                <label class="form-label">Compañía</label>
+                <select class="form-select" name="id_compañia"  id="compania-select">
+                    {{range .Data.Compañias}}
+                    <option value="{{.IDCompañia}}" data-tipo="{{.Tipo}}">{{.Nombre}}</option>
+                    {{end}}
+                </select>
+            </div>
+            
+            <!-- Dropdown Estado -->
+            <div class="col-md-6">
+                <label class="form-label">Estado</label>
+                <select class="form-select" name="estado" required id="estado-select">
+                    {{range .Data.Estados}}
+                    <option value="{{.ClaveEstado}}">({{.ClaveEstado}}) {{.NombreEstado}}</option>
+                    {{end}}
+                </select>
+            </div>
+            
+            <!-- Campo Municipio -->
+            <div class="col-md-6">
+                <label class="form-label">Municipio/Alcaldía</label>
+                <input type="text" class="form-control" name="municipio">
+            </div>
+            
+            <!-- Campo Código Postal -->
+            <div class="col-md-6">
+                <label class="form-label">Código Postal</label>
+                <input type="text" class="form-control" name="codigo_postal">
+            </div>
+            
+            <!-- Campo Dirección -->
+            <div class="col-12">
+                <label class="form-label">Dirección</label>
+                <textarea class="form-control" name="direccion" rows="2"></textarea>
+            </div>
+            
+            <!-- Botones -->
+            <div class="col-12 mt-4">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="/datos-entidades" class="btn btn-secondary ms-2">Cancelar</a>
+            </div>
+        </div>
+    </form>
+</div>
+{{end}}
+
+
+
+{{define "js"}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const companiaSelect = document.getElementById('compania-select');
+        const tipoInput = document.getElementById('tipo-input');
+        
+        companiaSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            tipoInput.value = selectedOption.getAttribute('data-tipo') || '';
+            
+            // Opcional: Mostrar el tipo en la interfaz (sin ser campo editable)
+            document.getElementById('tipo-display').innerText = tipoInput.value;
+        });
+    });
+    </script>
+{{end}}

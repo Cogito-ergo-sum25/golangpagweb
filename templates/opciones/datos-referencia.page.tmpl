@@ -13,6 +13,8 @@
             <option value="clasificaciones">Clasificaciones</option>
             <option value="paises">Países</option>
             <option value="certificaciones">Certificaciones</option>
+            <option value="compañias">Compañias</option>
+
         </select>
     </div>
 
@@ -150,6 +152,36 @@
             </tbody>
         </table>
     </div>
+
+    <div id="tablaCompañias" class="tabla-container" style="display:none">
+        <h3>Compañias</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Compañias}}
+                    <tr>
+                        <td>{{.Nombre}}</td>
+                        <td>{{.Tipo}}</td>
+                        <td>
+                            <form action="/eliminar-referencia/{{.IDCompañia}}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <input type="hidden" name="tabla" value="compañias">
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+
     <div class="d-flex justify-content-center mt-4">
         <button id="btnNuevo" class="btn btn-success btn-lg">
             <i class="fas fa-plus-circle me-2"></i> Nuevo
@@ -213,6 +245,8 @@
             document.getElementById("tablaPaises").style.display = "block";
         } else if (tablaSeleccionada === "certificaciones") {
             document.getElementById("tablaCertificaciones").style.display = "block";
+        } else if (tablaSeleccionada === "compañias") {
+            document.getElementById("tablaCompañias").style.display = "block";
         }
     }
 
@@ -235,6 +269,8 @@
             document.getElementById("tablaPaises").style.display = "block";
         } else if (tablaSeleccionada === "certificaciones") {
             document.getElementById("tablaCertificaciones").style.display = "block";
+        } else if (tablaSeleccionada === "compañias") {
+            document.getElementById("tablaCompañias").style.display = "block";
         }
     }
 
@@ -264,6 +300,17 @@
             <div class="mb-3">
                 <label class="form-label">Organismo Emisor</label>
                 <input type="text" class="form-control" name="organismo_emisor" required>
+            </div>
+        `;
+    } else if (tabla === "compañias") {
+        contenido = `
+            <div class="mb-3">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" name="nombre" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tipo</label>
+                <input type="text" class="form-control" name="tipo" required>
             </div>
         `;
     } else {

@@ -1,0 +1,26 @@
+
+-- Tabla proyectos (depende de licitaciones)
+CREATE TABLE proyectos (
+  id_proyecto INT AUTO_INCREMENT PRIMARY KEY,
+  id_licitacion INT UNIQUE, -- Unique para relación 1:1
+  nombre VARCHAR(255) NOT NULL,
+  descripcion TEXT,
+  fecha_inicio DATE,
+  fecha_fin DATE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_licitacion) REFERENCES licitaciones(id_licitacion)
+)
+
+-- Tabla producto_proyecto (tabla puente entre productos y proyecto muchos a muchos)
+CREATE TABLE producto_proyecto (
+  id_producto INT NOT NULL,
+  id_proyecto INT NOT NULL,
+  cantidad INT NOT NULL DEFAULT 1,
+  precio_unitario DECIMAL(10,2) NOT NULL,
+  especificaciones TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_producto, id_proyecto),
+  FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE,
+  FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE CASCADE
+)

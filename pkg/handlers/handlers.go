@@ -906,6 +906,10 @@ func (m *Repository) MostrarNuevaLicitacion(w http.ResponseWriter, r *http.Reque
     render.RenderTemplate(w, "licitaciones/nueva-licitacion.page.tmpl", data)
 }
 
+
+
+
+
 // TODO LO DE OPCIONES
 
 func (m *Repository) Opciones(w http.ResponseWriter, r *http.Request) {
@@ -949,12 +953,21 @@ func (m *Repository) DatosReferencia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+    compañias, err := m.ObtenerCompañias()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener certificaciones")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+    
+
 	data := &models.TemplateData{
 		Marcas:          marcas,
 		TiposProducto:   tipos,
 		Clasificaciones: clasificaciones,
 		Paises:          paises,
 		Certificaciones: certificaciones,
+        Compañias: compañias,
 		CSRFToken:       nosurf.Token(r),
 	}
 
@@ -1019,6 +1032,17 @@ func (m *Repository) AgregarDato(w http.ResponseWriter, r *http.Request) {
         }
         err = m.AgregarCertificacion(nombre, organismoEmisor)
 
+    case "compañias":
+        nombre := r.FormValue("nombre")
+        tipo := r.FormValue("tipo")
+        if nombre == "" || tipo == "" {
+            m.App.Session.Put(r.Context(), "error", "El nombre y el tipo son obligatorios")
+            fmt.Println("Error: El nombre y el tipo son obligatorios")
+            http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
+            return
+        }
+        err = m.AgregarCompañia(nombre, tipo)
+
     default:
         m.App.Session.Put(r.Context(), "error", "Tabla no válida")
         fmt.Println("Error: Tabla no válida")
@@ -1056,6 +1080,8 @@ func (m *Repository) EliminarDatoReferencia(w http.ResponseWriter, r *http.Reque
         err = m.EliminarPais(id)
     case "certificaciones":
         err = m.EliminarCertificacion(id)
+    case "compañias":
+        err = m.EliminarCompañia(id)
     default:
         fmt.Println("Error: tabla no válida")
         m.App.Session.Put(r.Context(), "error", "Tabla no válida")
@@ -1073,6 +1099,120 @@ func (m *Repository) EliminarDatoReferencia(w http.ResponseWriter, r *http.Reque
     http.Redirect(w, r, "/datos-referencia", http.StatusSeeOther)
 }
 
+// ENTIDADES
+func (m *Repository) Entidades(w http.ResponseWriter, r *http.Request) {
+    // Obtener todas las entidades con información de estado
+    entidades, err := m.ObtenerTodasEntidades()
+    if err != nil {
+        log.Println("Error al obtener entidades:", err)
+        http.Error(w, "Error interno del servidor", http.StatusInternalServerError)
+        return
+    }
 
+    // Obtener lista de estados para filtros (opcional)
+    estados, err := m.ObtenerEstados()
+    if err != nil {
+        log.Println("Error al obtener estados:", err)
+        // No es crítico, podemos continuar
+    }
 
+    data := &models.TemplateData{
+        Data: map[string]interface{}{
+            "Entidades": entidades,
+            "Estados":   estados,
+            
+        },
+        CSRFToken:       nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "opciones/entidades-opciones.page.tmpl", data)
+}
+
+func (m *Repository) MostrarNuevaEntidad(w http.ResponseWriter, r *http.Request) {
+    estados, err := m.ObtenerEstados()
+    if err != nil {
+        log.Println("Error al obtener estados:", err)
+        // Manejar error según necesites
+    }
+
+    compañias, err := m.ObtenerCompañias()
+    if err != nil {
+        log.Println("Error al obtener compañías:", err)
+    }
+
+    data := &models.TemplateData{
+        Data: map[string]interface{}{
+            "Estados":   estados,
+            "Compañias": compañias,
+        },
+        CSRFToken:       nosurf.Token(r),
+    }
+	render.RenderTemplate(w, "opciones/entidades-nueva.page.tmpl", data)
+}
+
+func (m *Repository) CrearEntidad(w http.ResponseWriter, r *http.Request) {
+    if err := r.ParseForm(); err != nil {
+        fmt.Printf("ERROR ParseForm: %v\n", err)
+        log.Println("Error al parsear formulario:", err)
+        m.App.Session.Put(r.Context(), "error", "Datos inválidos")
+        http.Redirect(w, r, "/crear-entidad", http.StatusSeeOther)
+        return
+    }
+    // Validar campos requeridos
+    required := map[string]string{
+        "nombre":      "Nombre",
+        "tipo":        "Tipo",
+        "id_compañia": "Compañía",
+        "estado":      "Estado",
+    }
+    
+    for field, name := range required {
+        val := r.Form.Get(field)
+        if val == "" {
+            fmt.Printf("FALTA Campo requerido: %s\n", name)
+            m.App.Session.Put(r.Context(), "error", name+" es requerido")
+            http.Redirect(w, r, "/crear-entidad", http.StatusSeeOther)
+            return
+        }
+    }
+
+    // Convertir id_compañia
+    idCompañiaStr := r.Form.Get("id_compañia")    
+    idCompañia, err := strconv.Atoi(idCompañiaStr)
+    if err != nil {
+        fmt.Printf("ERROR Conversión id_compañia: %v\n", err)
+        m.App.Session.Put(r.Context(), "error", "ID de compañía inválido")
+        http.Redirect(w, r, "/crear-entidad", http.StatusSeeOther)
+        return
+    }
+    // Validar estado
+    estado := r.Form.Get("estado")
+    if len(estado) != 2 {
+        fmt.Println("ERROR: Longitud de estado incorrecta")
+        m.App.Session.Put(r.Context(), "error", "El estado debe tener 2 caracteres (ej: '09')")
+        http.Redirect(w, r, "/crear-entidad", http.StatusSeeOther)
+        return
+    }
+    // Construir estructura
+    entidad := models.Entidad{
+        Nombre:       r.Form.Get("nombre"),
+        Compañia:     models.Compañias{IDCompañia: idCompañia},
+        Estado:       models.EstadosRepublica{ClaveEstado: estado},
+        Municipio:    r.Form.Get("municipio"),
+        CodigoPostal: r.Form.Get("codigo_postal"),
+        Direccion:    r.Form.Get("direccion"),
+        CreatedAt:    time.Now(),
+        UpdatedAt:    time.Now(),
+    }
+    // Insertar en BD
+    if err := m.InsertarEntidad(entidad); err != nil {
+        fmt.Printf("ERROR InsertarEntidad: %v\n", err)
+        log.Println("Error al guardar entidad:", err)
+        m.App.Session.Put(r.Context(), "error", "Error al guardar. ¿La compañía existe? Detalle: "+err.Error())
+        http.Redirect(w, r, "/crear-entidad", http.StatusSeeOther)
+        return
+    }
+    m.App.Session.Put(r.Context(), "flash", "¡Entidad creada exitosamente!")
+    http.Redirect(w, r, "/datos-entidades", http.StatusSeeOther)
+}
 

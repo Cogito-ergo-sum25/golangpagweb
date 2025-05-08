@@ -1,0 +1,37 @@
+{{template "base" .}}
+
+{{define "content"}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Listado de Entidades</h2>
+        <a name="" id="" class="btn btn-primary mt-3 btn-outline-success verde" href="/crear-entidad" role="button">
+            Nueva Entidad
+        </a>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Compañía</th>
+                <th>Ubicación</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Data.Entidades}}
+            <tr>
+                <td>{{.Nombre}}</td>
+                <td>{{.Compañia.Tipo}}</td>
+                <td>{{.Compañia.Nombre}}</td>
+                <td>{{.Estado.NombreEstado}},{{.Municipio}} ({{.Estado.ClaveEstado}})</td>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron entidades</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}

@@ -38,6 +38,15 @@ CREATE TABLE certificaciones (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Tabla producto_certificaciones (tabla puente)
+CREATE TABLE producto_certificaciones (
+  id_producto INT NOT NULL,
+  id_certificacion INT NOT NULL,
+  PRIMARY KEY (id_producto, id_certificacion),
+  FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
+  FOREIGN KEY (id_certificacion) REFERENCES certificaciones(id_certificacion)
+);
+
 -- Tabla productos
 CREATE TABLE productos (
   id_producto INT AUTO_INCREMENT PRIMARY KEY,
@@ -66,11 +75,3 @@ CREATE TABLE productos (
   FOREIGN KEY (id_pais_origen) REFERENCES paises(id_pais)
 );
 
--- Tabla producto_certificaciones (tabla puente)
-CREATE TABLE producto_certificaciones (
-  id_producto INT NOT NULL,
-  id_certificacion INT NOT NULL,
-  PRIMARY KEY (id_producto, id_certificacion),
-  FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
-  FOREIGN KEY (id_certificacion) REFERENCES certificaciones(id_certificacion)
-);

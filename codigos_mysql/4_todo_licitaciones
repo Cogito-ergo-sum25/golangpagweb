@@ -1,0 +1,22 @@
+-- Tabla licitaciones (depende de entidades)
+CREATE TABLE licitaciones (
+  id_licitacion INT AUTO_INCREMENT PRIMARY KEY,
+  id_entidad INT NOT NULL,
+  num_contratacion VARCHAR(255),
+  caracter VARCHAR(255),
+  nombre VARCHAR(255) NOT NULL,
+  estatus VARCHAR(100),
+  tipo VARCHAR(100),
+  fecha_junta DATE,
+  fecha_propuestas DATE,
+  fecha_fallo DATE,
+  fecha_entrega DATE,
+  tiempo_entrega VARCHAR(255),
+  revisada TINYINT(1) DEFAULT 0,
+  intevi TINYINT(1) DEFAULT 0,
+  estado VARCHAR(100),
+  observaciones_generales TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_entidad) REFERENCES entidades(id_entidad)
+)
