@@ -78,3 +78,217 @@ body {
     color: #88ab3e;
     font-weight: 600;
 }
+
+.btn.amarillo {
+    background-color: #ffc107 !important;  /* Amarillo Bootstrap */
+    color: #000 !important;               /* Texto negro */
+    border-color: #ffc107 !important;
+}
+
+.btn.amarillo:hover {
+    background-color: #e0a800 !important;  /* Amarillo más oscuro al hover */
+    color: #000 !important;
+    border-color: #e0a800 !important;
+}
+
+/* ===== BOTÓN AZUL (MODO CLARO) ===== */
+.btn.azul {
+    background-color: #0d6efd !important;  /* Azul Bootstrap */
+    color: #fff !important;               /* Texto blanco */
+    border-color: #0d6efd !important;
+}
+
+.btn.azul:hover {
+    background-color: #0b5ed7 !important;  /* Azul más oscuro al hover */
+    color: #fff !important;
+    border-color: #0a58ca !important;
+}
+
+
+
+
+
+
+
+
+
+
+/* ===== Modo Oscuro ===== */
+body.dark-mode {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+/* Navbar y Header */
+.dark-mode .navbar-light,
+.dark-mode .bg-light {
+    background-color: #222 !important;
+    border-color: #333 !important;
+}
+
+.dark-mode .verde-header {
+    background-color: #6a8a2d !important; /* Verde más oscuro */
+    color: white !important;
+}
+
+/* Cards y Tablas */
+.dark-mode .card,
+.dark-mode .list-group-item,
+.dark-mode .table {
+    background-color: #2d2d2d !important;
+    color: #f0f0f0 !important;
+    border-color: #444 !important;
+}
+
+.dark-mode .card-header.azul {
+    background-color: #2a6a8a !important; /* Azul más oscuro */
+}
+
+
+/* Botones */
+.dark-mode .btn-outline-success.verde {
+    border-color: #88ab3e;
+    color:white;
+}
+
+.dark-mode .btn-outline-success.verde:hover {
+    background-color: #88ab3e;
+    color: white;
+}
+
+/* Textos y enlaces */
+.dark-mode a,
+.dark-mode .highlight-text {
+    color: #a5d363 !important; /* Verde claro para contrastar */
+}
+
+.dark-mode .text-black {
+    color: #e0e0e0 !important;
+}
+
+/* Botón "Inicio" en el navbar (modo oscuro) */
+.dark-mode .navbar-brand.verde {
+    background-color: #6a8a2d !important; /* Verde oscuro */
+    color: white !important;
+}
+
+.dark-mode .navbar-brand.verde:hover {
+    background-color: #5a7a25 !important; /* Verde más oscuro al hover */
+}
+
+/* Botones con clase .verde (modo oscuro) */
+.dark-mode .btn.verde {
+    background-color: transparent !important;
+    border-color: #88ab3e !important;
+    color: #88ab3e !important;
+}
+
+.dark-mode .btn.verde:hover {
+    background-color: #88ab3e !important;
+    color: white !important;
+}
+
+/* ===== Botón ROJO en modo oscuro ===== */
+.dark-mode .btn.rojo {
+    background-color: transparent !important;
+    border-color: #ff2d00 !important;  /* Borde rojo */
+    color: #ff2d00 !important;         /* Texto rojo */
+}
+
+.dark-mode .btn.rojo:hover {
+    background-color: #ff2d00 !important;  /* Fondo rojo al hover */
+    color: white !important;               /* Texto blanco al hover */
+}
+
+/* ===== BOTÓN AMARILLO (MODO OSCURO) ===== */
+.dark-mode .btn.amarillo {
+    background-color: transparent !important;
+    border-color: #ffc107 !important;     /* Borde amarillo */
+    color: #ffc107 !important;            /* Texto amarillo */
+}
+
+.dark-mode .btn.amarillo:hover {
+    background-color: #ffc107 !important;  /* Fondo amarillo al hover */
+    color: #000 !important;               /* Texto negro al hover */
+}
+
+/* ===== BOTÓN AZUL (MODO OSCURO) ===== */
+.dark-mode .btn.azul {
+    background-color: transparent !important;
+    border-color: #0d6efd !important;     /* Borde azul */
+    color: #0d6efd !important;            /* Texto azul */
+}
+
+.dark-mode .btn.azul:hover {
+    background-color: #0d6efd !important;  /* Fondo azul al hover */
+    color: #fff !important;               /* Texto blanco al hover */
+}
+
+
+/* ===== Modo Oscuro - Tablas ===== */
+/* ===== SOLUCIÓN PARA HOVER EN MODO OSCURO ===== */
+.dark-mode table.table-hover tbody tr:hover td,
+.dark-mode table.table-hover tbody tr:hover th {
+    background-color: #2d2d2d !important; /* Igual que el fondo base */
+    color: #ffffff !important; /* Texto blanco */
+    --bs-table-accent-bg: #2d2d2d !important; /* Anula Bootstrap 5 */
+}
+
+/* ===== BOTONES OUTLINE EN MODO OSCURO (TEXTO BLANCO) ===== */
+.dark-mode .btn-outline-success,
+.dark-mode .btn-outline-primary,
+.dark-mode .btn-outline-warning,
+.dark-mode .btn-outline-danger,
+.dark-mode .btn-outline-info,
+.dark-mode .btn-outline-secondary {
+    color: white !important; /* Fuerza texto blanco */
+}
+
+/* ===== MODAL EN MODO OSCURO ===== */
+.dark-mode .modal-content {
+    background-color: #2d2d2d !important;
+    color: #f8f9fa !important;
+    border-color: #444 !important;
+}
+
+.dark-mode .modal-header {
+    border-bottom-color: #444 !important;
+}
+
+.dark-mode .modal-footer {
+    border-top-color: #444 !important;
+}
+
+.dark-mode .modal-title {
+    color: #f8f9fa !important;
+}
+
+.dark-mode .btn-close {
+    filter: invert(1) brightness(2) !important; /* Invierte el color de la X */
+}
+
+/* Opcional: Ajustar inputs dentro del modal */
+.dark-mode .modal-body .form-control {
+    background-color: #3a3a3a !important;
+    color: #f8f9fa !important;
+    border-color: #555 !important;
+}
+
+.dark-mode .modal-body .form-control:focus {
+    background-color: #3a3a3a;
+    color: #f8f9fa;
+}
+
+dark-mode footer {
+    background-color: #2d2d2d !important;
+    border-color: #444 !important;
+    color: #e0e0e0;
+  }
+  
+  .dark-mode footer a {
+    color: #a5d363 !important;
+  }
+  
+  .dark-mode footer h5 {
+    color: #f8f9fa !important;
+  }

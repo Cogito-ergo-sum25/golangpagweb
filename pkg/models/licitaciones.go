@@ -11,7 +11,7 @@ type Licitacion struct {
     Estatus          string    `json:"estatus"`
     Tipo             string    `json:"tipo"`
     Lugar            string    `json:"lugar"`
-    FechaJunta       time.Time `json:"fecha_junta"`
+    FechaJunta       time.Time `json:"fecha_junta"` 
     FechaPropuestas  time.Time `json:"fecha_propuestas"`
     FechaFallo       time.Time `json:"fecha_fallo"`
     FechaEntrega     time.Time `json:"fecha_entrega"`
@@ -24,6 +24,10 @@ type Licitacion struct {
     // Datos entidad para mostrar
     EntidadNombre    string    `json:"entidad_nombre"`
     EntidadTipo      string    `json:"entidad_tipo"`
+    EntidadMunicipio string
+    EstadoNombre     string
+    CompaniaTipo     string
+
 
     // Relación con proyecto (1:1)
     Proyecto         *Proyecto `json:"proyecto,omitempty"`

@@ -9,7 +9,41 @@
         </a>
     </div>
 
-    <div class="card shadow">
-    </div>
+    <div class="card-body">
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Entidad</th>
+                <th>Número de Contratación</th>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Estatus</th>
+                <th>Fechas</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Licitaciones}}
+            <tr>
+                <td>{{.EntidadNombre}}</td>
+                <td>{{.NumContratacion}}</td>
+                <td>{{.Nombre}}</td>
+                <td>{{.Tipo}}</td>
+                <td>{{.Estatus}}</td>
+                <td>{{.FechaEntrega.Format "2006-01-02"}}</td>
+                <td>
+                    <a href="/editar-licitacion/{{.IDLicitacion}}" class="btn btn-sm amarillo">Editar</a>   
+                    <a href="/editar-licitacion/{{.IDLicitacion}}" class="btn btn-sm azul">Partidas</a>
+                </td>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="8" class="text-center">No hay licitaciones registradas.</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+
 </div>
 {{end}}

@@ -5,8 +5,8 @@
         <h2>Inventario de Productos</h2>
         <a name="" id="" class="btn btn-primary mt-3 btn-outline-success verde" href="/crear-producto" role="button">Agregar Producto</a>
     </div>
-    <table class="table table-striped">
-        <thead>
+    <table class="table table-hover">
+        <thead class="table-dark">
             <tr>
                 <th>SKU</th>
                 <th>Marca</th>
@@ -25,10 +25,10 @@
                 <td>{{.Version}}</td>
                 <td>{{.Nombre}}</td>
                 <td>
-                    <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm btn-warning">Editar</a>
+                    <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm amarillo py-1 px-2">Editar</a>
                     <form action="/eliminar/{{.IDProducto}}" method="POST" class="d-inline">
                         <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                        <button type="submit" class="btn btn-sm rojo py-1 px-2">Eliminar</button>
                     </form>
                 </td>
             </tr>

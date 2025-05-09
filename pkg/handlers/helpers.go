@@ -2,20 +2,12 @@ package handlers
 
 import (
 	"log"
+	"time"
+
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/models"
 )
 
 // FUNCIONES EXTRA DEL RENDER
-
-// Función helper para verificar certificaciones seleccionadas
-func isCertSelected(certID int, productCerts []models.Certificacion) bool {
-	for _, pc := range productCerts {
-		if pc.IDCertificacion == certID {
-			return true
-		}
-	}
-	return false
-}
 
 // ObtenerMarcas devuelve todas las marcas para los selects
 func (m *Repository) ObtenerMarcas() ([]models.Marca, error) {
@@ -380,6 +372,76 @@ func (m *Repository) ObtenerTodasEntidades() ([]models.Entidad, error) {
     return entidades, nil
 }
 
+func (m *Repository) ObtenerTodasLicitaciones() ([]models.Licitacion, error) {
+	query := `
+        SELECT 
+            l.id_licitacion, l.id_entidad,
+            l.num_contratacion, l.caracter, l.nombre, l.estatus, l.tipo,
+            l.fecha_junta, l.fecha_propuestas, l.fecha_fallo, l.fecha_entrega,
+            l.tiempo_entrega, l.revisada, l.intevi, l.estado,
+            l.observaciones_generales,
+            e.nombre AS entidad_nombre,
+            COALESCE(e.municipio, '-') AS municipio,
+            er.nombre AS estado_nombre,
+            c.tipo AS compania_tipo,
+            l.created_at, l.updated_at
+        FROM licitaciones l
+        LEFT JOIN entidades e ON l.id_entidad = e.id_entidad
+        LEFT JOIN estados_republica er ON e.estado = er.clave_estado
+        LEFT JOIN compañias c ON e.id_compañia = c.id_compañia
+        ORDER BY l.id_licitacion DESC;
+    `
+
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		log.Println("Error ejecutando la consulta de licitaciones:", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var licitaciones []models.Licitacion
+	for rows.Next() {
+		var l models.Licitacion
+		err := rows.Scan(
+			&l.IDLicitacion,
+			&l.IDEntidad,
+			&l.NumContratacion,
+			&l.Caracter,
+			&l.Nombre,
+			&l.Estatus,
+			&l.Tipo,
+			&l.FechaJunta,
+			&l.FechaPropuestas,
+			&l.FechaFallo,
+			&l.FechaEntrega,
+			&l.TiempoEntrega,
+			&l.Revisada,
+			&l.Intevi,
+			&l.Estado,
+			&l.ObservacionesGenerales,
+			&l.EntidadNombre,
+			&l.EntidadMunicipio,
+			&l.EstadoNombre,
+			&l.CompaniaTipo,
+			&l.CreatedAt,
+			&l.UpdatedAt,
+		)
+		if err != nil {
+			log.Println("Error escaneando fila de licitación:", err)
+			return nil, err
+		}
+		licitaciones = append(licitaciones, l)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Println("Error al iterar rows:", err)
+		return nil, err
+	}
+
+	return licitaciones, nil
+}
+
+
 
 
 
@@ -443,6 +505,37 @@ func (m *Repository) InsertarEntidad(entidad models.Entidad) error {
     return err
 }
 
+func (m *Repository) InsertarLicitacion(licitacion models.Licitacion) error {
+	query := `
+        INSERT INTO licitaciones (
+            id_entidad, num_contratacion, caracter, nombre,
+            estatus, tipo, fecha_junta, fecha_propuestas,
+            fecha_fallo, fecha_entrega, tiempo_entrega,
+            revisada, intevi, estado, observaciones_generales,
+            created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `
+	_, err := m.App.DB.Exec(query,
+		licitacion.IDEntidad,
+		licitacion.NumContratacion,
+		licitacion.Caracter,
+		licitacion.Nombre,
+		licitacion.Estatus,
+		licitacion.Tipo,
+		licitacion.FechaJunta,
+		licitacion.FechaPropuestas,
+		licitacion.FechaFallo,
+		licitacion.FechaEntrega,
+		licitacion.TiempoEntrega,
+		licitacion.Revisada,
+		licitacion.Intevi,
+		licitacion.Estado,
+		licitacion.ObservacionesGenerales,
+		licitacion.CreatedAt,
+		licitacion.UpdatedAt,
+	)
+	return err
+}
 
 
 
@@ -534,3 +627,17 @@ func (m *Repository) ExisteID(tabla string, id int) bool {
     return count > 0
 }
 
+// Función helper para verificar certificaciones seleccionadas
+func isCertSelected(certID int, productCerts []models.Certificacion) bool {
+	for _, pc := range productCerts {
+		if pc.IDCertificacion == certID {
+			return true
+		}
+	}
+	return false
+}
+
+func parseDate(value string) time.Time {
+	t, _ := time.Parse("2006-01-02", value)
+	return t
+}

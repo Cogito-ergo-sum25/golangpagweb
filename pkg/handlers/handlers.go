@@ -485,16 +485,16 @@ func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {
 
 // TODO LO DE PROYECTOS
 func (m *Repository) ProyectosVista(w http.ResponseWriter, r *http.Request) {
-	proyectos, err := m.ObtenerProyectosConRelaciones()
+	/*proyectos, err := m.ObtenerProyectosConRelaciones()
 	if err != nil {
 		m.App.Session.Put(r.Context(), "error", "Error al obtener proyectos: "+err.Error())
 		log.Println("Error al obtener proyectos:", err)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
-	}
+	}*/
 
 	data := &models.TemplateData{
-		Proyectos: proyectos,
+		//Proyectos: proyectos,
 		CSRFToken: nosurf.Token(r),
 	}
 
@@ -884,8 +884,20 @@ func (m *Repository) VerProducto(w http.ResponseWriter, r *http.Request) {
 
 // TODO LO DE LICITACIONES
 func (m *Repository) Licitaciones(w http.ResponseWriter, r *http.Request) {
-	render.RenderTemplate(w, "licitaciones/licitaciones.page.tmpl", &models.TemplateData{})
+    licitaciones, err := m.ObtenerTodasLicitaciones()
+    if err != nil {
+        http.Error(w, "No se pudieron obtener las licitaciones", http.StatusInternalServerError)
+        return
+    }
+
+    data := &models.TemplateData{
+        Licitaciones: licitaciones,
+        CSRFToken:  nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/licitaciones.page.tmpl", data)
 }
+
 
 func (m *Repository) MostrarNuevaLicitacion(w http.ResponseWriter, r *http.Request) {
     // Obtener todas las entidades para el select
@@ -904,6 +916,56 @@ func (m *Repository) MostrarNuevaLicitacion(w http.ResponseWriter, r *http.Reque
         },
     }
     render.RenderTemplate(w, "licitaciones/nueva-licitacion.page.tmpl", data)
+}
+
+func (m *Repository) CrearNuevaLicitacion(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/licitaciones/nueva", http.StatusSeeOther)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "No se pudo procesar el formulario", http.StatusBadRequest)
+		return
+	}
+
+    idEntidad, err := strconv.Atoi(r.FormValue("id_entidad"))
+    if err != nil {
+        http.Error(w, "ID de entidad inválido", http.StatusBadRequest)
+        return
+    }
+
+	// Parsear campos del formulario
+	licitacion := models.Licitacion{
+		IDEntidad:            idEntidad,
+		NumContratacion:      r.FormValue("num_contratacion"),
+		Caracter:             r.FormValue("caracter"),
+		Nombre:               r.FormValue("nombre"),
+		Estatus:              r.FormValue("estatus"),
+		Tipo:                 r.FormValue("tipo"),
+		FechaJunta:           parseDate(r.FormValue("fecha_junta")),
+		FechaPropuestas:      parseDate(r.FormValue("fecha_propuestas")),
+		FechaFallo:           parseDate(r.FormValue("fecha_fallo")),
+		FechaEntrega:         parseDate(r.FormValue("fecha_entrega")),
+		TiempoEntrega:        r.FormValue("tiempo_entrega"),
+		Revisada:             r.FormValue("revisada") == "on",
+		Intevi:               r.FormValue("intevi") == "on",
+		Estado:               r.FormValue("estado"),
+		ObservacionesGenerales: r.FormValue("observaciones_generales"),
+		CreatedAt:            time.Now(),
+		UpdatedAt:            time.Now(),
+	}
+
+	// Insertar en la base de datos
+	err = m.InsertarLicitacion(licitacion)
+	if err != nil {
+		http.Error(w, "Error al insertar la licitación", http.StatusInternalServerError)
+		return
+	}
+
+	// Redirigir o mostrar mensaje de éxito
+	http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
 }
 
 

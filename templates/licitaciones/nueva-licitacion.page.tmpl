@@ -9,11 +9,11 @@
     </div>
 
     <div class="card shadow">
-        <div class="card-header bg-primary text-white">
-            <i class="fas fa-info-circle me-1"></i> Información Básica
+        <div class="card-header bg-primary text-white card-header azul">
+            <i class="fas fa-info-circle me-1 "></i> Información Básica
         </div>
         <div class="card-body">
-            <form action="/licitaciones/crear" method="POST" id="form-licitacion">
+            <form action="/nueva-licitacion" method="POST" id="form-licitacion">
                 <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                 
                 <!-- Sección 1: Datos Principales -->
@@ -23,9 +23,13 @@
                         <select class="form-select" id="id_entidad" name="id_entidad" required>
                             <option value="">-- Seleccione una entidad --</option>
                             {{range .Entidades}}
-                            <option value="{{.IDEntidad}}">{{.Nombre}} - {{.Tipo}}</option>
+                            <option value="{{.IDEntidad}}" 
+                                    data-estado="{{.Estado.NombreEstado}}"
+                                    data-municipio="{{.Municipio}}">
+                                {{.Nombre}} - {{.Compañia.Nombre}}
+                            </option>
                             {{end}}
-                        </select>
+                         </select>
                     </div>
                     <div class="col-md-6">
                         <label for="nombre" class="form-label">Nombre de la Licitación *</label>
@@ -76,18 +80,19 @@
                 <!-- Sección 3: Información Adicional -->
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="lugar" class="form-label">Lugar</label>
-                        <input type="text" class="form-control" id="lugar" name="lugar">
+                        <label for="estado" class="form-label">Estado</label>
+                        <input type="text" class="form-control" id="estado" name="estado" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="municipio" class="form-label">Municipio/Alcaldía</label>
+                        <input type="text" class="form-control" id="municipio" name="municipio" readonly>
                     </div>
                     <div class="col-md-4">
                         <label for="tiempo_entrega" class="form-label">Tiempo de Entrega</label>
                         <input type="text" class="form-control" id="tiempo_entrega" name="tiempo_entrega" placeholder="Ej: 30 días">
                     </div>
-                    <div class="col-md-4">
-                        <label for="estado" class="form-label">Estado</label>
-                        <input type="text" class="form-control" id="estado" name="estado">
-                    </div>
                 </div>
+
 
                 <!-- Sección 4: Checkboxes -->
                 <div class="row mb-3">
@@ -113,7 +118,7 @@
 
                 <!-- Botón de envío -->
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-secondary verde">
                         <i class="fas fa-save me-1"></i> Guardar Licitación
                     </button>
                 </div>
@@ -126,19 +131,38 @@
 {{define "js"}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Validación básica del formulario
-    document.getElementById('form-licitacion').addEventListener('submit', function(e) {
-        const nombre = document.getElementById('nombre').value;
-        const tipo = document.getElementById('tipo').value;
-        const idEntidad = document.getElementById('id_entidad').value;
-        
-        if (!nombre || !tipo || !idEntidad) {
-            e.preventDefault();
-            alert('Por favor complete los campos requeridos');
-            return false;
-        }
-        return true;
-    });
+    const selectEntidad = document.getElementById('id_entidad');
+    const inputEstado = document.getElementById('estado');
+    const inputMunicipio = document.getElementById('municipio');
+
+    function actualizarUbicacion() {
+        const selectedOption = selectEntidad.options[selectEntidad.selectedIndex];
+        const estado = selectedOption.getAttribute('data-estado');
+        const municipio = selectedOption.getAttribute('data-municipio');
+
+        inputEstado.value = estado || '';  // Muestra estado si está definido
+        inputMunicipio.value = municipio ? municipio : 'No especificado';  // Muestra mensaje si falta
+    }
+
+    if (selectEntidad) {
+        selectEntidad.addEventListener('change', actualizarUbicacion);
+        actualizarUbicacion(); // ejecutar una vez al cargar
+    }
+
+    const form = document.getElementById('form-licitacion');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const nombre = document.getElementById('nombre').value;
+            const tipo = document.getElementById('tipo').value;
+            const idEntidad = selectEntidad.value;
+
+            if (!nombre || !tipo || !idEntidad) {
+                e.preventDefault();
+                alert('Por favor complete los campos requeridos');
+            }
+        });
+    }
 });
+
 </script>
 {{end}}

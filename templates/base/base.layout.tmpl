@@ -1,72 +1,120 @@
 {{define "base"}}
-    <!doctype html>
-    <html lang="es_MX">
-    <head>
-         <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <title>Intevi</title>
-        {{block "css" .}}
+  <!doctype html>
+  <html lang="es_MX">
+  <head>
+        <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  <title>Intevi</title>
+      {{block "css" .}}
 
-        {{end}}
+      {{end}}
 
-    </head>
-    <body>
-        
-    <!-- HEADER -->
-    <header class="container-fluid bg-success d-flex justify-content-center verde-header" style="--bs-bg-opacity: .5;">
-        <p class="text-black mb-0 p-2 fs-4"> INTEVI </p>
-    </header>
+  </head>
+  <body>
+      
+  <!-- HEADER -->
+  <header class="container-fluid bg-success d-flex justify-content-center verde-header" style="--bs-bg-opacity: .5;">
+      <p class="text-black mb-0 p-2 fs-4"> INTEVI </p>
+  </header>
 
-    <!-- NAVBAR  -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-          <a class="navbar-brand verde" href="/" >Inicio</a>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-          <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-              <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/inventario">Inventario</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/proyectos-vista">Proyectos</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/licitaciones">Licitaciones</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link active" href="/catalogo">Catalogo</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/opciones">Opciones</a>
-              </li>
-            </ul>
-            <form class="d-flex">
-              <input class="form-control me-2 border border-dark" type="search" placeholder="Buscar" aria-label="Buscar">
-              <button class="btn btn-outline-success verde" type="submit">
-                Buscar
-              </button>
-            </form>
-          </div>
+  <!-- NAVBAR  -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <a class="navbar-brand verde" href="/" >Inicio</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/inventario">Inventario</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/proyectos-vista">Proyectos</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/licitaciones">Licitaciones</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="/catalogo">Catalogo</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/opciones">Opciones</a>
+            </li>
+          </ul>
+          <form class="d-flex">
+            <input class="form-control me-2 border border-dark" type="search" placeholder="Buscar" aria-label="Buscar">
+            <button class="btn btn-outline-success verde" type="submit">
+              Buscar
+            </button>
+            <button id="darkModeToggle" class="btn btn-dark ms-2">🌙</button>
+          </form>
         </div>
-    </nav>
-    {{block "content" .}}
+      </div>
+  </nav>
+  {{block "content" .}}
 
-    {{end}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+  {{end}}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+  <script>
+    document.getElementById('darkModeToggle').addEventListener('click', function() {
+        document.body.classList.toggle('dark-mode');
+        const isDarkMode = document.body.classList.contains('dark-mode');
+        this.textContent = isDarkMode ? '☀️' : '🌙';
+        this.classList.toggle('btn-light', isDarkMode);
+        this.classList.toggle('btn-dark', !isDarkMode);
+        localStorage.setItem('darkMode', isDarkMode);
+    });
 
+    // Cargar preferencia al inicio
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('darkModeToggle').textContent = '☀️';
+        document.getElementById('darkModeToggle').classList.replace('btn-dark', 'btn-light');
+    }
+  </script>
 
-    {{block "js" .}}
-    
-    {{end}}
-    <footer>
-      <p>Autor: Jose Valencia</p>
-    </footer> 
-    </body>
-    </html>
+  {{block "js" .}}
+  
+  {{end}}
+  <footer class="mt-5 py-4 bg-light border-top">
+  <div class="container">
+    <div class="row">
+      <!-- Columna 1: Información básica -->
+      <div class="col-md-4 mb-4 mb-md-0">
+        <h5 class="fw-bold mb-3">INTEVI</h5>
+        <p class="mb-2">Sistema de gestión de inventario y proyectos</p>
+        <p class="mb-0">2025</p>
+      </div>
+
+      <!-- Columna 2: Contacto -->
+      <div class="col-md-4 mb-4 mb-md-0">
+        <h5 class="fw-bold mb-3">Contacto</h5>
+        <ul class="list-unstyled">
+          <li class="mb-2">
+            <i class="fas fa-envelope me-2"></i> contacto@intevi.com.mx
+          </li>
+          <li class="mb-2">
+            <i class="fas fa-phone me-2"></i> +52 55 1234 5678
+          </li>
+          <li>
+            <i class="fas fa-map-marker-alt me-2"></i> Ciudad de México
+          </li>
+        </ul>
+      </div>
+
+      <!-- Columna 3: Autor y enlaces -->
+      <div class="col-md-4">
+        <h5 class="fw-bold mb-3">Desarrollado por</h5>
+        <p class="mb-2">Jose Valencia</p>
+      </div>
+    </div>
+  </div>
+</footer> 
+  </body>
+  </html>
 {{end}}
