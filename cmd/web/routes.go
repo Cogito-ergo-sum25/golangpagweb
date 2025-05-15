@@ -38,6 +38,10 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/licitaciones",handlers.Repo.Licitaciones)
 	mux.Get("/nueva-licitacion",handlers.Repo.MostrarNuevaLicitacion)
 	mux.Post("/nueva-licitacion",handlers.Repo.CrearNuevaLicitacion)
+	mux.Get("/editar-licitacion/{id}", handlers.Repo.MostrarFormularioEditarLicitacion)
+	mux.Post("/editar-licitacion/{id}", handlers.Repo.EditarLicitacion)
+	mux.Get("/nueva-partida",handlers.Repo.MostrarNuevaPartida)
+	mux.Post("/nueva-partida",handlers.Repo.CrearNuevaPartida)
 	
 
 	// CATALOGO 

@@ -18,8 +18,10 @@ type Licitacion struct {
     TiempoEntrega    string    `json:"tiempo_entrega"`
     Revisada         bool      `json:"revisada"`
     Intevi           bool      `json:"intevi"`
-    Estado           string    `json:"estado"`
+    CriterioEvaluacion     string `json:"criterio_evaluacion"`
     ObservacionesGenerales string `json:"observaciones_generales"`
+    
+    
 
     // Datos entidad para mostrar
     EntidadNombre    string    `json:"entidad_nombre"`

@@ -1,0 +1,31 @@
+-- Tabla partidas
+CREATE TABLE partidas (
+  id_partida INT AUTO_INCREMENT PRIMARY KEY,
+  numero_partida_convocatoria integer,
+  nombre_descripcion varchar(255),
+  cantidad integer,
+  cantidad_minima integer,
+  cantidad_maxima integer,
+  no_ficha_tecnica varchar(255),
+  tipo_de_bien varchar(255),
+  clave_compendio varchar(255),
+  clave_cucop varchar(255),
+  unidad_medida varchar(255),
+  días_de_entrega varchar(255),
+  fecha_de_entrega date,
+  garantia integer,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) 
+
+-- Tabla licitacion_partidas (relación entre licitaciones y partidas)
+CREATE TABLE licitacion_partidas (
+  id_licitacion_partida INT AUTO_INCREMENT PRIMARY KEY,
+  id_licitacion INT NOT NULL,
+  id_partida INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_licitacion) REFERENCES licitaciones(id_licitacion) ON DELETE CASCADE,
+  FOREIGN KEY (id_partida) REFERENCES partidas(id_partida) ON DELETE CASCADE,
+  UNIQUE KEY (id_licitacion, id_partida)
+) 

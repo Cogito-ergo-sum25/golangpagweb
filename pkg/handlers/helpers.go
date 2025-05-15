@@ -3,11 +3,34 @@ package handlers
 import (
 	"log"
 	"time"
-
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/models"
 )
 
 // FUNCIONES EXTRA DEL RENDER
+
+//ACTUALIZADORES
+
+func (m *Repository) ActualizarLicitacion(l models.Licitacion) error {
+	query := `
+		UPDATE licitaciones SET 
+			id_entidad=?, num_contratacion=?, caracter=?, nombre=?, estatus=?, tipo=?, 
+			fecha_junta=?, fecha_propuestas=?, fecha_fallo=?, fecha_entrega=?, 
+			tiempo_entrega=?, revisada=?, intevi=?, observaciones_generales=?, 
+			updated_at=?, criterio_evaluacion=?
+		WHERE id_licitacion=?`
+	
+	_, err := m.App.DB.Exec(query,
+		l.IDEntidad, l.NumContratacion, l.Caracter, l.Nombre, l.Estatus, l.Tipo,
+		l.FechaJunta, l.FechaPropuestas, l.FechaFallo, l.FechaEntrega,
+		l.TiempoEntrega, l.Revisada, l.Intevi, l.ObservacionesGenerales,
+		l.UpdatedAt, l.CriterioEvaluacion, l.IDLicitacion)
+
+	return err
+}
+
+
+
+// GETTERS
 
 // ObtenerMarcas devuelve todas las marcas para los selects
 func (m *Repository) ObtenerMarcas() ([]models.Marca, error) {
@@ -378,13 +401,13 @@ func (m *Repository) ObtenerTodasLicitaciones() ([]models.Licitacion, error) {
             l.id_licitacion, l.id_entidad,
             l.num_contratacion, l.caracter, l.nombre, l.estatus, l.tipo,
             l.fecha_junta, l.fecha_propuestas, l.fecha_fallo, l.fecha_entrega,
-            l.tiempo_entrega, l.revisada, l.intevi, l.estado,
+            l.tiempo_entrega, l.revisada, l.intevi,
             l.observaciones_generales,
             e.nombre AS entidad_nombre,
             COALESCE(e.municipio, '-') AS municipio,
             er.nombre AS estado_nombre,
             c.tipo AS compania_tipo,
-            l.created_at, l.updated_at
+            l.created_at, l.updated_at,criterio_evaluacion
         FROM licitaciones l
         LEFT JOIN entidades e ON l.id_entidad = e.id_entidad
         LEFT JOIN estados_republica er ON e.estado = er.clave_estado
@@ -417,7 +440,6 @@ func (m *Repository) ObtenerTodasLicitaciones() ([]models.Licitacion, error) {
 			&l.TiempoEntrega,
 			&l.Revisada,
 			&l.Intevi,
-			&l.Estado,
 			&l.ObservacionesGenerales,
 			&l.EntidadNombre,
 			&l.EntidadMunicipio,
@@ -425,6 +447,7 @@ func (m *Repository) ObtenerTodasLicitaciones() ([]models.Licitacion, error) {
 			&l.CompaniaTipo,
 			&l.CreatedAt,
 			&l.UpdatedAt,
+            &l.CriterioEvaluacion,
 		)
 		if err != nil {
 			log.Println("Error escaneando fila de licitación:", err)
@@ -441,12 +464,67 @@ func (m *Repository) ObtenerTodasLicitaciones() ([]models.Licitacion, error) {
 	return licitaciones, nil
 }
 
+func (m *Repository) ObtenerLicitacionPorID(id int) (models.Licitacion, error) {
+	var l models.Licitacion
+
+	query := `
+        SELECT 
+            l.id_licitacion, l.id_entidad,
+            l.num_contratacion, l.caracter, l.nombre, l.estatus, l.tipo,
+            l.fecha_junta, l.fecha_propuestas, l.fecha_fallo, l.fecha_entrega,
+            l.tiempo_entrega, l.revisada, l.intevi,
+            l.observaciones_generales,
+            e.nombre AS entidad_nombre,
+            COALESCE(e.municipio, '-') AS municipio,
+            er.nombre AS estado_nombre,
+            c.tipo AS compania_tipo,
+            l.created_at, l.updated_at, l.criterio_evaluacion
+        FROM licitaciones l
+        LEFT JOIN entidades e ON l.id_entidad = e.id_entidad
+        LEFT JOIN estados_republica er ON e.estado = er.clave_estado
+        LEFT JOIN compañias c ON e.id_compañia = c.id_compañia
+        WHERE l.id_licitacion = ?
+        LIMIT 1
+    `
+
+	row := m.App.DB.QueryRow(query, id)
+
+	err := row.Scan(
+		&l.IDLicitacion,
+		&l.IDEntidad,
+		&l.NumContratacion,
+		&l.Caracter,
+		&l.Nombre,
+		&l.Estatus,
+		&l.Tipo,
+		&l.FechaJunta,
+		&l.FechaPropuestas,
+		&l.FechaFallo,
+		&l.FechaEntrega,
+		&l.TiempoEntrega,
+		&l.Revisada,
+		&l.Intevi,
+		&l.ObservacionesGenerales,
+		&l.EntidadNombre,
+		&l.EntidadMunicipio,
+		&l.EstadoNombre,
+		&l.CompaniaTipo,
+		&l.CreatedAt,
+		&l.UpdatedAt,
+		&l.CriterioEvaluacion,
+	)
+
+	return l, err
+}
 
 
 
 
 
 
+
+
+// SETTERS 
 
 // AgregarMarca inserta una nueva marca en la base de datos
 func (m *Repository) AgregarMarca(nombre string) error {
@@ -506,15 +584,14 @@ func (m *Repository) InsertarEntidad(entidad models.Entidad) error {
 }
 
 func (m *Repository) InsertarLicitacion(licitacion models.Licitacion) error {
-	query := `
-        INSERT INTO licitaciones (
-            id_entidad, num_contratacion, caracter, nombre,
-            estatus, tipo, fecha_junta, fecha_propuestas,
-            fecha_fallo, fecha_entrega, tiempo_entrega,
-            revisada, intevi, estado, observaciones_generales,
-            created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
+	query := 
+    `INSERT INTO licitaciones (
+        id_entidad, num_contratacion, caracter, nombre,
+        estatus, tipo, fecha_junta, fecha_propuestas,
+        fecha_fallo, fecha_entrega, tiempo_entrega,
+        revisada, intevi, observaciones_generales,
+        created_at, updated_at, criterio_evaluacion
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err := m.App.DB.Exec(query,
 		licitacion.IDEntidad,
 		licitacion.NumContratacion,
@@ -529,21 +606,63 @@ func (m *Repository) InsertarLicitacion(licitacion models.Licitacion) error {
 		licitacion.TiempoEntrega,
 		licitacion.Revisada,
 		licitacion.Intevi,
-		licitacion.Estado,
 		licitacion.ObservacionesGenerales,
 		licitacion.CreatedAt,
 		licitacion.UpdatedAt,
+        licitacion.CriterioEvaluacion,
 	)
 	return err
+}
+
+func (m *Repository) InsertarPartida(p models.Partida) (int, error) {
+    query := `
+        INSERT INTO partidas (
+            numero_partida_convocatoria, nombre_descripcion, cantidad, cantidad_minima,
+            cantidad_maxima, no_ficha_tecnica, tipo_de_bien, clave_compendio,
+            clave_cucop, unidad_medida, dias_de_entrega, fecha_de_entrega,
+            garantia, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+    `
+
+    result, err := m.App.DB.Exec(
+        query,
+        p.NumPartidaConvocatoria,
+        p.NombreDescripcion,
+        p.Cantidad,
+        p.CantidadMinima,
+        p.CantidadMaxima,
+        p.NoFichaTecnica,
+        p.TipoDeBien,
+        p.ClaveCompendio,
+        p.ClaveCucop,
+        p.UnidadMedida,
+        p.DiasDeEntrega,
+        p.FechaDeEntrega,
+        p.Garantia,
+    )
+    if err != nil {
+        return 0, err
+    }
+
+    id, err := result.LastInsertId()
+    return int(id), err
+}
+
+func (m *Repository) InsertarLicitacionPartida(idLicitacion, idPartida int) error {
+    query := `
+        INSERT INTO licitacion_partidas (
+            id_licitacion, id_partida, created_at, updated_at
+        ) VALUES (?, ?, NOW(), NOW());
+    `
+    _, err :=  m.App.DB.Exec(query, idLicitacion, idPartida)
+    return err
 }
 
 
 
 
 
-
-
-
+//BORRADORES
 
 func (m *Repository) EliminarMarca(id string) error {
     // Ejecutar la consulta SQL para eliminar la marca con el ID especificado
@@ -582,7 +701,7 @@ func (m *Repository) EliminarCompañia(id string) error {
 
 
 
-
+//FUNCIONES AUXILIARES
 
 // ExisteID verifica si un ID existe en una tabla específica
 func (m *Repository) ExisteID(tabla string, id int) bool {

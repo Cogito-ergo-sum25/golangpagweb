@@ -1,0 +1,122 @@
+{{template "base" .}}
+
+{{define "content"}}
+<div class="container mt-4">
+
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-contract me-2"></i> Nueva Partida</h2>
+    </div>
+
+    <!-- Formulario principal -->
+    <form method="POST" action="/nueva-partida" class="needs-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        
+        <!-- Sección de Información Básica -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-primary text-white card-header azul">
+            <i class="fas fa-info-circle me-1"></i> Información Básica
+        </div>
+        
+        <div class="card-body">
+            <!-- Primera fila -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="id_licitacion" class="form-label">Licitación *</label>
+                    <select class="form-select" id="id_licitacion" name="id_licitacion" required>
+                        <option value="">-- Seleccione una licitación --</option>
+                        {{range .Licitaciones}}
+                        <option value="{{.IDLicitacion}}">
+                            {{.Nombre}} - {{.NumContratacion}}
+                        </option>
+                        {{end}}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label for="numero_partida_convocatoria" class="form-label">Número Partida*</label>
+                    <input type="number" class="form-control" id="numero_partida_convocatoria" name="numero_partida_convocatoria" required>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="nombre_descripcion" class="form-label">Nombre / Descripcion *</label>
+                    <input type="text" class="form-control" id="nombre_descripcion" name="nombre_descripcion" required>
+                </div>
+            </div>
+
+            <!-- Segunda fila -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="clave_compendio" class="form-label">Clave Compendio</label>
+                    <input type="text" class="form-control" id="clave_compendio" name="clave_compendio" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="clave_cucop" class="form-label">Clave CUCoP</label>
+                    <input type="text" class="form-control" id="clave_cucop" name="clave_cucop" required>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="unidad_medida" class="form-label">Unidad Medida</label>
+                    <input type="text" class="form-control" id="unidad_medida" name="unidad_medida" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="tipo_de_bien" class="form-label">Tipo de Bien</label>
+                    <input type="text" class="form-control" id="tipo_de_bien" name="tipo_de_bien" required>
+                </div>
+            </div>
+
+            <!-- Tercera fila -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="cantidad" class="form-label">Cantidad</label>
+                    <input type="number" class="form-control" id="cantidad" name="cantidad" required>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="cantidad_minima" class="form-label">Cantidad Mínima</label>
+                    <input type="number" class="form-control" id="cantidad_minima" name="cantidad_minima" required>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="cantidad_maxima" class="form-label">Cantidad Máxima</label>
+                    <input type="number" class="form-control" id="cantidad_maxima" name="cantidad_maxima" required>
+                </div>
+            </div>
+
+            <!-- Quinta fila -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label for="no_ficha_tecnica" class="form-label">No. Ficha Técnica</label>
+                    <input type="text" class="form-control" id="no_ficha_tecnica" name="no_ficha_tecnica" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="garantia" class="form-label">Garantía (días)</label>
+                    <input type="number" class="form-control" id="garantia" name="garantia" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="dias_de_entrega" class="form-label">Días de Entrega</label>
+                    <input type="text" class="form-control" id="dias_de_entrega" name="dias_de_entrega" required>
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="fecha_de_entrega" class="form-label">Fecha de Entrega</label>
+                    <input type="date" class="form-control" id="fecha_de_entrega" name="fecha_de_entrega" required>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+        <!-- Botón de envío -->
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-secondary verde">
+                <i class="fas fa-save me-1"></i> Crear
+            </button>
+        </div>
+    </form>
+</div>
+{{end}}

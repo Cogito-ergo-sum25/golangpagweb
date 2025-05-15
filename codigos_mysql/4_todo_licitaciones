@@ -18,5 +18,6 @@ CREATE TABLE licitaciones (
   observaciones_generales TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  criterio_evaluacion VARCHAR(100),
   FOREIGN KEY (id_entidad) REFERENCES entidades(id_entidad)
 )

@@ -898,7 +898,6 @@ func (m *Repository) Licitaciones(w http.ResponseWriter, r *http.Request) {
     render.RenderTemplate(w, "licitaciones/licitaciones.page.tmpl", data)
 }
 
-
 func (m *Repository) MostrarNuevaLicitacion(w http.ResponseWriter, r *http.Request) {
     // Obtener todas las entidades para el select
     entidades, err := m.ObtenerTodasEntidades()
@@ -913,6 +912,10 @@ func (m *Repository) MostrarNuevaLicitacion(w http.ResponseWriter, r *http.Reque
         CSRFToken:  nosurf.Token(r),
         Data: map[string]interface{}{
             "tipos": []string{"Directa", "Apoyo", "Estudio de mercado", "Adjudicación directa", "Producto no adecuado", "No solicitan productos INTEVI"},
+            "caracter": []string{"Internacional - Cobertura Tratados", "Nacional", "Internacional Abierto"},
+            "criterio": []string{"Mixta", "Binario", "Puntos y porcentajes"},
+            "estatus": []string{"Vigente", "En aclaraciones"},
+            
         },
     }
     render.RenderTemplate(w, "licitaciones/nueva-licitacion.page.tmpl", data)
@@ -951,15 +954,15 @@ func (m *Repository) CrearNuevaLicitacion(w http.ResponseWriter, r *http.Request
 		TiempoEntrega:        r.FormValue("tiempo_entrega"),
 		Revisada:             r.FormValue("revisada") == "on",
 		Intevi:               r.FormValue("intevi") == "on",
-		Estado:               r.FormValue("estado"),
 		ObservacionesGenerales: r.FormValue("observaciones_generales"),
 		CreatedAt:            time.Now(),
 		UpdatedAt:            time.Now(),
+        CriterioEvaluacion: r.FormValue("criterio_evaluacion"),
 	}
-
 	// Insertar en la base de datos
 	err = m.InsertarLicitacion(licitacion)
 	if err != nil {
+        fmt.Println("ERROR:", err) 
 		http.Error(w, "Error al insertar la licitación", http.StatusInternalServerError)
 		return
 	}
@@ -967,6 +970,212 @@ func (m *Repository) CrearNuevaLicitacion(w http.ResponseWriter, r *http.Request
 	// Redirigir o mostrar mensaje de éxito
 	http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
 }
+
+func (m *Repository) MostrarFormularioEditarLicitacion(w http.ResponseWriter, r *http.Request) {
+    idStr := chi.URLParam(r, "id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.NotFound(w, r)
+        return
+    }
+
+    licitacion, err := m.ObtenerLicitacionPorID(id)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No se pudo obtener la licitación: "+err.Error())
+        http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
+        return
+    }
+
+    entidades, err := m.ObtenerTodasEntidades()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo entidades: "+err.Error())
+        http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
+        return
+    }
+
+    data := &models.TemplateData{
+        Licitacion: licitacion,
+        Entidades:  entidades,
+        CSRFToken:  nosurf.Token(r),
+        Data: map[string]interface{}{
+            "tipos": []string{"Directa", "Apoyo", "Estudio de mercado", "Adjudicación directa", "Producto no adecuado", "No solicitan productos INTEVI"},
+            "caracter": []string{"Internacional - Cobertura Tratados", "Nacional", "Internacional Abierto"},
+            "criterio": []string{"Mixta", "Binario", "Puntos y porcentajes"},
+            "estatus": []string{"Vigente", "En aclaraciones"},
+        },
+    }
+
+    render.RenderTemplate(w, "licitaciones/editar-licitacion.page.tmpl", data)
+}
+
+func (m *Repository) EditarLicitacion(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
+        return
+    }
+
+    idStr := chi.URLParam(r, "id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    err = r.ParseForm()
+    if err != nil {
+        http.Error(w, "Formulario inválido", http.StatusBadRequest)
+        return
+    }
+
+    idEntidad, err := strconv.Atoi(r.FormValue("id_entidad"))
+    if err != nil {
+        http.Error(w, "ID de entidad inválido", http.StatusBadRequest)
+        return
+    }
+
+    licitacion := models.Licitacion{
+        IDLicitacion:         id,
+        IDEntidad:            idEntidad,
+        NumContratacion:      r.FormValue("num_contratacion"),
+        Caracter:             r.FormValue("caracter"),
+        Nombre:               r.FormValue("nombre"),
+        Estatus:              r.FormValue("estatus"),
+        Tipo:                 r.FormValue("tipo"),
+        FechaJunta:           parseDate(r.FormValue("fecha_junta")),
+        FechaPropuestas:      parseDate(r.FormValue("fecha_propuestas")),
+        FechaFallo:           parseDate(r.FormValue("fecha_fallo")),
+        FechaEntrega:         parseDate(r.FormValue("fecha_entrega")),
+        TiempoEntrega:        r.FormValue("tiempo_entrega"),
+        Revisada:             r.FormValue("revisada") == "on",
+        Intevi:               r.FormValue("intevi") == "on",
+        ObservacionesGenerales: r.FormValue("observaciones_generales"),
+        UpdatedAt:            time.Now(),
+        CriterioEvaluacion: r.FormValue("criterio_evaluacion"),
+
+    }
+    err = m.ActualizarLicitacion(licitacion)
+    if err != nil {
+        fmt.Println("ERROR:", err) 
+        http.Error(w, "Error al actualizar la licitación", http.StatusInternalServerError)
+        return
+    }
+
+    http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
+}
+
+
+func (m *Repository) MostrarNuevaPartida(w http.ResponseWriter, r *http.Request) {
+    licitaciones, err := m.ObtenerTodasLicitaciones()
+    if err != nil {
+        http.Error(w, "No se pudieron obtener las licitaciones", http.StatusInternalServerError)
+        return
+    }
+
+    productos, err := m.ObtenerTodosProductos()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    data := &models.TemplateData{
+        Productos:    productos,
+        Licitaciones: licitaciones,
+        CSRFToken:  nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/nueva-partida.page.tmpl", data)
+}
+
+func (m *Repository) CrearNuevaPartida(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+        return
+    }
+
+    if err := r.ParseForm(); err != nil {
+        http.Error(w, "Error al procesar el formulario", http.StatusBadRequest)
+        return
+    }
+
+    // Validaciones y conversiones seguras
+    idLicitacion, err := strconv.Atoi(r.FormValue("id_licitacion"))
+    if err != nil {
+        http.Error(w, "ID de licitación inválido", http.StatusBadRequest)
+        return
+    }
+
+    numeroPartida, err := strconv.Atoi(r.FormValue("numero_partida_convocatoria"))
+    if err != nil {
+        http.Error(w, "Número de partida inválido", http.StatusBadRequest)
+        return
+    }
+
+    cantidad, err := strconv.Atoi(r.FormValue("cantidad"))
+    if err != nil {
+        http.Error(w, "Cantidad inválida", http.StatusBadRequest)
+        return
+    }
+
+    cantidadMinima, err := strconv.Atoi(r.FormValue("cantidad_minima"))
+    if err != nil {
+        http.Error(w, "Cantidad mínima inválida", http.StatusBadRequest)
+        return
+    }
+
+    cantidadMaxima, err := strconv.Atoi(r.FormValue("cantidad_maxima"))
+    if err != nil {
+        http.Error(w, "Cantidad máxima inválida", http.StatusBadRequest)
+        return
+    }
+
+    garantia, err := strconv.Atoi(r.FormValue("garantia"))
+    if err != nil {
+        http.Error(w, "Garantía inválida", http.StatusBadRequest)
+        return
+    }
+
+    fechaEntrega, err := time.Parse("2006-01-02", r.FormValue("fecha_de_entrega"))
+    if err != nil {
+        http.Error(w, "Fecha de entrega inválida", http.StatusBadRequest)
+        return
+    }
+
+    // Construcción del modelo
+    partida := models.Partida{
+        NumPartidaConvocatoria: numeroPartida,
+        NombreDescripcion:      r.FormValue("nombre_descripcion"),
+        Cantidad:               cantidad,
+        CantidadMinima:         cantidadMinima,
+        CantidadMaxima:         cantidadMaxima,
+        NoFichaTecnica:         r.FormValue("no_ficha_tecnica"),
+        TipoDeBien:             r.FormValue("tipo_de_bien"),
+        ClaveCompendio:         r.FormValue("clave_compendio"),
+        ClaveCucop:             r.FormValue("clave_cucop"),
+        UnidadMedida:           r.FormValue("unidad_medida"),
+        DiasDeEntrega:          r.FormValue("dias_de_entrega"),
+        FechaDeEntrega:         fechaEntrega,
+        Garantia:               garantia,
+    }
+
+    // Insertar partida
+    idPartida, err := m.InsertarPartida(partida)
+    if err != nil {
+        fmt.Println("ERROR INSERTANDO PARTIDA:", err) // <--- AÑADE ESTO
+        http.Error(w, "Error al insertar partida", http.StatusInternalServerError)
+        return
+    }
+
+    // Insertar relación con licitación
+    err = m.InsertarLicitacionPartida(idLicitacion, idPartida)
+    if err != nil {
+        http.Error(w, "Error al vincular partida con licitación", http.StatusInternalServerError)
+        return
+    }
+
+    http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
+}
+
 
 
 

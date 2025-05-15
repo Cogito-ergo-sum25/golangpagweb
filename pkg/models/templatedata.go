@@ -38,6 +38,10 @@ type TemplateData struct {
 	// --- Datos de compañias ---
     Compañias []Compañias
 	Compañia   Compañias
+
+	// --- Datos de partidas ---
+    Partidas []Partida
+    Partida   Partida
 	
 	// Listas para formularios
 	Marcas          []Marca

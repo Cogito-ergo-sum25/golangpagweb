@@ -1,43 +1,42 @@
 {{template "base" .}}
 {{define "content"}}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-file-contract me-2"></i>Nueva Licitación</h2>
-        <a href="#" class="btn btn-outline-success">
-            <i class="fas fa-file-excel me-1"></i> IMPORTAR EXCEL
-        </a>
-    </div>
-
+    <h1>Editar Licitación</h1>
     <div class="card shadow">
         <div class="card-header bg-primary text-white card-header azul">
             <i class="fas fa-info-circle me-1 "></i> Información Básica
         </div>
         <div class="card-body">
-            <form action="/nueva-licitacion" method="POST" id="form-licitacion">
+            <form action="/editar-licitacion/{{.Licitacion.IDLicitacion}}" method="POST">
                 <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+               <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                 
                 <!-- Sección 1: Datos Principales -->
                 <div class="row mb-3">
                     <div class="col-md-5">
-                        <label for="id_entidad" class="form-label">Unidad Compradora *</label>
+                        <label for="id_entidad" class="form-label">Unidad Compradora</label>
                         <select class="form-select" id="id_entidad" name="id_entidad" required>
-                            <option value="">-- Seleccione una entidad --</option>
-                            {{range .Entidades}}
-                            <option value="{{.IDEntidad}}" 
-                                    data-estado="{{.Estado.NombreEstado}}"
-                                    data-municipio="{{.Municipio}}">
-                                {{.Nombre}} - {{.Compañia.Nombre}}
-                            </option>
+                            {{if not .Entidades}}
+                                <option value="">No hay entidades disponibles</option>
+                            {{else}}
+                                {{range .Entidades}}
+                                    <option value="{{.IDEntidad}}" 
+                                        data-estado="{{.Estado.NombreEstado}}" 
+                                        data-municipio="{{.Municipio}}"
+                                        {{if eq .IDEntidad $.Licitacion.IDEntidad}}selected{{end}}>
+                                        {{.Nombre}}
+                                    </option>
+                                {{end}}
                             {{end}}
-                         </select>
+                        </select>
                     </div>
                     <div class="col-md-3">
                         <label for="nombre" class="form-label">Nombre de la Licitación *</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                        <input type="text" class="form-control" id="nombre" name="nombre" value="{{.Licitacion.Nombre}}"required>
                     </div>
-                    <div class="col-md-4">
-                        <label for="num_contratacion" class="form-label">Número de Contratación *</label>
-                        <input type="text" class="form-control" id="num_contratacion" name="num_contratacion" required>
+                     <div class="col-md-4">
+                        <label for="num_contratacion" class="form-label">Número de Contratación</label>
+                        <input type="text" class="form-control" id="num_contratacion" name="num_contratacion" value="{{.Licitacion.NumContratacion}}" required>
                     </div>
                 </div>
 
@@ -45,9 +44,8 @@
                     <div class="col-md-3">
                         <label for="estatus" class="form-label">Estatus *</label>
                         <select class="form-select" id="estatus" name="estatus" required>
-                            <option value="">-- Seleccione estatus --</option>
                             {{range .Data.estatus}}
-                            <option value="{{.}}">{{.}}</option>
+                            <option value="{{.}}" {{if eq . $.Licitacion.Estatus}}selected{{end}}>{{.}}</option>
                             {{end}}
                         </select>
                     </div>
@@ -55,27 +53,24 @@
                     <div class="col-md-3">
                         <label for="caracter" class="form-label">Carácter *</label>
                         <select class="form-select" id="caracter" name="caracter" required>
-                            <option value="">-- Seleccione carácter --</option>
                             {{range .Data.caracter}}
-                            <option value="{{.}}">{{.}}</option>
+                            <option value="{{.}}" {{if eq . $.Licitacion.Caracter}}selected{{end}}>{{.}}</option>
                             {{end}}
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label for="tipo" class="form-label">Tipo *</label>
+                        <label for="tipo" class="form-label">Tipo</label>
                         <select class="form-select" id="tipo" name="tipo" required>
-                            <option value="">-- Seleccione tipo --</option>
                             {{range .Data.tipos}}
-                            <option value="{{.}}">{{.}}</option>
+                            <option value="{{.}}" {{if eq . $.Licitacion.Tipo}}selected{{end}}>{{.}}</option>
                             {{end}}
                         </select>
                     </div>
                     <div class="col-md-3">
                         <label for="criterio_evaluacion" class="form-label">Criterio de evaluación *</label>
                         <select class="form-select" id="criterio_evaluacion" name="criterio_evaluacion" required>
-                            <option value="">-- Seleccione criterio de evaluación --</option>
                             {{range .Data.criterio}}
-                            <option value="{{.}}">{{.}}</option>
+                                <option value="{{.}}" {{if eq . $.Licitacion.CriterioEvaluacion}}selected{{end}}>{{.}}</option>
                             {{end}}
                         </select>
                     </div>
@@ -85,19 +80,19 @@
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="fecha_junta" class="form-label">Fecha Junta</label>
-                        <input type="date" class="form-control" id="fecha_junta" name="fecha_junta">
+                        <input type="date" class="form-control" id="fecha_junta" name="fecha_junta" value="{{.Licitacion.FechaJunta.Format "2006-01-02"}}">
                     </div>
                     <div class="col-md-3">
                         <label for="fecha_propuestas" class="form-label">Fecha Propuestas</label>
-                        <input type="date" class="form-control" id="fecha_propuestas" name="fecha_propuestas">
+                        <input type="date" class="form-control" id="fecha_propuestas" name="fecha_propuestas" value="{{.Licitacion.FechaPropuestas.Format "2006-01-02"}}">
                     </div>
                     <div class="col-md-3">
                         <label for="fecha_fallo" class="form-label">Fecha Fallo</label>
-                        <input type="date" class="form-control" id="fecha_fallo" name="fecha_fallo">
+                        <input type="date" class="form-control" id="fecha_fallo" name="fecha_fallo" value="{{.Licitacion.FechaFallo.Format "2006-01-02"}}">
                     </div>
                     <div class="col-md-3">
                         <label for="fecha_entrega" class="form-label">Fecha Entrega</label>
-                        <input type="date" class="form-control" id="fecha_entrega" name="fecha_entrega">
+                        <input type="date" class="form-control" id="fecha_entrega" name="fecha_entrega" value="{{.Licitacion.FechaEntrega.Format "2006-01-02"}}">
                     </div>
                 </div>
 
@@ -113,7 +108,7 @@
                     </div>
                     <div class="col-md-4">
                         <label for="tiempo_entrega" class="form-label">Tiempo de Entrega</label>
-                        <input type="text" class="form-control" id="tiempo_entrega" name="tiempo_entrega" placeholder="Ej: 30 días">
+                        <input type="text" class="form-control" id="tiempo_entrega" name="tiempo_entrega" value="{{.Licitacion.TiempoEntrega}}">
                     </div>
                 </div>
 
@@ -122,30 +117,29 @@
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="revisada" name="revisada">
+                            <input class="form-check-input" type="checkbox" id="revisada" name="revisada" {{if .Licitacion.Revisada}}checked{{end}}>
                             <label class="form-check-label" for="revisada">Revisada</label>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="intevi" name="intevi">
-                            <label class="form-check-label" for="intevi">INTEVI</label>
+                            <input class="form-check-input" type="checkbox" id="intevi" name="intevi" {{if .Licitacion.Intevi}}checked{{end}}>
+                            <label class="form-check-label" for="intevi">Intevi</label>
                         </div>
                     </div>
                 </div>
 
                 <!-- Observaciones -->
                 <div class="mb-3">
-                    <label for="observaciones_generales" class="form-label">Observaciones Generales</label>
-                    <textarea class="form-control" id="observaciones_generales" name="observaciones_generales" rows="3"></textarea>
-                </div>
+                    <label for="observaciones_generales" class="form-label">Observaciones</label>
+                    <textarea class="form-control" id="observaciones_generales" name="observaciones_generales" rows="3">{{.Licitacion.ObservacionesGenerales}}</textarea>
+                </div>      
 
                 <!-- Botón de envío -->
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <button type="submit" class="btn btn-secondary verde">
-                        <i class="fas fa-save me-1"></i> Guardar Licitación
-                    </button>
-                </div>
+                            <button type="submit" class="btn btn-primary azul">Guardar Cambios</button>
+                            <a href="/licitaciones" class="btn btn-secondary rojo">Cancelar</a>
+                </div>       
             </form>
         </div>
     </div>
@@ -187,6 +181,5 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
 </script>
 {{end}}
