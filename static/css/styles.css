@@ -104,6 +104,32 @@ body {
     border-color: #0a58ca !important;
 }
 
+/* ===== Tablas por tipo (modo claro) ===== */
+.table-verde-claro {
+    background-color: #eaf4d3 !important;
+    color: #2a3c0b !important;
+}
+
+.table-amarilla-claro {
+    background-color: #fff9d6 !important;
+    color: #665c00 !important;
+}
+
+.table-azul-claro {
+    background-color: #d8ecf5 !important;
+    color: #0e3f53 !important;
+}
+
+.table-roja-claro {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+.table-gris-claro {
+    background-color: #f0f0f0 !important;
+    color: #333 !important;
+}
+
 
 
 
@@ -292,3 +318,56 @@ dark-mode footer {
   .dark-mode footer h5 {
     color: #f8f9fa !important;
   }
+
+  /* ===== Tablas por tipo (modo oscuro) ===== */
+.dark-mode .table-verde-claro {
+    background-color: #334422 !important;
+    color: #d7f3a2 !important;
+}
+
+.dark-mode .table-amarilla-claro {
+    background-color: #4a4411 !important;
+    color: #fff3a3 !important;
+}
+
+.dark-mode .table-azul-claro {
+    background-color: #233b46 !important;
+    color: #9bd1ea !important;
+}
+
+.dark-mode .table-roja-claro {
+    background-color: #4a1f23 !important;
+    color: #f5b5b8 !important;
+}
+
+.dark-mode .table-gris-claro {
+    background-color: #2e2e2e !important;
+    color: #ccc !important;
+}
+
+.dark-mode .accordion-button {
+  background-color: #2d2d2d !important; /* Fondo acorde al modo oscuro */
+  color: #e0e0e0 !important;           /* Texto claro */
+  border: 1px solid #444 !important;   /* Borde oscuro */
+  box-shadow: none !important;         /* Quita el brillo */
+}
+
+.dark-mode .accordion-button:not(.collapsed) {
+  background-color: #3a3a3a !important; /* Fondo más oscuro si está expandido */
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.125) !important;
+}
+
+.dark-mode .accordion-button:focus {
+  box-shadow: none !important;
+  outline: none;
+}
+
+.dark-mode .accordion-button::after {
+  filter: brightness(0) invert(1); /* Invierte el color para que se vea blanco */
+}
+
+
+
+.dark-mode .table {
+  margin-bottom: 0 !important;
+}

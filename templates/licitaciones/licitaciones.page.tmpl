@@ -1,54 +1,165 @@
 {{template "base" .}}
 {{define "content"}}
 <div class="container">
-
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Licitaciones</h2>
-        <a href="/nueva-partida" class="btn btn-primary mt-3 btn-outline-success verde" role="button">
+        <a href="/nueva-partida" class="btn btn-primary mt-3 btn-outline-success verde">
             <i class="fas fa-plus"></i> Nueva Partida
         </a>
-        <a href="/nueva-licitacion" class="btn btn-primary mt-3 btn-outline-success verde" role="button">
+        <a href="/nueva-licitacion" class="btn btn-primary mt-3 btn-outline-success verde">
             <i class="fas fa-plus"></i> Nueva Licitación
         </a>
     </div>
 
-    <div class="card-body">
-    <table class="table table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>Unidad compradora</th>
-                <th>Número de Contratación</th>
-                <th>Nombre</th>
-                <th>Tipo</th>
-                <th>Estatus</th>
-                <th>Fechas</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{range .Licitaciones}}
-            <tr>
-                <td>{{.EntidadNombre}}</td>
-                <td>{{.NumContratacion}}</td>
-                <td>{{.Nombre}}</td>
-                <td>{{.Tipo}}</td>
-                <td>{{.Estatus}}</td>
-                <td>Fecha Entrega: {{.FechaEntrega.Format "2006-01-02"}}</td>
-                <td>
-                    <div class="d-flex align-items-center gap-1">
-                        <a href="/editar-licitacion/{{.IDLicitacion}}" class="btn btn-sm amarillo">Editar</a>   
-                        <a href="/editar-licitacion/{{.IDLicitacion}}" class="btn btn-sm azul">Partidas</a>
-                    </div>
-                </td>
-            </tr>
-            {{else}}
-            <tr>
-                <td colspan="8" class="text-center">No hay licitaciones registradas.</td>
-            </tr>
-            {{end}}
-        </tbody>
-    </table>
-</div>
+    <div class="accordion" id="accordionLicitaciones">
 
+        {{/* Participación Directa */}}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingDirecta">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDirecta" aria-expanded="true" aria-controls="collapseDirecta">
+                    Participación Directa
+                </button>
+            </h2>
+            <div id="collapseDirecta" class="accordion-collapse collapse show" aria-labelledby="headingDirecta">
+                <div class="accordion-body p-0">
+                    <table class="table table-azul-claro">
+                        {{template "tableHead" .}}
+                        <tbody>
+                            {{range .Licitaciones}}
+                                {{if and .Revisada (eq .Tipo "Directa")}}
+                                    {{template "tableRow" .}}
+                                {{end}}
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{/* Apoyo */}}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingApoyo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseApoyo" aria-expanded="false" aria-controls="collapseApoyo">
+                    Apoyo
+                </button>
+            </h2>
+            <div id="collapseApoyo" class="accordion-collapse collapse" aria-labelledby="headingApoyo">
+                <div class="accordion-body p-0">
+                    <table class="table table-verde-claro">
+                        {{template "tableHead" .}}
+                        <tbody>
+                            {{range .Licitaciones}}
+                                {{if and .Revisada (eq .Tipo "Apoyo")}}
+                                    {{template "tableRow" .}}
+                                {{end}}
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{/* Estudio de mercado */}}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingEstudio">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEstudio" aria-expanded="false" aria-controls="collapseEstudio">
+                    Estudios de Mercado
+                </button>
+            </h2>
+            <div id="collapseEstudio" class="accordion-collapse collapse" aria-labelledby="headingEstudio">
+                <div class="accordion-body p-0">
+                    <table class="table table-amarilla-claro">
+                        {{template "tableHead" .}}
+                        <tbody>
+                            {{range .Licitaciones}}
+                                {{if and .Revisada (eq .Tipo "Estudio de mercado")}}
+                                    {{template "tableRow" .}}
+                                {{end}}
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{/* No participamos / No aplican */}}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingNoParticipamos">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNoParticipamos" aria-expanded="false" aria-controls="collapseNoParticipamos">
+                    No Participamos / No aplican
+                </button>
+            </h2>
+            <div id="collapseNoParticipamos" class="accordion-collapse collapse" aria-labelledby="headingNoParticipamos">
+                <div class="accordion-body p-0">
+                    <table class="table table-roja-claro">
+                        {{template "tableHead" .}}
+                        <tbody>
+                            {{range .Licitaciones}}
+                                {{if and .Revisada (or (eq .Tipo "Adjudicación directa") (eq .Tipo "Producto no adecuado") (eq .Tipo "No solicitan productos INTEVI"))}}
+                                    {{template "tableRow" .}}
+                                {{end}}
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {{/* Pendientes por revisar */}}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingPendientes">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePendientes" aria-expanded="false" aria-controls="collapsePendientes">
+                    Pendientes por Revisar
+                </button>
+            </h2>
+            <div id="collapsePendientes" class="accordion-collapse collapse" aria-labelledby="headingPendientes">
+                <div class="accordion-body p-0">
+                    <table class="table table-gris-claro">
+                        {{template "tableHead" .}}
+                        <tbody>
+                            {{range .Licitaciones}}
+                                {{if not .Revisada}}
+                                    {{template "tableRow" .}}
+                                {{end}}
+                            {{end}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
+{{end}}
+
+
+{{define "tableHead"}}
+    <thead class="table-dark">
+        <tr>
+            <th>Unidad compradora</th>
+            <th>Número de Contratación</th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Estatus</th>
+            <th>Fechas</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+{{end}}
+
+{{define "tableRow"}}
+<tr>
+    <td>{{.EntidadNombre}}</td>
+    <td>{{.NumContratacion}}</td>
+    <td>{{.Nombre}}</td>
+    <td>{{.Tipo}}</td>
+    <td>{{.Estatus}}</td>
+    <td>Fecha Entrega: {{.FechaEntrega.Format "2006-01-02"}}</td>
+    <td>
+        <div class="d-flex align-items-center gap-1">
+            <a href="/editar-licitacion/{{.IDLicitacion}}" class="btn btn-sm amarillo">Editar</a>   
+            <a href="/editar-licitacion/{{.IDLicitacion}}" class="btn btn-sm azul">Partidas</a>
+        </div>
+    </td>
+</tr>
 {{end}}
