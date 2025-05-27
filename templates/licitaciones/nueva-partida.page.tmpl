@@ -23,14 +23,8 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="id_licitacion" class="form-label">Licitación *</label>
-                    <select class="form-select" id="id_licitacion" name="id_licitacion" required>
-                        <option value="">-- Seleccione una licitación --</option>
-                        {{range .Licitaciones}}
-                        <option value="{{.IDLicitacion}}">
-                            {{.Nombre}} - {{.NumContratacion}}
-                        </option>
-                        {{end}}
-                    </select>
+                    <p><strong>{{.Licitacion.Nombre}} - {{.Licitacion.NumContratacion}}</strong></p>
+                    <input type="hidden" name="id_licitacion" value="{{.Licitacion.IDLicitacion}}">
                 </div>
                 
                 <div class="col-md-2">

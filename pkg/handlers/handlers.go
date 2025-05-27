@@ -1063,11 +1063,49 @@ func (m *Repository) EditarLicitacion(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
 }
 
+// TODO LO DE PARTIDAS
+func (m *Repository) MostrarPartidasPorID(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		http.Error(w, "ID de licitación inválido", http.StatusBadRequest)
+		return
+	}
+
+	partidas, err := m.ObtenerPartidasPorLicitacionID(id)
+	if err != nil {
+		log.Printf("Error al obtener partidas para licitación %d: %v", id, err)
+		http.Error(w, "Error al obtener las partidas", http.StatusInternalServerError)
+		return
+	}
+
+    licitacion, err := m.ObtenerLicitacionPorID(id)
+	if err != nil {
+		http.Error(w, "Error al obtener licitación", http.StatusInternalServerError)
+		return
+	}
+
+	data := &models.TemplateData{
+		CSRFToken: nosurf.Token(r),
+		Partidas:  partidas,
+        Licitacion: licitacion,
+	}
+
+	render.RenderTemplate(w, "licitaciones/mostrar-partidas.page.tmpl", data)
+}
+
 
 func (m *Repository) MostrarNuevaPartida(w http.ResponseWriter, r *http.Request) {
-    licitaciones, err := m.ObtenerTodasLicitaciones()
+    idParam := chi.URLParam(r, "id") // <- Extrae ID desde URL
+    idLicitacion, err := strconv.Atoi(idParam)
     if err != nil {
-        http.Error(w, "No se pudieron obtener las licitaciones", http.StatusInternalServerError)
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    licitacion, err := m.ObtenerLicitacionPorID(idLicitacion)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la licitación", http.StatusInternalServerError)
         return
     }
 
@@ -1079,13 +1117,14 @@ func (m *Repository) MostrarNuevaPartida(w http.ResponseWriter, r *http.Request)
     }
 
     data := &models.TemplateData{
-        Productos:    productos,
-        Licitaciones: licitaciones,
+        Productos:   productos,
+        Licitacion:  licitacion,
         CSRFToken:  nosurf.Token(r),
     }
 
     render.RenderTemplate(w, "licitaciones/nueva-partida.page.tmpl", data)
 }
+
 
 func (m *Repository) CrearNuevaPartida(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
@@ -1173,7 +1212,7 @@ func (m *Repository) CrearNuevaPartida(w http.ResponseWriter, r *http.Request) {
         return
     }
 
-    http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
+    http.Redirect(w, r, fmt.Sprintf("/mostrar-partidas/%d", idLicitacion), http.StatusSeeOther)
 }
 
 

@@ -1,0 +1,47 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2>Partidas de la Licitación</h2>
+            <p class="mb-1"><strong>Nombre:</strong> {{ .Licitacion.Nombre }}</p>
+            <p class="mb-1"><strong>No. de Contratación:</strong> {{ .Licitacion.NumContratacion }}</p>
+            <p class="mb-1"><strong>Entidad:</strong> {{ .Licitacion.EntidadNombre }} ({{ .Licitacion.EstadoNombre }})</p>
+            <p class="mb-1"><strong>Tipo:</strong> {{ .Licitacion.Tipo }} | <strong>Carácter:</strong> {{ .Licitacion.Caracter }}</p>
+        </div>
+        <a href="/nueva-partida/{{ .Licitacion.IDLicitacion }}" class="btn btn-primary mt-3 btn-outline-success verde">
+            <i class="fas fa-plus"></i> Nueva Partida
+        </a>
+    </div>
+
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Partidas }}
+            <tr>
+                <td>{{ .NumPartidaConvocatoria }}</td>
+                <td>{{ .NombreDescripcion }}</td>
+                <td>{{ .Cantidad }}</td>
+                <td>{{ .UnidadMedida }}</td>
+                <td>
+                    <a href="/editar-partida/{{.IDPartida}}" class="btn btn-sm amarillo py-1 px-2">Editar</a>
+					<a href="/" class="btn btn-sm amarillo py-1 px-2">Productos</a>
+					<a href="/" class="btn btn-sm amarillo py-1 px-2">Requerimientos</a>
+					<a href="/" class="btn btn-sm amarillo py-1 px-2">Propuestas</a>
+                </td>
+            </tr>
+            {{ else }}
+            <tr><td colspan="5" class="text-center">No hay partidas registradas para esta licitación.</td></tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+{{end}}

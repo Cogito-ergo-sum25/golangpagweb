@@ -517,6 +517,71 @@ func (m *Repository) ObtenerLicitacionPorID(id int) (models.Licitacion, error) {
 	return l, err
 }
 
+func (m *Repository) ObtenerPartidasPorLicitacionID(idLicitacion int) ([]models.Partida, error) {
+    query := `
+        SELECT 
+            p.id_partida,
+            p.numero_partida_convocatoria,
+            p.nombre_descripcion,
+            p.cantidad,
+            p.cantidad_minima,
+            p.cantidad_maxima,
+            p.no_ficha_tecnica,
+            p.tipo_de_bien,
+            p.clave_compendio,
+            p.clave_cucop,
+            p.unidad_medida,
+            p.dias_de_entrega,
+            p.fecha_de_entrega,
+            p.garantia,
+            p.created_at,
+            p.updated_at
+        FROM partidas p
+        INNER JOIN licitacion_partidas lp ON lp.id_partida = p.id_partida
+        WHERE lp.id_licitacion = ?
+    `
+
+    rows, err := m.App.DB.Query(query, idLicitacion)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var partidas []models.Partida
+
+    for rows.Next() {
+        var p models.Partida
+        err := rows.Scan(
+            &p.IDPartida,
+            &p.NumPartidaConvocatoria,
+            &p.NombreDescripcion,
+            &p.Cantidad,
+            &p.CantidadMinima,
+            &p.CantidadMaxima,
+            &p.NoFichaTecnica,
+            &p.TipoDeBien,
+            &p.ClaveCompendio,
+            &p.ClaveCucop,
+            &p.UnidadMedida,
+            &p.DiasDeEntrega,
+            &p.FechaDeEntrega,
+            &p.Garantia,
+            &p.CreatedAt,
+            &p.UpdatedAt,
+        )
+        if err != nil {
+            return nil, err
+        }
+
+        partidas = append(partidas, p)
+    }
+
+    if err = rows.Err(); err != nil {
+        return nil, err
+    }
+
+    return partidas, nil
+}
 
 
 
