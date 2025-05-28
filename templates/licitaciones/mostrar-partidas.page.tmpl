@@ -1,7 +1,9 @@
 {{template "base" .}}
 {{define "content"}}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
             <h2>Partidas de la Licitación</h2>
             <p class="mb-1"><strong>Nombre:</strong> {{ .Licitacion.Nombre }}</p>
@@ -9,39 +11,132 @@
             <p class="mb-1"><strong>Entidad:</strong> {{ .Licitacion.EntidadNombre }} ({{ .Licitacion.EstadoNombre }})</p>
             <p class="mb-1"><strong>Tipo:</strong> {{ .Licitacion.Tipo }} | <strong>Carácter:</strong> {{ .Licitacion.Caracter }}</p>
         </div>
-        <a href="/nueva-partida/{{ .Licitacion.IDLicitacion }}" class="btn btn-primary mt-3 btn-outline-success verde">
+        <a href="/nueva-partida/{{ .Licitacion.IDLicitacion }}" class="btn mt-2 verde">
             <i class="fas fa-plus"></i> Nueva Partida
         </a>
     </div>
 
-    <table class="table table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Descripción</th>
-                <th>Cantidad</th>
-                <th>Unidad</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{ range .Partidas }}
-            <tr>
-                <td>{{ .NumPartidaConvocatoria }}</td>
-                <td>{{ .NombreDescripcion }}</td>
-                <td>{{ .Cantidad }}</td>
-                <td>{{ .UnidadMedida }}</td>
-                <td>
-                    <a href="/editar-partida/{{.IDPartida}}" class="btn btn-sm amarillo py-1 px-2">Editar</a>
-					<a href="/" class="btn btn-sm amarillo py-1 px-2">Productos</a>
-					<a href="/" class="btn btn-sm amarillo py-1 px-2">Requerimientos</a>
-					<a href="/" class="btn btn-sm amarillo py-1 px-2">Propuestas</a>
-                </td>
-            </tr>
-            {{ else }}
-            <tr><td colspan="5" class="text-center">No hay partidas registradas para esta licitación.</td></tr>
-            {{ end }}
-        </tbody>
-    </table>
+    <!-- Contenedor de tarjetas -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {{ range .Partidas }}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="card-title">Partida #{{ .NumPartidaConvocatoria }}</h5>
+					<h6 class="card-subtitle mb-2 text-muted">{{ .NombreDescripcion }}</h6>
+					<p class="card-text"><strong>Fecha entrega:</strong> {{ .FechaDeEntrega.Format "2006-01-02" }}</p>                    <p class="card-text"><strong>Clave CUCoP:</strong> {{ .ClaveCucop }}</p>
+                </div>
+                <div class="card-footer bg-light d-flex justify-content-between flex-wrap text-center">
+                    <a href="/editar-partida/{{.IDPartida}}" class="btn btn-sm btn-outline-primary mb-1">Editar</a>
+					<a href="/" class="btn btn-sm btn-outline-danger mb-1">Aclaraciones</a>
+                    <a href="/" class="btn btn-sm btn-outline-warning mb-1">Productos</a>
+                    <a href="/requerimientos/{{.IDPartida}}" 
+						class="btn btn-sm btn-outline-info mb-1 btn-requerimientos" 
+						data-id-partida="{{ .IDPartida }}" 
+						data-num-partida="{{ .NumPartidaConvocatoria }}"
+						data-bs-toggle="modal" 
+						data-bs-target="#requerimientosModal">
+						Requerimientos
+					</a>
+
+                    <a href="/" class="btn btn-sm btn-outline-success mb-1">Propuestas</a>
+                </div>
+            </div>
+        </div>
+        {{ else }}
+        <div class="col-12 text-center">
+            <div class="alert alert-warning mt-4" role="alert">
+                No hay partidas registradas para esta licitación.
+            </div>
+        </div>
+        {{ end }}
+    </div>
 </div>
+
+<div class="modal fade" id="requerimientosModal" tabindex="-1" aria-labelledby="requerimientosLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" action="/guardar-requerimientos" id="formRequerimientos">
+	<input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
+
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="requerimientosLabel">Requerimientos de la Partida</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="id_partida" id="req_id_partida">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="requiere_mantenimiento" id="req_mantenimiento">
+            <label class="form-check-label" for="req_mantenimiento">Requiere Mantenimiento</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="requiere_instalacion" id="req_instalacion">
+            <label class="form-check-label" for="req_instalacion">Requiere Instalación</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="requiere_puesta_marcha" id="req_puesta_marcha">
+            <label class="form-check-label" for="req_puesta_marcha">Requiere Puesta en Marcha</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="requiere_capacitacion" id="req_capacitacion">
+            <label class="form-check-label" for="req_capacitacion">Requiere Capacitación</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="requiere_visita_previa" id="req_visita_previa">
+            <label class="form-check-label" for="req_visita_previa">Requiere Visita Previa</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 {{end}}
+
+{{define "js"}}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const modal = document.getElementById("requerimientosModal");
+  const modalTitle = modal.querySelector("#requerimientosLabel");
+  const hiddenInput = modal.querySelector("#req_id_partida");
+
+  const checkboxes = {
+    mantenimiento: modal.querySelector("#req_mantenimiento"),
+    instalacion: modal.querySelector("#req_instalacion"),
+    puesta_marcha: modal.querySelector("#req_puesta_marcha"),
+    capacitacion: modal.querySelector("#req_capacitacion"),
+    visita_previa: modal.querySelector("#req_visita_previa")
+  };
+
+  document.querySelectorAll(".btn-requerimientos").forEach(btn => {
+    btn.addEventListener("click", async function () {
+      const idPartida = this.getAttribute("data-id-partida");
+      const numPartida = this.getAttribute("data-num-partida");
+
+      modalTitle.textContent = `Requerimientos de la Partida #${numPartida}`;
+      hiddenInput.value = idPartida;
+
+      // Llamada AJAX para obtener los requerimientos
+      try {
+        const response = await fetch(`/requerimientos-json/${idPartida}`);
+        if (!response.ok) throw new Error("Error al obtener datos");
+
+        const data = await response.json();
+
+        checkboxes.mantenimiento.checked = data.requiere_mantenimiento;
+        checkboxes.instalacion.checked = data.requiere_instalacion;
+        checkboxes.puesta_marcha.checked = data.requiere_puesta_marcha;
+        checkboxes.capacitacion.checked = data.requiere_capacitacion;
+        checkboxes.visita_previa.checked = data.requiere_visita_previa;
+      } catch (error) {
+        console.error("Error cargando requerimientos:", error);
+      }
+    });
+  });
+});
+</script>
+{{end}}
+

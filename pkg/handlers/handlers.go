@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -1063,6 +1064,12 @@ func (m *Repository) EditarLicitacion(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
 }
 
+
+
+
+
+
+
 // TODO LO DE PARTIDAS
 func (m *Repository) MostrarPartidasPorID(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
@@ -1094,7 +1101,6 @@ func (m *Repository) MostrarPartidasPorID(w http.ResponseWriter, r *http.Request
 	render.RenderTemplate(w, "licitaciones/mostrar-partidas.page.tmpl", data)
 }
 
-
 func (m *Repository) MostrarNuevaPartida(w http.ResponseWriter, r *http.Request) {
     idParam := chi.URLParam(r, "id") // <- Extrae ID desde URL
     idLicitacion, err := strconv.Atoi(idParam)
@@ -1124,7 +1130,6 @@ func (m *Repository) MostrarNuevaPartida(w http.ResponseWriter, r *http.Request)
 
     render.RenderTemplate(w, "licitaciones/nueva-partida.page.tmpl", data)
 }
-
 
 func (m *Repository) CrearNuevaPartida(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
@@ -1215,13 +1220,125 @@ func (m *Repository) CrearNuevaPartida(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, fmt.Sprintf("/mostrar-partidas/%d", idLicitacion), http.StatusSeeOther)
 }
 
+func (m *Repository) ObtenerRequerimientos(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID inválido", http.StatusBadRequest)
+		return
+	}
+
+	req, err := m.ObtenerOCrearRequerimientos(id)
+	if err != nil {
+		log.Println("Error al obtener o crear requerimientos:", err)
+		http.Error(w, "Error al obtener requerimientos", http.StatusInternalServerError)
+		return
+	}
+
+	data := &models.TemplateData{
+		Requerimientos: req,
+		CSRFToken:      nosurf.Token(r),
+	}
+
+	render.RenderTemplate(w, "licitaciones/mostrar-partidas.page.tmpl", data)
+}
+
+func (m *Repository) ObtenerRequerimientosJSON(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID inválido", http.StatusBadRequest)
+		return
+	}
+
+	req, err := m.ObtenerOCrearRequerimientos(id)
+	if err != nil {
+		log.Println("Error al obtener o crear requerimientos:", err)
+		http.Error(w, "Error al obtener requerimientos", http.StatusInternalServerError)
+		return
+	}
+
+	// Devolver como JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{
+		"requiere_mantenimiento": req.RequiereMantenimiento,
+		"requiere_instalacion": req.RequiereInstalacion,
+		"requiere_puesta_marcha": req.RequierePuestaEnMarcha,
+		"requiere_capacitacion": req.RequiereCapacitacion,
+		"requiere_visita_previa": req.RequiereVisitaPrevia,
+	})
+}
+
+func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Request) {
+    err := r.ParseForm()
+    if err != nil {
+        log.Println("Error al parsear el formulario:", err)
+        http.Error(w, "Error al procesar el formulario", http.StatusBadRequest)
+        return
+    }
+
+    idPartidaStr := r.FormValue("id_partida")
+    idPartida, err := strconv.Atoi(idPartidaStr)
+    if err != nil {
+        log.Println("ID de partida inválido:", err)
+        http.Error(w, "ID de partida inválido", http.StatusBadRequest)
+        return
+    }
+
+    // Parsear checkboxes (están presentes solo si están marcados)
+    mantenimiento := r.FormValue("requiere_mantenimiento") == "on"
+    instalacion := r.FormValue("requiere_instalacion") == "on"
+    puestaMarcha := r.FormValue("requiere_puesta_marcha") == "on"
+    capacitacion := r.FormValue("requiere_capacitacion") == "on"
+    visitaPrevia := r.FormValue("requiere_visita_previa") == "on"
+
+    // Asegurar que el registro existe (lo crea si no)
+    _, err = m.ObtenerOCrearRequerimientos(idPartida)
+    if err != nil {
+        log.Println("Error al obtener o crear requerimientos:", err)
+        http.Error(w, "Error interno al preparar requerimientos", http.StatusInternalServerError)
+        return
+    }
+
+    // Actualizar requerimientos
+    update := `
+        UPDATE requerimientos_partida
+        SET 
+            requiere_mantenimiento = ?,
+            requiere_instalacion = ?,
+            requiere_puesta_marcha = ?,
+            requiere_capacitacion = ?,
+            requiere_visita_previa = ?
+        WHERE id_partida = ?
+    `
+    _, err = m.App.DB.Exec(update,
+        mantenimiento,
+        instalacion,
+        puestaMarcha,
+        capacitacion,
+        visitaPrevia,
+        idPartida,
+    )
+    if err != nil {
+        log.Println("Error al actualizar requerimientos:", err)
+        http.Error(w, "Error al guardar los requerimientos", http.StatusInternalServerError)
+        return
+    }
+
+    // Puedes redirigir o devolver 200 según cómo llames este handler (fetch o formulario clásico)
+    http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+}
+
+
+
+
+
 
 
 
 
 
 // TODO LO DE OPCIONES
-
 func (m *Repository) Opciones(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, "opciones/opciones.page.tmpl", &models.TemplateData{})
 }

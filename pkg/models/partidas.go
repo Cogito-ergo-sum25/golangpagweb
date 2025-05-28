@@ -38,3 +38,18 @@ type LicitacionPartida struct {
     CreatedAt              time.Time  `json:"created_at"`
     UpdatedAt              time.Time  `json:"updated_at"`
 }
+
+type RequerimientosPartida struct {
+    IDRequerimientos        int       `json:"id_requerimientos"`
+    IDLicitacion            int       `json:"id_licitacion"`
+    RequiereMantenimiento   bool      `json:"requiere_mantenimiento"`
+    RequiereInstalacion     bool      `json:"requiere_instalacion"`
+    RequierePuestaEnMarcha  bool      `json:"requiere_puesta_marcha"`
+    RequiereCapacitacion    bool      `json:"requiere_capacitacion"`
+    RequiereVisitaPrevia    bool      `json:"requiere_visita_previa"`
+    
+    Partida                 *Partida  `json:"partida"`
+
+    CreatedAt               time.Time  `json:"created_at"`
+    UpdatedAt               time.Time  `json:"updated_at"`
+}

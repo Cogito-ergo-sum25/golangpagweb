@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"database/sql"
 	"log"
 	"time"
+
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/models"
 )
 
@@ -581,6 +583,71 @@ func (m *Repository) ObtenerPartidasPorLicitacionID(idLicitacion int) ([]models.
     }
 
     return partidas, nil
+}
+
+func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.RequerimientosPartida, error) {
+	var r models.RequerimientosPartida
+
+	query := `
+	SELECT 
+		id_requerimientos,
+		requiere_mantenimiento,
+		requiere_instalacion,
+		requiere_puesta_marcha,
+		requiere_capacitacion,
+		requiere_visita_previa
+	FROM requerimientos_partida
+	WHERE id_partida = ?
+	LIMIT 1`
+
+	row := m.App.DB.QueryRow(query, idPartida)
+	err := row.Scan(
+		&r.IDRequerimientos,
+		&r.RequiereMantenimiento,
+		&r.RequiereInstalacion,
+		&r.RequierePuestaEnMarcha,
+		&r.RequiereCapacitacion,
+		&r.RequiereVisitaPrevia,
+	)
+
+	if err == sql.ErrNoRows {
+		// No existe, lo creamos por defecto
+		insert := `
+		INSERT INTO requerimientos_partida (
+			id_partida,
+			requiere_mantenimiento,
+			requiere_instalacion,
+			requiere_puesta_marcha,
+			requiere_capacitacion,
+			requiere_visita_previa
+		) VALUES (?, false, false, false, false, false)`
+
+		res, err := m.App.DB.Exec(insert, idPartida)
+		if err != nil {
+			return r, err
+		}
+
+		lastID, err := res.LastInsertId()
+		if err != nil {
+			return r, err
+		}
+
+		// Devolver el registro recién creado
+		r.IDRequerimientos = int(lastID)
+		r.RequiereMantenimiento = false
+		r.RequiereInstalacion = false
+		r.RequierePuestaEnMarcha = false
+		r.RequiereCapacitacion = false
+		r.RequiereVisitaPrevia = false
+
+		return r, nil
+	}
+
+	if err != nil {
+		return r, err
+	}
+
+	return r, nil
 }
 
 

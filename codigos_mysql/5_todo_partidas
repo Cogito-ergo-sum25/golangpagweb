@@ -29,3 +29,18 @@ CREATE TABLE licitacion_partidas (
   FOREIGN KEY (id_partida) REFERENCES partidas(id_partida) ON DELETE CASCADE,
   UNIQUE KEY (id_licitacion, id_partida)
 ) 
+
+CREATE TABLE requerimientos_partida (
+  id_requerimientos INT NOT NULL AUTO_INCREMENT,
+  id_partida INT NOT NULL,
+  requiere_mantenimiento BOOLEAN DEFAULT FALSE,
+  requiere_instalacion BOOLEAN DEFAULT FALSE,
+  requiere_puesta_marcha BOOLEAN DEFAULT FALSE,
+  requiere_capacitacion BOOLEAN DEFAULT FALSE,
+  requiere_visita_previa BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (id_requerimientos),
+  FOREIGN KEY (id_partida) REFERENCES partidas(id_partida)
+)

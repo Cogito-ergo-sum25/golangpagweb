@@ -42,6 +42,10 @@ type TemplateData struct {
 	// --- Datos de partidas ---
     Partidas []Partida
     Partida   Partida
+
+	// --- Datos de requerimientos ---
+	Requerimientos RequerimientosPartida
+
 	
 	// Listas para formularios
 	Marcas          []Marca
