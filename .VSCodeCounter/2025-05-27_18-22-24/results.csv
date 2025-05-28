@@ -1,0 +1,39 @@
+"filename", "language", "Go Checksum File", "Go Module File", "HTML", "Go", "JSON with Comments", "PostCSS", "comment", "blank", "total"
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\GOLANGUEANDO.code-workspace", "JSON with Comments", 0, 0, 0, 0, 8, 0, 0, 0, 8
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\cmd\web\main.go", "Go", 0, 0, 0, 59, 0, 0, 3, 18, 80
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\cmd\web\middleware.go", "Go", 0, 0, 0, 18, 0, 0, 2, 5, 25
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\cmd\web\routes.go", "Go", 0, 0, 0, 45, 0, 0, 10, 24, 79
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\go.mod", "Go Module File", 0, 9, 0, 0, 0, 0, 0, 4, 13
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\go.sum", "Go Checksum File", 10, 0, 0, 0, 0, 0, 0, 1, 11
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\config\config.go", "Go", 0, 0, 0, 15, 0, 0, 1, 3, 19
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\database\database.go", "Go", 0, 0, 0, 30, 0, 0, 3, 6, 39
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\handlers\handlers.go", "Go", 0, 0, 0, 1185, 0, 0, 263, 198, 1646
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\handlers\helpers.go", "Go", 0, 0, 0, 745, 0, 0, 23, 126, 894
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\entidades.go", "Go", 0, 0, 0, 27, 0, 0, 0, 6, 33
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\licitaciones.go", "Go", 0, 0, 0, 29, 0, 0, 2, 9, 40
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\partidas.go", "Go", 0, 0, 0, 42, 0, 0, 3, 10, 55
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\producto.go", "Go", 0, 0, 0, 48, 0, 0, 7, 13, 68
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\proyecto.go", "Go", 0, 0, 0, 33, 0, 0, 4, 8, 45
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\templatedata.go", "Go", 0, 0, 0, 38, 0, 0, 14, 15, 67
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\render\render.go", "Go", 0, 0, 0, 127, 0, 0, 13, 31, 171
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\static\css\styles.css", "PostCSS", 0, 0, 0, 0, 0, 281, 18, 75, 374
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\base\base.layout.tmpl", "HTML", 0, 0, 103, 0, 0, 0, 7, 10, 120
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\catalogo\catalogo.page.tmpl", "HTML", 0, 0, 82, 0, 0, 0, 7, 5, 94
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\home\home.page.tmpl", "HTML", 0, 0, 59, 0, 0, 0, 2, 5, 66
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\inventario\crear-producto.page.tmpl", "HTML", 0, 0, 177, 0, 0, 0, 22, 23, 222
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\inventario\editar-producto.page.tmpl", "HTML", 0, 0, 187, 0, 0, 0, 22, 23, 232
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\inventario\inventario.page.tmpl", "HTML", 0, 0, 39, 0, 0, 0, 0, 0, 39
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\inventario\ver_producto.page.tmpl", "HTML", 0, 0, 93, 0, 0, 0, 6, 8, 107
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\editar-licitacion.page.tmpl", "HTML", 0, 0, 164, 0, 0, 0, 6, 16, 186
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\licitaciones.page.tmpl", "HTML", 0, 0, 152, 0, 0, 0, 0, 12, 164
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\mostrar-partidas.page.tmpl", "HTML", 0, 0, 126, 0, 0, 0, 2, 15, 143
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nueva-licitacion.page.tmpl", "HTML", 0, 0, 169, 0, 0, 0, 6, 17, 192
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nueva-partida.page.tmpl", "HTML", 0, 0, 88, 0, 0, 0, 8, 20, 116
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nueva-partida2.page.tmpl", "HTML", 0, 0, 8, 0, 0, 0, 1, 1, 10
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\datos-referencia.page.tmpl", "HTML", 0, 0, 304, 0, 0, 0, 6, 30, 340
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\entidades-nueva.page.tmpl", "HTML", 0, 0, 66, 0, 0, 0, 8, 14, 88
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\entidades-opciones.page.tmpl", "HTML", 0, 0, 35, 0, 0, 0, 0, 3, 38
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\opciones.page.tmpl", "HTML", 0, 0, 42, 0, 0, 0, 0, 2, 44
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\proyectos\nuevo-proyecto.page.tmpl", "HTML", 0, 0, 158, 0, 0, 0, 3, 19, 180
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\proyectos\proyectos-vista.page.tmpl", "HTML", 0, 0, 67, 0, 0, 0, 0, 2, 69
+"Total", "-", 10, 9, 2119, 2441, 8, 281, 472, 777, 6117

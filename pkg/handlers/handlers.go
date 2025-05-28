@@ -1131,6 +1131,108 @@ func (m *Repository) MostrarNuevaPartida(w http.ResponseWriter, r *http.Request)
     render.RenderTemplate(w, "licitaciones/nueva-partida.page.tmpl", data)
 }
 
+func (m *Repository) MostrarEditarPartida(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    // Obtener partida
+    partida, err := m.ObtenerPartidaPorID(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
+        return
+    }
+
+    // Obtener id_licitacion desde tabla intermedia
+    idLicitacion, err := m.ObtenerIDLicitacionPorPartida(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo encontrar la licitación asociada", http.StatusInternalServerError)
+        return
+    }
+
+    // Obtener la licitación
+    licitacion, err := m.ObtenerLicitacionPorID(idLicitacion)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la licitación", http.StatusInternalServerError)
+        return
+    }
+
+    // Render
+    data := &models.TemplateData{
+        Partida:    partida,
+        Licitacion: licitacion,
+        CSRFToken:  nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/editar-partida.page.tmpl", data)
+}
+
+func (m *Repository) EditarPartida(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
+        return
+    }
+
+    idStr := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    err = r.ParseForm()
+    if err != nil {
+        http.Error(w, "Formulario inválido", http.StatusBadRequest)
+        return
+    }
+
+    // Parsear los campos del formulario
+    numPartidaConv, _ := strconv.Atoi(r.FormValue("numero_partida_convocatoria"))
+    cantidad, _ := strconv.Atoi(r.FormValue("cantidad"))
+    cantidadMinima, _ := strconv.Atoi(r.FormValue("cantidad_minima"))
+    cantidadMaxima, _ := strconv.Atoi(r.FormValue("cantidad_maxima"))
+    garantia, _ := strconv.Atoi(r.FormValue("garantia"))
+    fechaEntrega := parseDate(r.FormValue("fecha_de_entrega"))
+
+    partida := models.Partida{
+        IDPartida:              idPartida,
+        NumPartidaConvocatoria: numPartidaConv,
+        NombreDescripcion:      r.FormValue("nombre_descripcion"),
+        Cantidad:               cantidad,
+        CantidadMinima:         cantidadMinima,
+        CantidadMaxima:         cantidadMaxima,
+        NoFichaTecnica:         r.FormValue("no_ficha_tecnica"),
+        TipoDeBien:             r.FormValue("tipo_de_bien"),
+        ClaveCompendio:         r.FormValue("clave_compendio"),
+        ClaveCucop:             r.FormValue("clave_cucop"),
+        UnidadMedida:           r.FormValue("unidad_medida"),
+        DiasDeEntrega:          r.FormValue("días_de_entrega"),
+        FechaDeEntrega:         fechaEntrega,
+        Garantia:               garantia,
+        UpdatedAt:              time.Now(),
+    }
+
+    err = m.ActualizarPartida(partida)
+    if err != nil {
+        fmt.Println("Error al actualizar partida:", err)
+        http.Error(w, "Error al actualizar la partida", http.StatusInternalServerError)
+        return
+    }
+
+    idLicitacion, err := m.ObtenerIDLicitacionPorIDPartida(idPartida)
+    if err != nil {
+        fmt.Println("Error al obtener ID licitación de la partida:", err)
+        http.Error(w, "Error interno", http.StatusInternalServerError)
+        return
+    }
+
+
+    http.Redirect(w, r, fmt.Sprintf("/mostrar-partidas/%d", idLicitacion), http.StatusSeeOther)
+}
+
 func (m *Repository) CrearNuevaPartida(w http.ResponseWriter, r *http.Request) {
     if r.Method != http.MethodPost {
         http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)

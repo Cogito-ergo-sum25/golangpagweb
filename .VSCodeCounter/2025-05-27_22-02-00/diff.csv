@@ -1,0 +1,9 @@
+"filename", "language", "Go", "HTML", "comment", "blank", "total"
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\cmd\web\routes.go", "Go", 2, 0, 0, 2, 4
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\handlers\handlers.go", "Go", 82, 0, 5, 17, 104
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\handlers\helpers.go", "Go", 101, 0, 0, 13, 114
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\partidas.go", "Go", 1, 0, 0, 0, 1
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\editar-licitacion.page.tmpl", "HTML", 0, -1, 0, 0, -1
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\editar-partida.page.tmpl", "HTML", 0, 88, 8, 20, 116
+"c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\mostrar-partidas.page.tmpl", "HTML", 0, 0, 0, -1, -1
+"Total", "-", 186, 87, 13, 51, 337

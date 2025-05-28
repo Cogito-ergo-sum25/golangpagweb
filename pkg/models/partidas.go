@@ -4,6 +4,7 @@ import "time"
 
 type Partida struct {
 	IDPartida              int       `json:"id_partida"`
+    IDLicitacion           int       `json:"id_licitacion"` // <-- Agregado aquí
     NumPartidaConvocatoria int       `json:"numero_partida_convocatoria"`
     NombreDescripcion      string    `json:"nombre_descripcion"`
     Cantidad               int       `json:"cantidad"`

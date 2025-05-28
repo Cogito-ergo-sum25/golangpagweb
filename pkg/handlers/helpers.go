@@ -30,6 +30,48 @@ func (m *Repository) ActualizarLicitacion(l models.Licitacion) error {
 	return err
 }
 
+func (m *Repository) ActualizarPartida(p models.Partida) error {
+    query := `
+        UPDATE partidas SET 
+            numero_partida_convocatoria = ?, 
+            nombre_descripcion = ?, 
+            cantidad = ?, 
+            cantidad_minima = ?, 
+            cantidad_maxima = ?, 
+            no_ficha_tecnica = ?, 
+            tipo_de_bien = ?, 
+            clave_compendio = ?, 
+            clave_cucop = ?, 
+            unidad_medida = ?, 
+            dias_de_entrega = ?, 
+            fecha_de_entrega = ?, 
+            garantia = ?,
+            updated_at = ?
+        WHERE id_partida = ?
+    `
+
+    _, err := m.App.DB.Exec(query,
+        p.NumPartidaConvocatoria,
+        p.NombreDescripcion,
+        p.Cantidad,
+        p.CantidadMinima,
+        p.CantidadMaxima,
+        p.NoFichaTecnica,
+        p.TipoDeBien,
+        p.ClaveCompendio,
+        p.ClaveCucop,
+        p.UnidadMedida,
+        p.DiasDeEntrega,
+        p.FechaDeEntrega,
+        p.Garantia,
+        p.UpdatedAt,
+        p.IDPartida,
+    )
+
+    return err
+}
+
+
 
 
 // GETTERS
@@ -584,6 +626,78 @@ func (m *Repository) ObtenerPartidasPorLicitacionID(idLicitacion int) ([]models.
 
     return partidas, nil
 }
+
+func (m *Repository) ObtenerPartidaPorID(idPartida int) (models.Partida, error) {
+    query := `
+        SELECT 
+            id_partida,
+            
+            numero_partida_convocatoria,
+            nombre_descripcion,
+            cantidad,
+            cantidad_minima,
+            cantidad_maxima,
+            no_ficha_tecnica,
+            tipo_de_bien,
+            clave_compendio,
+            clave_cucop,
+            unidad_medida,
+            dias_de_entrega,
+            fecha_de_entrega,
+            garantia,
+            created_at,
+            updated_at
+        FROM partidas
+        WHERE id_partida = ?
+    `
+
+    var p models.Partida
+
+    err := m.App.DB.QueryRow(query, idPartida).Scan(
+        &p.IDPartida,
+        &p.NumPartidaConvocatoria,
+        &p.NombreDescripcion,
+        &p.Cantidad,
+        &p.CantidadMinima,
+        &p.CantidadMaxima,
+        &p.NoFichaTecnica,
+        &p.TipoDeBien,
+        &p.ClaveCompendio,
+        &p.ClaveCucop,
+        &p.UnidadMedida,
+        &p.DiasDeEntrega,
+        &p.FechaDeEntrega,
+        &p.Garantia,
+        &p.CreatedAt,
+        &p.UpdatedAt,
+    )
+    if err != nil {
+        return models.Partida{}, err
+    }
+
+    return p, nil
+}
+
+func (m *Repository) ObtenerIDLicitacionPorPartida(idPartida int) (int, error) {
+    var idLicitacion int
+    query := `SELECT id_licitacion FROM licitacion_partidas WHERE id_partida = ? LIMIT 1`
+
+    err := m.App.DB.QueryRow(query, idPartida).Scan(&idLicitacion)
+    return idLicitacion, err
+}
+
+func (m *Repository) ObtenerIDLicitacionPorIDPartida(idPartida int) (int, error) {
+    var idLicitacion int
+    query := `
+        SELECT id_licitacion 
+        FROM licitacion_partidas 
+        WHERE id_partida = ? 
+        LIMIT 1
+    `
+    err := m.App.DB.QueryRow(query, idPartida).Scan(&idLicitacion)
+    return idLicitacion, err
+}
+
 
 func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.RequerimientosPartida, error) {
 	var r models.RequerimientosPartida

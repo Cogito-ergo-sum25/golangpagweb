@@ -46,10 +46,14 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/mostrar-partidas/{id}",handlers.Repo.MostrarPartidasPorID)
 		mux.Get("/nueva-partida/{id}", handlers.Repo.MostrarNuevaPartida)
 		mux.Post("/nueva-partida",handlers.Repo.CrearNuevaPartida)
+		mux.Get("/editar-partida/{id}", handlers.Repo.MostrarEditarPartida)
+		mux.Post("/editar-partida/{id}", handlers.Repo.EditarPartida)
+		
+
+
 
 	mux.Get("/requerimientos/{id}", handlers.Repo.ObtenerRequerimientos)
 	mux.Get("/requerimientos-json/{id}", handlers.Repo.ObtenerRequerimientosJSON)
-
 	mux.Post("/guardar-requerimientos", handlers.Repo.GuardarRequerimientos)
 
 
