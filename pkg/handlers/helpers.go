@@ -1018,6 +1018,12 @@ func (m *Repository) InsertarAclaracion(a models.AclaracionesPartida) error {
 	return err
 }
 
+func (m *Repository) AgregarEmpresaNueva(nombre string) error {
+    query := `INSERT INTO empresas_externas (nombre, created_at, updated_at) VALUES (?, NOW(), NOW())`
+    _, err := m.App.DB.Exec(query, nombre)
+    return err
+}
+
 
 
 

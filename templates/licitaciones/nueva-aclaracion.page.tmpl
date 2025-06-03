@@ -20,13 +20,21 @@
                 <!-- Empresa -->
                 <div class="mb-3">
                     <label for="id_empresa" class="form-label">Empresa *</label>
-                    <select class="form-select" id="id_empresa" name="id_empresa" required>
-                        <option value="">Seleccione una empresa</option>
-                        {{range .Empresas}}
-                        <option value="{{.IDEmpresa}}">{{.Nombre}}</option>
-                        {{end}}
-                    </select>
+                    <div class="input-group">
+                        <select class="form-select" id="id_empresa" name="id_empresa" required>
+                            <option value="">Seleccione una empresa</option>
+                            {{range .Empresas}}
+                            <option value="{{.IDEmpresa}}">{{.Nombre}}</option>
+                            {{end}}
+                        </select>
+                        <button type="button" class="btn btn-primary azul" title="Agregar nueva empresa" data-bs-toggle="modal" data-bs-target="#modalNuevaEmpresa">
+                            <i class="fas fa-solid fa-plus me-1"></i> 
+                            <span class="d-none d-md-inline">Agregar nueva empresa</span>
+                        </button>
+                    </div>
                 </div>
+
+
 
                 <!-- Pregunta -->
                 <div class="mb-3">
@@ -61,5 +69,28 @@
             </button>
         </div>
     </form>
+
+        <!-- Modal: Agregar Nueva Empresa -->
+    <div class="modal fade" id="modalNuevaEmpresa" tabindex="-1" aria-labelledby="modalNuevaEmpresaLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/datos-empresas-externas-nueva-contexto" method="POST">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                <input type="hidden" name="id_partida" value="{{.Partida.IDPartida}}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nombreEmpresa" class="form-label">Nombre de la Empresa</label>
+                            <input type="text" class="form-control" id="nombreEmpresa" name="nombre" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn rojo py-1 px-2" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn azul py-1 px-2">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 </div>
 {{end}}

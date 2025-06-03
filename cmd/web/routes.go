@@ -51,6 +51,7 @@ func routes(app *config.AppConfig) http.Handler {
 		
 	mux.Get("/aclaraciones/{id}", handlers.Repo.MostrarAclaraciones)
 	mux.Get("/nueva-aclaracion/{id}", handlers.Repo.MostrarNuevaAclaracion)
+	mux.Post("/datos-empresas-externas-nueva-contexto", handlers.Repo.AgregarEmpresaExternaContexto)
 	mux.Post("/nueva-aclaracion", handlers.Repo.CrearNuevaAclaracion)
 
 
@@ -80,6 +81,11 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Get("/datos-entidades",handlers.Repo.Entidades)
 		mux.Get("/crear-entidad",handlers.Repo.MostrarNuevaEntidad)
 		mux.Post("/crear-entidad", handlers.Repo.CrearEntidad)
+	// OPCIONES DE EMPRESAS EXTERNAS
+		mux.Get("/datos-empresas-externas",handlers.Repo.EmpresasExternas)
+		mux.Post("/datos-empresas-externas-nueva", handlers.Repo.AgregarEmpresaExterna)
+		mux.Post("/crear-entidad", handlers.Repo.CrearEntidad)
+
 	    	
 	fileServer := http.FileServer(http.Dir("./static/"))
 	mux.Handle("/static/*",http.StripPrefix("/static",fileServer))

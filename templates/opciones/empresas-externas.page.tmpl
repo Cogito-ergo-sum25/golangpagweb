@@ -1,0 +1,64 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container mt-5">
+    <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Menú de Empresas Externas</h2>
+            <button type="button" class="btn verde" data-bs-toggle="modal" data-bs-target="#agregarEmpresaModal">
+                <i class="fas fa-plus"></i> Agregar Empresa
+            </button>
+            <button type="button" class="btn verde">
+                <i class="fas fa-plus"></i> Productos Competencia
+            </button>
+        </div>
+        <div class="table-responsive"> <!-- Añade esto para tablas responsivas -->
+            <table class="table table-hover table-bordered"> <!-- Añadí table-bordered -->
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center">#</th> <!-- Centrado -->
+                        <th class="text-start">Nombre</th> <!-- Alineado a la izquierda -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Empresas}}
+                    <tr>
+                        <td class="text-center">{{.IDEmpresa}}</td>
+                        <td class="text-start">{{.Nombre}}</td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="2" class="text-center">No se encontraron entidades</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal para agregar nueva empresa -->
+    <div class="modal fade" id="agregarEmpresaModal" tabindex="-1" aria-labelledby="agregarEmpresaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="agregarEmpresaModalLabel">Agregar Nueva Empresa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="/datos-empresas-externas-nueva" method="POST">
+                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nombreEmpresa" class="form-label">Nombre de la Empresa</label>
+                            <input type="text" class="form-control" id="nombreEmpresa" name="nombre" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn rojo py-1 px-2" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn azul py-1 px-2">Guardar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{{end}}

@@ -1542,6 +1542,35 @@ func (m *Repository) CrearNuevaAclaracion(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, fmt.Sprintf("/aclaraciones/%d", idPartida), http.StatusSeeOther)
 }
 
+func (m *Repository) AgregarEmpresaExternaContexto(w http.ResponseWriter, r *http.Request) {
+    if err := r.ParseForm(); err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    nombre := r.FormValue("nombre")
+    idPartida := r.FormValue("id_partida")
+
+    if nombre == "" || idPartida == "" {
+        m.App.Session.Put(r.Context(), "error", "Todos los campos son obligatorios")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    err := m.AgregarEmpresaNueva(nombre)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al agregar la empresa")
+        fmt.Println("Error al agregar empresa:", err)
+        http.Redirect(w, r, "/nueva-aclaracion/"+idPartida, http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "success", "Empresa agregada correctamente")
+    http.Redirect(w, r, "/nueva-aclaracion/"+idPartida, http.StatusSeeOther)
+}
+
+
 
 
 
@@ -1852,5 +1881,48 @@ func (m *Repository) CrearEntidad(w http.ResponseWriter, r *http.Request) {
     }
     m.App.Session.Put(r.Context(), "flash", "¡Entidad creada exitosamente!")
     http.Redirect(w, r, "/datos-entidades", http.StatusSeeOther)
+}
+
+// EMPRESAS EXTERNAS
+func (m *Repository) EmpresasExternas(w http.ResponseWriter, r *http.Request) {
+    empresas, err := m.ObtenerTodasEmpresas()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    data := &models.TemplateData{
+        Empresas:   empresas,
+        CSRFToken:       nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "opciones/empresas-externas.page.tmpl", data)
+}
+
+func (m *Repository) AgregarEmpresaExterna(w http.ResponseWriter, r *http.Request) {
+    if err := r.ParseForm(); err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/datos-empresas-externas", http.StatusSeeOther)
+        return
+    }
+
+    nombre := r.FormValue("nombre")
+    if nombre == "" {
+        m.App.Session.Put(r.Context(), "error", "El nombre de la empresa es obligatorio")
+        http.Redirect(w, r, "/datos-empresas-externas", http.StatusSeeOther)
+        return
+    }
+
+    err := m.AgregarEmpresaNueva(nombre)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al agregar la empresa")
+        fmt.Println("Error al agregar empresa:", err)
+        http.Redirect(w, r, "/datos-empresas-externas", http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "success", "Empresa agregada correctamente")
+    http.Redirect(w, r, "/datos-empresas-externas", http.StatusSeeOther)
 }
 
