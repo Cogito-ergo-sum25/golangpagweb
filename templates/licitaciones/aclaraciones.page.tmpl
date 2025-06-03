@@ -1,0 +1,27 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <h2 class="mb-4">Aclaraciones para la partida #{{.Partida.NumPartidaConvocatoria}}</h2>
+        <a href="/nueva-aclaracion/{{ .Partida.IDPartida }}" class="btn mt-2 verde">
+            <i class="fas fa-plus"></i> Nueva Aclaracion
+        </a>
+    </div>
+    {{range .Aclaraciones}}
+    <div class="card mb-3 shadow-sm border border-secondary">
+        <div class="card-body">
+        <h5 class="card-title">{{.Pregunta}}</h5>
+        <h6 class="card-subtitle mb-2 text-muted">Empresa: {{.Empresa.Nombre}}</h6>
+        <p class="card-text"><strong>Observaciones:</strong> {{.Observaciones}}</p>
+        <p class="card-text"><strong>Ficha Técnica ID:</strong> {{.FichaTecnica}}</p>
+        </div>
+    </div>
+    {{else}}
+    <div class="col-12 text-center">
+            <div class="alert alert-warning mt-4" role="alert">
+                No hay aclaraciones registradas para esta partida.
+            </div>
+        </div>
+    {{end}}
+</div>
+{{end}}

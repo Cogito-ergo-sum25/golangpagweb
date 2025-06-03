@@ -49,6 +49,10 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Get("/editar-partida/{id}", handlers.Repo.MostrarEditarPartida)
 		mux.Post("/editar-partida/{id}", handlers.Repo.EditarPartida)
 		
+	mux.Get("/aclaraciones/{id}", handlers.Repo.MostrarAclaraciones)
+	mux.Get("/nueva-aclaracion/{id}", handlers.Repo.MostrarNuevaAclaracion)
+	mux.Post("/nueva-aclaracion", handlers.Repo.CrearNuevaAclaracion)
+
 
 
 

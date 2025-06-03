@@ -44,3 +44,27 @@ CREATE TABLE requerimientos_partida (
   PRIMARY KEY (id_requerimientos),
   FOREIGN KEY (id_partida) REFERENCES partidas(id_partida)
 )
+
+-- Tabla 'empresas'
+CREATE TABLE empresas_externas (
+  id_empresa INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)
+
+-- Tabla 'aclaraciones_partida'
+CREATE TABLE aclaraciones_partida (
+  id_aclaracion INT PRIMARY KEY AUTO_INCREMENT,
+  id_partida INT NOT NULL,
+  id_empresa INT NOT NULL,
+  pregunta TEXT,
+  observaciones TEXT,
+  ficha_tecnica_id INT,
+  id_puntos_tecnicos_modif INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (id_partida) REFERENCES partidas(id_partida),
+  FOREIGN KEY (id_empresa) REFERENCES empresas_externas(id_empresa)
+);

@@ -11,7 +11,6 @@ import (
 // FUNCIONES EXTRA DEL RENDER
 
 //ACTUALIZADORES
-
 func (m *Repository) ActualizarLicitacion(l models.Licitacion) error {
 	query := `
 		UPDATE licitaciones SET 
@@ -698,7 +697,6 @@ func (m *Repository) ObtenerIDLicitacionPorIDPartida(idPartida int) (int, error)
     return idLicitacion, err
 }
 
-
 func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.RequerimientosPartida, error) {
 	var r models.RequerimientosPartida
 
@@ -762,6 +760,102 @@ func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.Requerim
 	}
 
 	return r, nil
+}
+
+func (m *Repository) ObtenerAclaracionesPorPartidaID(idPartida int) ([]models.AclaracionesPartida, error) {
+	query := `
+		SELECT 
+			a.id_aclaracion,
+			a.pregunta,
+			a.observaciones,
+			a.ficha_tecnica_id,
+			a.id_puntos_tecnicos_modif,
+			a.created_at,
+			a.updated_at,
+
+			e.id_empresa,
+			e.nombre,
+			e.created_at AS empresa_created_at,
+			e.updated_at AS empresa_updated_at
+
+		FROM aclaraciones_partida a
+		JOIN empresas_externas e ON a.id_empresa = e.id_empresa
+		WHERE a.id_partida = ?
+	`
+
+	rows, err := m.App.DB.Query(query, idPartida)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var aclaraciones []models.AclaracionesPartida
+
+	for rows.Next() {
+		var a models.AclaracionesPartida
+		var empresa models.Empresas
+
+		err := rows.Scan(
+			&a.IDAclaracion,
+			&a.Pregunta,
+			&a.Observaciones,
+			&a.FichaTecnica,
+			&a.IDPuntosTecnico,
+			&a.CreatedAt,
+			&a.UpdatedAt,
+			&empresa.IDEmpresa,
+			&empresa.Nombre,
+			&empresa.CreatedAt,
+			&empresa.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		a.Empresa = &empresa
+		aclaraciones = append(aclaraciones, a)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return aclaraciones, nil
+}
+
+func (m *Repository) ObtenerTodasEmpresas() ([]models.Empresas, error) {
+	query := `
+		SELECT id_empresa, nombre, created_at, updated_at
+		FROM empresas_externas
+	`
+
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var empresas []models.Empresas
+
+	for rows.Next() {
+		var e models.Empresas
+		err := rows.Scan(
+			&e.IDEmpresa,
+			&e.Nombre,
+			&e.CreatedAt,
+			&e.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		empresas = append(empresas, e)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return empresas, nil
 }
 
 
@@ -903,6 +997,27 @@ func (m *Repository) InsertarLicitacionPartida(idLicitacion, idPartida int) erro
     _, err :=  m.App.DB.Exec(query, idLicitacion, idPartida)
     return err
 }
+
+func (m *Repository) InsertarAclaracion(a models.AclaracionesPartida) error {
+	query := `
+		INSERT INTO aclaraciones_partida (
+			pregunta, observaciones, ficha_tecnica_id, id_puntos_tecnicos_modif,
+			id_partida, id_empresa, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+
+	_, err := m.App.DB.Exec(query,
+		a.Pregunta,
+		a.Observaciones,
+		a.FichaTecnica,
+		a.IDPuntosTecnico,
+		a.Partida.IDPartida,
+		a.Empresa.IDEmpresa,
+		a.CreatedAt,
+		a.UpdatedAt,
+	)
+	return err
+}
+
 
 
 

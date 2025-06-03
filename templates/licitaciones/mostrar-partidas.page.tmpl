@@ -28,16 +28,16 @@
                 </div>
                 <div class="card-footer bg-light d-flex justify-content-between flex-wrap text-center">
                     <a href="/editar-partida/{{.IDPartida}}" class="btn btn-sm btn-outline-primary mb-1">Editar</a>
-					<a href="/" class="btn btn-sm btn-outline-danger mb-1">Aclaraciones</a>
+					          <a href="/aclaraciones/{{.IDPartida}}" class="btn btn-sm btn-outline-danger mb-1">Aclaraciones</a>
                     <a href="/" class="btn btn-sm btn-outline-warning mb-1">Productos</a>
                     <a href="/requerimientos/{{.IDPartida}}" 
-						class="btn btn-sm btn-outline-info mb-1 btn-requerimientos" 
-						data-id-partida="{{ .IDPartida }}" 
-						data-num-partida="{{ .NumPartidaConvocatoria }}"
-						data-bs-toggle="modal" 
-						data-bs-target="#requerimientosModal">
-						Requerimientos
-					</a>
+                    class="btn btn-sm btn-outline-info mb-1 btn-requerimientos" 
+                    data-id-partida="{{ .IDPartida }}" 
+                    data-num-partida="{{ .NumPartidaConvocatoria }}"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#requerimientosModal">
+                    Requerimientos
+                    </a>
                     <a href="/" class="btn btn-sm btn-outline-success mb-1">Propuestas</a>
                 </div>
             </div>

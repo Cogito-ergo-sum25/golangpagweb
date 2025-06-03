@@ -4,7 +4,7 @@ import "time"
 
 type Partida struct {
 	IDPartida              int       `json:"id_partida"`
-    IDLicitacion           int       `json:"id_licitacion"` // <-- Agregado aquí
+    IDLicitacion           int       `json:"id_licitacion"`
     NumPartidaConvocatoria int       `json:"numero_partida_convocatoria"`
     NombreDescripcion      string    `json:"nombre_descripcion"`
     Cantidad               int       `json:"cantidad"`
@@ -40,6 +40,14 @@ type LicitacionPartida struct {
     UpdatedAt              time.Time  `json:"updated_at"`
 }
 
+type Empresas struct{
+    IDEmpresa   int        `json:"id_empresa"`
+    Nombre      string     `json:"nombre"`
+    CreatedAt   time.Time  `json:"created_at"`
+    UpdatedAt   time.Time  `json:"updated_at"`
+}
+
+
 type RequerimientosPartida struct {
     IDRequerimientos        int       `json:"id_requerimientos"`
     IDLicitacion            int       `json:"id_licitacion"`
@@ -53,4 +61,18 @@ type RequerimientosPartida struct {
 
     CreatedAt               time.Time  `json:"created_at"`
     UpdatedAt               time.Time  `json:"updated_at"`
+}
+
+type AclaracionesPartida struct {
+    IDAclaracion       int       `json:"id_aclaracion"`
+    Pregunta           string    `json:"pregunta"`
+    Observaciones      string    `json:"observaciones"`
+    FichaTecnica       int       `json:"ficha_tecnica_id"`
+    IDPuntosTecnico    int       `json:"id_puntos_tecnicos_modif"`
+
+    Partida            *Partida  `json:"id_partida"`
+    Empresa            *Empresas `json:"id_empresa"`
+
+    CreatedAt          time.Time  `json:"created_at"`
+    UpdatedAt          time.Time  `json:"updated_at"`
 }

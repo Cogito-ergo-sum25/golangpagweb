@@ -43,10 +43,16 @@ type TemplateData struct {
     Partidas []Partida
     Partida   Partida
 
+	// --- Datos de empresas externas ---
+	Empresas []Empresas
+    Empresa   Empresas
+
 	// --- Datos de requerimientos ---
 	Requerimientos RequerimientosPartida
 
-	
+	// --- Datos de aclaraciones ---
+	Aclaraciones []AclaracionesPartida
+
 	// Listas para formularios
 	Marcas          []Marca
 	TiposProducto   []TipoProducto

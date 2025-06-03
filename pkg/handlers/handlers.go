@@ -1431,7 +1431,116 @@ func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Reques
     http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 }
 
+func (m *Repository) MostrarAclaraciones(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
 
+    // Obtener aclaracion
+    aclaraciones, err := m.ObtenerAclaracionesPorPartidaID(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
+        return
+    }
+
+    // Obtener partida
+    partida, err := m.ObtenerPartidaPorID(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
+        return
+    }
+
+    // Render
+    data := &models.TemplateData{
+        Aclaraciones: aclaraciones,
+        Partida:      partida,
+        CSRFToken:  nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/aclaraciones.page.tmpl", data)
+}
+
+func (m *Repository) MostrarNuevaAclaracion(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    // Obtener partida
+    partida, err := m.ObtenerPartidaPorID(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
+        return
+    }
+
+    empresas, err := m.ObtenerTodasEmpresas()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    data := &models.TemplateData{
+        Empresas:   empresas,
+        Partida:    partida,
+        CSRFToken:  nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/nueva-aclaracion.page.tmpl", data)
+}
+
+func (m *Repository) CrearNuevaAclaracion(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "No se pudo procesar el formulario", http.StatusBadRequest)
+		return
+	}
+
+	idPartida, err := strconv.Atoi(r.FormValue("id_partida"))
+	if err != nil {
+		http.Error(w, "ID de partida inválido", http.StatusBadRequest)
+		return
+	}
+
+	idEmpresa, err := strconv.Atoi(r.FormValue("id_empresa"))
+	if err != nil {
+		http.Error(w, "ID de empresa inválido", http.StatusBadRequest)
+		return
+	}
+
+	fichaTecnicaID, _ := strconv.Atoi(r.FormValue("ficha_tecnica_id")) // puede venir vacío
+	idPuntosTecnicosModif, _ := strconv.Atoi(r.FormValue("id_puntos_tecnicos_modif")) // también opcional
+
+	aclaracion := models.AclaracionesPartida{
+		Pregunta:        r.FormValue("pregunta"),
+		Observaciones:   r.FormValue("observaciones"),
+		FichaTecnica:    fichaTecnicaID,
+		IDPuntosTecnico: idPuntosTecnicosModif,
+		Partida:         &models.Partida{IDPartida: idPartida},
+		Empresa:         &models.Empresas{IDEmpresa: idEmpresa},
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	err = m.InsertarAclaracion(aclaracion)
+	if err != nil {
+		fmt.Println("ERROR al insertar aclaración:", err)
+		http.Error(w, "Error al insertar la aclaración", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/aclaraciones/%d", idPartida), http.StatusSeeOther)
+}
 
 
 
