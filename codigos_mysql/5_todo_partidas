@@ -68,3 +68,16 @@ CREATE TABLE aclaraciones_partida (
   FOREIGN KEY (id_partida) REFERENCES partidas(id_partida),
   FOREIGN KEY (id_empresa) REFERENCES empresas_externas(id_empresa)
 );
+
+CREATE TABLE partida_productos (
+    id_partida_producto INT PRIMARY KEY AUTO_INCREMENT,
+    id_producto INT NOT NULL,
+    id_partida INT NOT NULL,
+    precio_ofertado DECIMAL(10,2),
+    observaciones TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
+    FOREIGN KEY (id_partida) REFERENCES partidas(id_partida)
+);

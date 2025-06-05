@@ -1570,6 +1570,217 @@ func (m *Repository) AgregarEmpresaExternaContexto(w http.ResponseWriter, r *htt
     http.Redirect(w, r, "/nueva-aclaracion/"+idPartida, http.StatusSeeOther)
 }
 
+func (m *Repository) MostrarProductosPartida(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+    // Obtener partida
+    partida, err := m.ObtenerPartidaPorID(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
+        return
+    }
+
+    productosPartida, err := m.ObtenerProductosDePartida(idPartida)
+    if err != nil {
+        http.Error(w, "Error al obtener productos de la partida", http.StatusInternalServerError)
+        return
+    }
+
+
+    data := &models.TemplateData{
+
+        Partida:      partida,
+        ProductosPartida: productosPartida,
+        CSRFToken: nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/productos-partida.page.tmpl", data)
+}
+
+func (m *Repository) MostrarNuevoProductoPartida(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+    // Obtener partida
+    partida, err := m.ObtenerPartidaPorID(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
+        return
+    }
+    // Obtener todos los productos
+    productos, err := m.ObtenerTodosProductos()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al obtener productos: "+err.Error())
+        log.Println("Error al obtener productos:", err)
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    data := &models.TemplateData{
+        Productos:  productos,
+        Partida:      partida,
+        CSRFToken: nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/nuevo-producto-partida.page.tmpl", data)
+}
+
+func (m *Repository) CrearNuevoProductoPartida(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        m.App.Session.Put(r.Context(), "error", "Método no permitido")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    err := r.ParseForm()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    idPartidaStr := r.Form.Get("id_partida")
+    idPartida, err := strconv.Atoi(idPartidaStr)
+    if err != nil || idPartida <= 0 {
+        m.App.Session.Put(r.Context(), "error", "ID de partida inválido")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Validar que la partida exista
+    if !m.ExisteID("partidas", idPartida) {
+        m.App.Session.Put(r.Context(), "error", "La partida no existe")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Procesar productos
+    err = m.procesarProductosPartida(r, idPartida)
+    if err != nil {
+        log.Println("Error al guardar productos de la partida:", err)
+        m.App.Session.Put(r.Context(), "error", "Error al guardar productos de la partida")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "flash", "Productos guardados exitosamente")
+    http.Redirect(w, r, fmt.Sprintf("/productos-partida/%d", idPartida), http.StatusSeeOther)
+}
+
+func (m *Repository) procesarProductosPartida(r *http.Request, idPartida int) error {
+    productos := make([]struct {
+        IDProducto     string
+        PrecioOfertado string
+        Observaciones  string
+    }, 0)
+
+    for key, values := range r.Form {
+        if strings.HasPrefix(key, "productos[") && strings.Contains(key, "][id_producto]") {
+            idx := strings.Split(key, "[")[1]
+            idx = strings.Split(idx, "]")[0]
+
+            producto := struct {
+                IDProducto     string
+                PrecioOfertado string
+                Observaciones  string
+            }{
+                IDProducto:     values[0],
+                PrecioOfertado: r.Form.Get(fmt.Sprintf("productos[%s][precio_ofertado]", idx)),
+                Observaciones:  r.Form.Get(fmt.Sprintf("productos[%s][observaciones]", idx)),
+            }
+
+            if producto.IDProducto != "" {
+                productos = append(productos, producto)
+            }
+        }
+    }
+
+    for _, p := range productos {
+        idProducto, err := strconv.Atoi(p.IDProducto)
+        if err != nil {
+            continue
+        }
+
+        precio, err := strconv.ParseFloat(p.PrecioOfertado, 64)
+        if err != nil || precio <= 0 {
+            continue
+        }
+
+        if !m.ExisteID("productos", idProducto) {
+            continue
+        }
+
+        _, err = m.App.DB.Exec(`
+            INSERT INTO partida_productos (
+                id_partida, id_producto, precio_ofertado,
+                observaciones, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            idPartida,
+            idProducto,
+            precio,
+            p.Observaciones,
+            time.Now(),
+            time.Now(),
+        )
+        if err != nil {
+            return err
+        }
+    }
+
+    return nil
+}
+
+func (m *Repository) EditarProductoPartida(w http.ResponseWriter, r *http.Request) {
+    err := r.ParseForm()
+    if err != nil {
+        http.Error(w, "Error al leer formulario", http.StatusBadRequest)
+        return
+    }
+
+    idStr := r.Form.Get("id_partida_producto")
+    precioStr := r.Form.Get("precio_ofertado")
+    observaciones := r.Form.Get("observaciones")
+
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    precio, err := strconv.ParseFloat(precioStr, 64)
+    if err != nil {
+        http.Error(w, "Precio inválido", http.StatusBadRequest)
+        return
+    }
+
+    p := models.PartidaProductos{
+        IDPartidaProducto: id,
+        PrecioOfertado:    precio,
+        Observaciones:     observaciones,
+    }
+
+    err = m.ActualizarProductoPartida(p)
+    if err != nil {
+        http.Error(w, "Error actualizando producto", http.StatusInternalServerError)
+        return
+    }
+    idPartida, err := m.ObtenerIDPartidaPorIDPartidaProducto(p.IDPartidaProducto)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la partida para redireccionar", http.StatusInternalServerError)
+        return
+    }
+    http.Redirect(w, r, "/productos-partida/"+strconv.Itoa(idPartida), http.StatusSeeOther)
+}
+
+
+
 
 
 

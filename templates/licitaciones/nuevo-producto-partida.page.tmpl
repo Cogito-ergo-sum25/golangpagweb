@@ -1,0 +1,109 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container">
+    <!-- Sección de Productos -->
+    <div class="card shadow-lg mb-4 border-0">
+        <div class="card-header bg-gradient-primary text-white azul d-flex align-items-center justify-content-between">
+            <span>
+                <i class="bi bi-box-seam me-2"></i>
+                Nuevos productos para la partida #{{.Partida.NumPartidaConvocatoria}}
+            </span>
+            <button type="button" class="btn btn-light btn-sm" onclick="agregarProducto()">
+                <i class="bi bi-plus-circle text-success"></i> Agregar Producto
+            </button>
+        </div>
+        <form id="productos-form" method="POST" action="/nuevo-producto-partida">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        <input type="hidden" name="id_partida" value="{{.Partida.IDPartida}}">
+            <div class="card-body bg-light">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="productos-table">
+                        <thead class="table-primary">
+                            <tr>
+                                <th width="40%"><i class="bi bi-box"></i> Producto</th>
+                                <th width="15%"><i class="bi bi-currency-dollar"></i> Precio Ofertado</th>
+                                <th width="35%"><i class="bi bi-card-text"></i> Observaciones</th>
+                                <th width="5%"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="productos-body">
+                            <!-- Fila inicial vacía -->
+                            <tr class="producto-row">
+                                <td>
+                                    <select class="form-select producto-select" name="productos[0][id_producto]" required>
+                                        <option value="">-- Seleccione producto --</option>
+                                        {{range .Productos}}
+                                        <option value="{{.IDProducto}}">
+                                            {{.Nombre}} 
+                                            {{if .Modelo}}(Modelo: {{.Modelo}}){{end}}
+                                            {{if .SKU}}(SKU: {{.SKU}}){{end}}
+                                        </option>
+                                        {{end}}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" step="0.5" class="form-control" name="productos[0][precio_ofertado]" required>
+                                </td>
+                                <td>
+                                    <textarea class="form-control" name="productos[0][observaciones]" rows="1"></textarea>
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="quitarFila(this)" title="Quitar">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn verde">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Productos
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let productoIndex = 1;
+function agregarProducto() {
+    const tbody = document.getElementById('productos-body');
+    const row = document.createElement('tr');
+    row.className = 'producto-row';
+    row.innerHTML = `
+        <td>
+            <select class="form-select producto-select" name="productos[${productoIndex}][id_producto]" required>
+                <option value="">-- Seleccione producto --</option>
+                {{range .Productos}}
+                <option value="{{.IDProducto}}">
+                    {{.Nombre}} 
+                    {{if .Modelo}}(Modelo: {{.Modelo}}){{end}}
+                    {{if .SKU}}(SKU: {{.SKU}}){{end}}
+                </option>
+                {{end}}
+            </select>
+        </td>
+        <td>
+            <input type="number" step="0.5" class="form-control" name="productos[${productoIndex}][precio_ofertado]" required>
+        </td>
+        <td>
+            <textarea class="form-control" name="productos[${productoIndex}][observaciones]" rows="1"></textarea>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="quitarFila(this)" title="Quitar">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(row);
+    productoIndex++;
+}
+
+function quitarFila(btn) {
+    const row = btn.closest('tr');
+    row.remove();
+}
+</script>
+{{end}}

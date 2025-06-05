@@ -10,7 +10,7 @@ import (
 
 // FUNCIONES EXTRA DEL RENDER
 
-//ACTUALIZADORES
+// ACTUALIZADORES
 func (m *Repository) ActualizarLicitacion(l models.Licitacion) error {
 	query := `
 		UPDATE licitaciones SET 
@@ -19,7 +19,7 @@ func (m *Repository) ActualizarLicitacion(l models.Licitacion) error {
 			tiempo_entrega=?, revisada=?, intevi=?, observaciones_generales=?, 
 			updated_at=?, criterio_evaluacion=?
 		WHERE id_licitacion=?`
-	
+
 	_, err := m.App.DB.Exec(query,
 		l.IDEntidad, l.NumContratacion, l.Caracter, l.Nombre, l.Estatus, l.Tipo,
 		l.FechaJunta, l.FechaPropuestas, l.FechaFallo, l.FechaEntrega,
@@ -30,7 +30,7 @@ func (m *Repository) ActualizarLicitacion(l models.Licitacion) error {
 }
 
 func (m *Repository) ActualizarPartida(p models.Partida) error {
-    query := `
+	query := `
         UPDATE partidas SET 
             numero_partida_convocatoria = ?, 
             nombre_descripcion = ?, 
@@ -49,28 +49,37 @@ func (m *Repository) ActualizarPartida(p models.Partida) error {
         WHERE id_partida = ?
     `
 
-    _, err := m.App.DB.Exec(query,
-        p.NumPartidaConvocatoria,
-        p.NombreDescripcion,
-        p.Cantidad,
-        p.CantidadMinima,
-        p.CantidadMaxima,
-        p.NoFichaTecnica,
-        p.TipoDeBien,
-        p.ClaveCompendio,
-        p.ClaveCucop,
-        p.UnidadMedida,
-        p.DiasDeEntrega,
-        p.FechaDeEntrega,
-        p.Garantia,
-        p.UpdatedAt,
-        p.IDPartida,
-    )
+	_, err := m.App.DB.Exec(query,
+		p.NumPartidaConvocatoria,
+		p.NombreDescripcion,
+		p.Cantidad,
+		p.CantidadMinima,
+		p.CantidadMaxima,
+		p.NoFichaTecnica,
+		p.TipoDeBien,
+		p.ClaveCompendio,
+		p.ClaveCucop,
+		p.UnidadMedida,
+		p.DiasDeEntrega,
+		p.FechaDeEntrega,
+		p.Garantia,
+		p.UpdatedAt,
+		p.IDPartida,
+	)
 
-    return err
+	return err
 }
 
+func (m *Repository) ActualizarProductoPartida(p models.PartidaProductos) error {
+    query := `
+        UPDATE partida_productos
+        SET precio_ofertado = ?, observaciones = ?, updated_at = NOW()
+        WHERE id_partida_producto = ?;
+    `
 
+    _, err := m.App.DB.Exec(query, p.PrecioOfertado, p.Observaciones, p.IDPartidaProducto)
+    return err
+}
 
 
 // GETTERS
@@ -194,118 +203,118 @@ func (m *Repository) ObtenerCertificaciones() ([]models.Certificacion, error) {
 }
 
 func (m *Repository) ObtenerEstados() ([]models.EstadosRepublica, error) {
-    var estados []models.EstadosRepublica
-    
-    query := `
+	var estados []models.EstadosRepublica
+
+	query := `
         SELECT clave_estado, nombre 
         FROM estados_republica 
         ORDER BY nombre
     `
-    
-    rows, err := m.App.DB.Query(query)
-    if err != nil {
-        log.Println("Error al obtener estados:", err)
-        return nil, err
-    }
-    defer rows.Close()
 
-    for rows.Next() {
-        var estado models.EstadosRepublica
-        err := rows.Scan(&estado.ClaveEstado, &estado.NombreEstado)
-        if err != nil {
-            log.Println("Error al escanear estado:", err)
-            continue
-        }
-        estados = append(estados, estado)
-    }
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		log.Println("Error al obtener estados:", err)
+		return nil, err
+	}
+	defer rows.Close()
 
-    return estados, nil
+	for rows.Next() {
+		var estado models.EstadosRepublica
+		err := rows.Scan(&estado.ClaveEstado, &estado.NombreEstado)
+		if err != nil {
+			log.Println("Error al escanear estado:", err)
+			continue
+		}
+		estados = append(estados, estado)
+	}
+
+	return estados, nil
 }
 
 func (m *Repository) ObtenerCompañias() ([]models.Compañias, error) {
-    var compañias []models.Compañias
+	var compañias []models.Compañias
 
-    query := `
+	query := `
         SELECT id_compañia, nombre, tipo
         FROM compañias
         ORDER BY nombre
     `
-    
-    rows, err := m.App.DB.Query(query)
-    if err != nil {
-        log.Println("Error al obtener compañias:", err)
-        return nil, err
-    }
-    defer rows.Close()
 
-    for rows.Next() {
-        var compañia models.Compañias
-        err := rows.Scan(&compañia.IDCompañia, &compañia.Nombre, &compañia.Tipo)
-        if err != nil {
-            log.Println("Error al escanear compañia:", err)
-            continue
-        }
-        compañias = append(compañias, compañia)
-    }
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		log.Println("Error al obtener compañias:", err)
+		return nil, err
+	}
+	defer rows.Close()
 
-    return compañias, nil
+	for rows.Next() {
+		var compañia models.Compañias
+		err := rows.Scan(&compañia.IDCompañia, &compañia.Nombre, &compañia.Tipo)
+		if err != nil {
+			log.Println("Error al escanear compañia:", err)
+			continue
+		}
+		compañias = append(compañias, compañia)
+	}
+
+	return compañias, nil
 }
 
 // ObtenerTodosProductos devuelve todos los productos
 func (m *Repository) ObtenerTodosProductos() ([]models.Producto, error) {
-    query := `SELECT p.id_producto, p.sku, m.nombre as marca, c.nombre as clasificacion,
+	query := `SELECT p.id_producto, p.sku, m.nombre as marca, c.nombre as clasificacion,
               p.nombre_corto, p.modelo, p.nombre, p.version, p.serie,
               p.codigo_fabricante, p.descripcion
               FROM productos p
               LEFT JOIN marcas m ON p.id_marca = m.id_marca
               LEFT JOIN clasificaciones c ON p.id_clasificacion = c.id_clasificacion
               ORDER BY p.id_producto DESC`
-    
-    rows, err := m.App.DB.Query(query)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
 
-    var productos []models.Producto
-    for rows.Next() {
-        var p models.Producto
-        err := rows.Scan(
-            &p.IDProducto, &p.SKU, &p.Marca, &p.Clasificacion,
-            &p.NombreCorto, &p.Modelo, &p.Nombre, &p.Version,
-            &p.Serie, &p.CodigoFabricante, &p.Descripcion,
-        )
-        if err != nil {
-            return nil, err
-        }
-        productos = append(productos, p)
-    }
-    return productos, nil
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var productos []models.Producto
+	for rows.Next() {
+		var p models.Producto
+		err := rows.Scan(
+			&p.IDProducto, &p.SKU, &p.Marca, &p.Clasificacion,
+			&p.NombreCorto, &p.Modelo, &p.Nombre, &p.Version,
+			&p.Serie, &p.CodigoFabricante, &p.Descripcion,
+		)
+		if err != nil {
+			return nil, err
+		}
+		productos = append(productos, p)
+	}
+	return productos, nil
 }
 
 func (m *Repository) ObtenerLicitacionesParaSelect() ([]models.Licitacion, error) {
-    query := `SELECT id_licitacion, nombre, num_contratacion FROM licitaciones ORDER BY id_licitacion DESC`
-    
-    rows, err := m.App.DB.Query(query)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	query := `SELECT id_licitacion, nombre, num_contratacion FROM licitaciones ORDER BY id_licitacion DESC`
 
-    var licitaciones []models.Licitacion
-    for rows.Next() {
-        var l models.Licitacion
-        err := rows.Scan(&l.IDLicitacion, &l.Nombre, &l.NumContratacion)
-        if err != nil {
-            return nil, err
-        }
-        licitaciones = append(licitaciones, l)
-    }
-    return licitaciones, nil
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var licitaciones []models.Licitacion
+	for rows.Next() {
+		var l models.Licitacion
+		err := rows.Scan(&l.IDLicitacion, &l.Nombre, &l.NumContratacion)
+		if err != nil {
+			return nil, err
+		}
+		licitaciones = append(licitaciones, l)
+	}
+	return licitaciones, nil
 }
 
 func (m *Repository) ObtenerProyectosConRelaciones() ([]models.Proyecto, error) {
-    query := `
+	query := `
         SELECT 
             p.id_proyecto, p.nombre, p.descripcion, p.fecha_inicio, 
             COALESCE(p.fecha_fin, CAST('1970-01-01' AS DATE)) AS fecha_fin,
@@ -334,59 +343,59 @@ func (m *Repository) ObtenerProyectosConRelaciones() ([]models.Proyecto, error) 
             p.id_proyecto, pp.id_producto
     `
 
-    rows, err := m.App.DB.Query(query)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var proyectos []models.Proyecto
-    var currentProyectoID int
-    var currentProyecto *models.Proyecto
+	var proyectos []models.Proyecto
+	var currentProyectoID int
+	var currentProyecto *models.Proyecto
 
-    for rows.Next() {
-        var p models.Proyecto
-        var pp models.ProductoProyecto
+	for rows.Next() {
+		var p models.Proyecto
+		var pp models.ProductoProyecto
 
-        err := rows.Scan(
-            &p.IDProyecto, &p.Nombre, &p.Descripcion, &p.FechaInicio, &p.FechaFin,
-            &p.CreatedAt, &p.UpdatedAt,
-            &p.IDLicitacion, &p.LicitacionNombre, &p.NumContratacion,
-            &p.Lugar,
-            &p.FechaJunta, &p.FechaPropuestas, &p.FechaFallo, &p.FechaEntrega,
-            &p.EstadoLicitacion,
-            &p.EntidadNombre,
-            &pp.IDProducto, &pp.Cantidad, &pp.PrecioUnitario, &pp.Especificaciones,
-            &pp.ProductoNombre, &pp.SKU, &pp.ImagenURL, &pp.Modelo,
-        )
-        
-        if err != nil {
-            return nil, err
-        }
+		err := rows.Scan(
+			&p.IDProyecto, &p.Nombre, &p.Descripcion, &p.FechaInicio, &p.FechaFin,
+			&p.CreatedAt, &p.UpdatedAt,
+			&p.IDLicitacion, &p.LicitacionNombre, &p.NumContratacion,
+			&p.Lugar,
+			&p.FechaJunta, &p.FechaPropuestas, &p.FechaFallo, &p.FechaEntrega,
+			&p.EstadoLicitacion,
+			&p.EntidadNombre,
+			&pp.IDProducto, &pp.Cantidad, &pp.PrecioUnitario, &pp.Especificaciones,
+			&pp.ProductoNombre, &pp.SKU, &pp.ImagenURL, &pp.Modelo,
+		)
 
-        if p.IDProyecto != currentProyectoID {
-            if currentProyecto != nil {
-                proyectos = append(proyectos, *currentProyecto)
-            }
-            currentProyectoID = p.IDProyecto
-            currentProyecto = &p
-            currentProyecto.Productos = []models.ProductoProyecto{}
-        }
+		if err != nil {
+			return nil, err
+		}
 
-        if pp.IDProducto != 0 {
-            currentProyecto.Productos = append(currentProyecto.Productos, pp)
-        }
-    }
+		if p.IDProyecto != currentProyectoID {
+			if currentProyecto != nil {
+				proyectos = append(proyectos, *currentProyecto)
+			}
+			currentProyectoID = p.IDProyecto
+			currentProyecto = &p
+			currentProyecto.Productos = []models.ProductoProyecto{}
+		}
 
-    if currentProyecto != nil {
-        proyectos = append(proyectos, *currentProyecto)
-    }
+		if pp.IDProducto != 0 {
+			currentProyecto.Productos = append(currentProyecto.Productos, pp)
+		}
+	}
 
-    return proyectos, nil
+	if currentProyecto != nil {
+		proyectos = append(proyectos, *currentProyecto)
+	}
+
+	return proyectos, nil
 }
 
 func (m *Repository) ObtenerTodasEntidades() ([]models.Entidad, error) {
-    query := `
+	query := `
         SELECT 
             e.id_entidad, 
             e.nombre, 
@@ -405,37 +414,37 @@ func (m *Repository) ObtenerTodasEntidades() ([]models.Entidad, error) {
         LEFT JOIN compañias c ON e.id_compañia = c.id_compañia
         ORDER BY e.nombre
     `
-    
-    rows, err := m.App.DB.Query(query)
-    if (err != nil) {
-        return nil, err
-    }
-    defer rows.Close()
 
-    var entidades []models.Entidad
-    for rows.Next() {
-        var e models.Entidad
-        
-        err := rows.Scan(
-            &e.IDEntidad,
-            &e.Nombre,
-            &e.Compañia.IDCompañia,
-            &e.Compañia.Nombre,
-            &e.Compañia.Tipo,
-            &e.Estado.ClaveEstado,
-            &e.Estado.NombreEstado,
-            &e.Municipio,
-            &e.CodigoPostal,
-            &e.Direccion,
-            &e.CreatedAt,
-            &e.UpdatedAt,
-        )        
-        if err != nil {
-            return nil, err
-        }
-        entidades = append(entidades, e)
-    }
-    return entidades, nil
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entidades []models.Entidad
+	for rows.Next() {
+		var e models.Entidad
+
+		err := rows.Scan(
+			&e.IDEntidad,
+			&e.Nombre,
+			&e.Compañia.IDCompañia,
+			&e.Compañia.Nombre,
+			&e.Compañia.Tipo,
+			&e.Estado.ClaveEstado,
+			&e.Estado.NombreEstado,
+			&e.Municipio,
+			&e.CodigoPostal,
+			&e.Direccion,
+			&e.CreatedAt,
+			&e.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		entidades = append(entidades, e)
+	}
+	return entidades, nil
 }
 
 func (m *Repository) ObtenerTodasLicitaciones() ([]models.Licitacion, error) {
@@ -490,7 +499,7 @@ func (m *Repository) ObtenerTodasLicitaciones() ([]models.Licitacion, error) {
 			&l.CompaniaTipo,
 			&l.CreatedAt,
 			&l.UpdatedAt,
-            &l.CriterioEvaluacion,
+			&l.CriterioEvaluacion,
 		)
 		if err != nil {
 			log.Println("Error escaneando fila de licitación:", err)
@@ -561,7 +570,7 @@ func (m *Repository) ObtenerLicitacionPorID(id int) (models.Licitacion, error) {
 }
 
 func (m *Repository) ObtenerPartidasPorLicitacionID(idLicitacion int) ([]models.Partida, error) {
-    query := `
+	query := `
         SELECT 
             p.id_partida,
             p.numero_partida_convocatoria,
@@ -584,50 +593,50 @@ func (m *Repository) ObtenerPartidasPorLicitacionID(idLicitacion int) ([]models.
         WHERE lp.id_licitacion = ?
     `
 
-    rows, err := m.App.DB.Query(query, idLicitacion)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := m.App.DB.Query(query, idLicitacion)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var partidas []models.Partida
+	var partidas []models.Partida
 
-    for rows.Next() {
-        var p models.Partida
-        err := rows.Scan(
-            &p.IDPartida,
-            &p.NumPartidaConvocatoria,
-            &p.NombreDescripcion,
-            &p.Cantidad,
-            &p.CantidadMinima,
-            &p.CantidadMaxima,
-            &p.NoFichaTecnica,
-            &p.TipoDeBien,
-            &p.ClaveCompendio,
-            &p.ClaveCucop,
-            &p.UnidadMedida,
-            &p.DiasDeEntrega,
-            &p.FechaDeEntrega,
-            &p.Garantia,
-            &p.CreatedAt,
-            &p.UpdatedAt,
-        )
-        if err != nil {
-            return nil, err
-        }
+	for rows.Next() {
+		var p models.Partida
+		err := rows.Scan(
+			&p.IDPartida,
+			&p.NumPartidaConvocatoria,
+			&p.NombreDescripcion,
+			&p.Cantidad,
+			&p.CantidadMinima,
+			&p.CantidadMaxima,
+			&p.NoFichaTecnica,
+			&p.TipoDeBien,
+			&p.ClaveCompendio,
+			&p.ClaveCucop,
+			&p.UnidadMedida,
+			&p.DiasDeEntrega,
+			&p.FechaDeEntrega,
+			&p.Garantia,
+			&p.CreatedAt,
+			&p.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
 
-        partidas = append(partidas, p)
-    }
+		partidas = append(partidas, p)
+	}
 
-    if err = rows.Err(); err != nil {
-        return nil, err
-    }
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
 
-    return partidas, nil
+	return partidas, nil
 }
 
 func (m *Repository) ObtenerPartidaPorID(idPartida int) (models.Partida, error) {
-    query := `
+	query := `
         SELECT 
             id_partida,
             
@@ -650,51 +659,51 @@ func (m *Repository) ObtenerPartidaPorID(idPartida int) (models.Partida, error) 
         WHERE id_partida = ?
     `
 
-    var p models.Partida
+	var p models.Partida
 
-    err := m.App.DB.QueryRow(query, idPartida).Scan(
-        &p.IDPartida,
-        &p.NumPartidaConvocatoria,
-        &p.NombreDescripcion,
-        &p.Cantidad,
-        &p.CantidadMinima,
-        &p.CantidadMaxima,
-        &p.NoFichaTecnica,
-        &p.TipoDeBien,
-        &p.ClaveCompendio,
-        &p.ClaveCucop,
-        &p.UnidadMedida,
-        &p.DiasDeEntrega,
-        &p.FechaDeEntrega,
-        &p.Garantia,
-        &p.CreatedAt,
-        &p.UpdatedAt,
-    )
-    if err != nil {
-        return models.Partida{}, err
-    }
+	err := m.App.DB.QueryRow(query, idPartida).Scan(
+		&p.IDPartida,
+		&p.NumPartidaConvocatoria,
+		&p.NombreDescripcion,
+		&p.Cantidad,
+		&p.CantidadMinima,
+		&p.CantidadMaxima,
+		&p.NoFichaTecnica,
+		&p.TipoDeBien,
+		&p.ClaveCompendio,
+		&p.ClaveCucop,
+		&p.UnidadMedida,
+		&p.DiasDeEntrega,
+		&p.FechaDeEntrega,
+		&p.Garantia,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+	)
+	if err != nil {
+		return models.Partida{}, err
+	}
 
-    return p, nil
+	return p, nil
 }
 
 func (m *Repository) ObtenerIDLicitacionPorPartida(idPartida int) (int, error) {
-    var idLicitacion int
-    query := `SELECT id_licitacion FROM licitacion_partidas WHERE id_partida = ? LIMIT 1`
+	var idLicitacion int
+	query := `SELECT id_licitacion FROM licitacion_partidas WHERE id_partida = ? LIMIT 1`
 
-    err := m.App.DB.QueryRow(query, idPartida).Scan(&idLicitacion)
-    return idLicitacion, err
+	err := m.App.DB.QueryRow(query, idPartida).Scan(&idLicitacion)
+	return idLicitacion, err
 }
 
 func (m *Repository) ObtenerIDLicitacionPorIDPartida(idPartida int) (int, error) {
-    var idLicitacion int
-    query := `
+	var idLicitacion int
+	query := `
         SELECT id_licitacion 
         FROM licitacion_partidas 
         WHERE id_partida = ? 
         LIMIT 1
     `
-    err := m.App.DB.QueryRow(query, idPartida).Scan(&idLicitacion)
-    return idLicitacion, err
+	err := m.App.DB.QueryRow(query, idPartida).Scan(&idLicitacion)
+	return idLicitacion, err
 }
 
 func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.RequerimientosPartida, error) {
@@ -858,74 +867,134 @@ func (m *Repository) ObtenerTodasEmpresas() ([]models.Empresas, error) {
 	return empresas, nil
 }
 
+func (m *Repository) ObtenerProductosDePartida(idPartida int) ([]models.PartidaProductos, error) {
+    query := `
+        SELECT 
+            pp.id_partida_producto,
+            pp.id_producto,
+            p.nombre,
+            p.modelo,
+            p.sku,
+            pp.precio_ofertado,
+            pp.observaciones,
+            pp.created_at
+        FROM partida_productos pp
+        INNER JOIN productos p ON pp.id_producto = p.id_producto
+        WHERE pp.id_partida = ?
+        ORDER BY pp.created_at DESC;
+    `
+
+    rows, err := m.App.DB.Query(query, idPartida)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var productos []models.PartidaProductos
+    for rows.Next() {
+        var p models.PartidaProductos
+        var prod models.Producto
+
+        err := rows.Scan(
+            &p.IDPartidaProducto,
+            &p.IDProducto,
+            &prod.Nombre,
+            &prod.Modelo,
+            &prod.SKU,
+            &p.PrecioOfertado,
+            &p.Observaciones,
+            &p.CreatedAt,
+        )
+        if err != nil {
+            return nil, err
+        }
+
+        p.Producto = &prod
+        productos = append(productos, p)
+    }
+
+    return productos, nil
+}
+
+func (m *Repository) ObtenerIDPartidaPorIDPartidaProducto(idPartidaProducto int) (int, error) {
+    var idPartida int
+    query := `SELECT id_partida FROM partida_productos WHERE id_partida_producto = ?`
+    err := m.App.DB.QueryRow(query, idPartidaProducto).Scan(&idPartida)
+    if err != nil {
+        return 0, err
+    }
+    return idPartida, nil
+}
 
 
 
 
 
 
-// SETTERS 
+
+
+// SETTERS
 
 // AgregarMarca inserta una nueva marca en la base de datos
 func (m *Repository) AgregarMarca(nombre string) error {
-    _, err := m.App.DB.Exec("INSERT INTO marcas (nombre) VALUES (?)", nombre)
-    return err
+	_, err := m.App.DB.Exec("INSERT INTO marcas (nombre) VALUES (?)", nombre)
+	return err
 }
 
 // AgregarTipoProducto inserta un nuevo tipo de producto en la base de datos
 func (m *Repository) AgregarTipoProducto(nombre string) error {
-    _, err := m.App.DB.Exec("INSERT INTO tipos_producto (nombre) VALUES (?)", nombre)
-    return err
+	_, err := m.App.DB.Exec("INSERT INTO tipos_producto (nombre) VALUES (?)", nombre)
+	return err
 }
 
 // AgregarClasificacion inserta una nueva clasificación en la base de datos
 func (m *Repository) AgregarClasificacion(nombre string) error {
-    _, err := m.App.DB.Exec("INSERT INTO clasificaciones (nombre) VALUES (?)", nombre)
-    return err
+	_, err := m.App.DB.Exec("INSERT INTO clasificaciones (nombre) VALUES (?)", nombre)
+	return err
 }
 
 // AgregarPais inserta un nuevo país en la base de datos
 func (m *Repository) AgregarPais(nombre, codigo string) error {
-    _, err := m.App.DB.Exec("INSERT INTO paises (nombre, codigo) VALUES (?, ?)", nombre, codigo)
-    return err
+	_, err := m.App.DB.Exec("INSERT INTO paises (nombre, codigo) VALUES (?, ?)", nombre, codigo)
+	return err
 }
 
 // AgregarCertificacion inserta una nueva certificación en la base de datos
 func (m *Repository) AgregarCertificacion(nombre, organismoEmisor string) error {
-    _, err := m.App.DB.Exec("INSERT INTO certificaciones (nombre, organismo_emisor) VALUES (?, ?)", nombre, organismoEmisor)
-    return err
+	_, err := m.App.DB.Exec("INSERT INTO certificaciones (nombre, organismo_emisor) VALUES (?, ?)", nombre, organismoEmisor)
+	return err
 }
 
 func (m *Repository) AgregarCompañia(nombre, tipo string) error {
-    _, err := m.App.DB.Exec("INSERT INTO compañias (nombre, tipo) VALUES (?, ?)", nombre, tipo)
-    return err
+	_, err := m.App.DB.Exec("INSERT INTO compañias (nombre, tipo) VALUES (?, ?)", nombre, tipo)
+	return err
 }
 
 func (m *Repository) InsertarEntidad(entidad models.Entidad) error {
-    query := `
+	query := `
         INSERT INTO entidades (
             nombre, id_compañia, estado, 
             municipio, codigo_postal, direccion,
             created_at, updated_at
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `
-    _, err := m.App.DB.Exec(query,
-        entidad.Nombre,
-        entidad.Compañia.IDCompañia,
-        entidad.Estado.ClaveEstado,
-        entidad.Municipio,
-        entidad.CodigoPostal,
-        entidad.Direccion,
-        entidad.CreatedAt,
-        entidad.UpdatedAt,
-    )
+	_, err := m.App.DB.Exec(query,
+		entidad.Nombre,
+		entidad.Compañia.IDCompañia,
+		entidad.Estado.ClaveEstado,
+		entidad.Municipio,
+		entidad.CodigoPostal,
+		entidad.Direccion,
+		entidad.CreatedAt,
+		entidad.UpdatedAt,
+	)
 
-    return err
+	return err
 }
 
 func (m *Repository) InsertarLicitacion(licitacion models.Licitacion) error {
-	query := 
-    `INSERT INTO licitaciones (
+	query :=
+		`INSERT INTO licitaciones (
         id_entidad, num_contratacion, caracter, nombre,
         estatus, tipo, fecha_junta, fecha_propuestas,
         fecha_fallo, fecha_entrega, tiempo_entrega,
@@ -949,13 +1018,13 @@ func (m *Repository) InsertarLicitacion(licitacion models.Licitacion) error {
 		licitacion.ObservacionesGenerales,
 		licitacion.CreatedAt,
 		licitacion.UpdatedAt,
-        licitacion.CriterioEvaluacion,
+		licitacion.CriterioEvaluacion,
 	)
 	return err
 }
 
 func (m *Repository) InsertarPartida(p models.Partida) (int, error) {
-    query := `
+	query := `
         INSERT INTO partidas (
             numero_partida_convocatoria, nombre_descripcion, cantidad, cantidad_minima,
             cantidad_maxima, no_ficha_tecnica, tipo_de_bien, clave_compendio,
@@ -964,38 +1033,38 @@ func (m *Repository) InsertarPartida(p models.Partida) (int, error) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
     `
 
-    result, err := m.App.DB.Exec(
-        query,
-        p.NumPartidaConvocatoria,
-        p.NombreDescripcion,
-        p.Cantidad,
-        p.CantidadMinima,
-        p.CantidadMaxima,
-        p.NoFichaTecnica,
-        p.TipoDeBien,
-        p.ClaveCompendio,
-        p.ClaveCucop,
-        p.UnidadMedida,
-        p.DiasDeEntrega,
-        p.FechaDeEntrega,
-        p.Garantia,
-    )
-    if err != nil {
-        return 0, err
-    }
+	result, err := m.App.DB.Exec(
+		query,
+		p.NumPartidaConvocatoria,
+		p.NombreDescripcion,
+		p.Cantidad,
+		p.CantidadMinima,
+		p.CantidadMaxima,
+		p.NoFichaTecnica,
+		p.TipoDeBien,
+		p.ClaveCompendio,
+		p.ClaveCucop,
+		p.UnidadMedida,
+		p.DiasDeEntrega,
+		p.FechaDeEntrega,
+		p.Garantia,
+	)
+	if err != nil {
+		return 0, err
+	}
 
-    id, err := result.LastInsertId()
-    return int(id), err
+	id, err := result.LastInsertId()
+	return int(id), err
 }
 
 func (m *Repository) InsertarLicitacionPartida(idLicitacion, idPartida int) error {
-    query := `
+	query := `
         INSERT INTO licitacion_partidas (
             id_licitacion, id_partida, created_at, updated_at
         ) VALUES (?, ?, NOW(), NOW());
     `
-    _, err :=  m.App.DB.Exec(query, idLicitacion, idPartida)
-    return err
+	_, err := m.App.DB.Exec(query, idLicitacion, idPartida)
+	return err
 }
 
 func (m *Repository) InsertarAclaracion(a models.AclaracionesPartida) error {
@@ -1019,98 +1088,89 @@ func (m *Repository) InsertarAclaracion(a models.AclaracionesPartida) error {
 }
 
 func (m *Repository) AgregarEmpresaNueva(nombre string) error {
-    query := `INSERT INTO empresas_externas (nombre, created_at, updated_at) VALUES (?, NOW(), NOW())`
-    _, err := m.App.DB.Exec(query, nombre)
-    return err
+	query := `INSERT INTO empresas_externas (nombre, created_at, updated_at) VALUES (?, NOW(), NOW())`
+	_, err := m.App.DB.Exec(query, nombre)
+	return err
 }
-
-
-
-
-
 
 //BORRADORES
 
 func (m *Repository) EliminarMarca(id string) error {
-    // Ejecutar la consulta SQL para eliminar la marca con el ID especificado
-    _, err := m.App.DB.Exec("DELETE FROM marcas WHERE id_marca = ?", id)
-    return err
+	// Ejecutar la consulta SQL para eliminar la marca con el ID especificado
+	_, err := m.App.DB.Exec("DELETE FROM marcas WHERE id_marca = ?", id)
+	return err
 }
 
 func (m *Repository) EliminarTipoProducto(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM tipos_producto WHERE id_tipo = ?", id)
-    return err
+	_, err := m.App.DB.Exec("DELETE FROM tipos_producto WHERE id_tipo = ?", id)
+	return err
 }
 
 func (m *Repository) EliminarClasificacion(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM clasificaciones WHERE id_clasificacion = ?", id)
-    return err
+	_, err := m.App.DB.Exec("DELETE FROM clasificaciones WHERE id_clasificacion = ?", id)
+	return err
 }
 
 func (m *Repository) EliminarPais(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM paises WHERE id_pais = ?", id)
-    return err
+	_, err := m.App.DB.Exec("DELETE FROM paises WHERE id_pais = ?", id)
+	return err
 }
 
 func (m *Repository) EliminarCertificacion(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM certificaciones WHERE id_certificacion = ?", id)
-    return err
+	_, err := m.App.DB.Exec("DELETE FROM certificaciones WHERE id_certificacion = ?", id)
+	return err
 }
 
 func (m *Repository) EliminarCompañia(id string) error {
-    _, err := m.App.DB.Exec("DELETE FROM compañias WHERE id_compañia = ?", id)
-    return err
+	_, err := m.App.DB.Exec("DELETE FROM compañias WHERE id_compañia = ?", id)
+	return err
 }
-
-
-
-
-
-
 
 //FUNCIONES AUXILIARES
 
 // ExisteID verifica si un ID existe en una tabla específica
 func (m *Repository) ExisteID(tabla string, id int) bool {
-    var count int
-    
-    // Mapeo de nombres de tablas y columnas ID
-    tablas := map[string]struct {
-        nombreTabla  string
-        columnaID    string
-    }{
-        "marca":           {"marcas", "id_marca"},
-        "marcas":          {"marcas", "id_marca"},
-        "tipo":            {"tipos_producto", "id_tipo"},
-        "tipos":           {"tipos_producto", "id_tipo"},
-        "tipos_producto":  {"tipos_producto", "id_tipo"},
-        "clasificacion":   {"clasificaciones", "id_clasificacion"},
-        "clasificaciones": {"clasificaciones", "id_clasificacion"},
-        "pais":            {"paises", "id_pais"},
-        "paises":          {"paises", "id_pais"},
-        "certificacion":   {"certificaciones", "id_certificacion"},
-        "certificaciones": {"certificaciones", "id_certificacion"},
-        "licitacion":      {"licitaciones", "id_licitacion"},
-        "licitaciones":    {"licitaciones", "id_licitacion"},
-        "producto":        {"productos", "id_producto"},
-        "productos":       {"productos", "id_producto"},
-        "proyecto":        {"proyectos", "id_proyecto"},
-        "proyectos":       {"proyectos", "id_proyecto"},
-    }
-    
-    config, ok := tablas[tabla]
-    if !ok {
-        log.Printf("Tabla no configurada: %s", tabla)
-        return false
-    }
-    
-    query := "SELECT COUNT(*) FROM " + config.nombreTabla + " WHERE " + config.columnaID + " = ?"
-    err := m.App.DB.QueryRow(query, id).Scan(&count)
-    if err != nil {
-        log.Printf("Error al verificar ID en tabla %s: %v\n", config.nombreTabla, err)
-        return false
-    }
-    return count > 0
+	var count int
+
+	// Mapeo de nombres de tablas y columnas ID
+	tablas := map[string]struct {
+		nombreTabla string
+		columnaID   string
+	}{
+		"marca":           {"marcas", "id_marca"},
+		"marcas":          {"marcas", "id_marca"},
+		"tipo":            {"tipos_producto", "id_tipo"},
+		"tipos":           {"tipos_producto", "id_tipo"},
+		"tipos_producto":  {"tipos_producto", "id_tipo"},
+		"clasificacion":   {"clasificaciones", "id_clasificacion"},
+		"clasificaciones": {"clasificaciones", "id_clasificacion"},
+		"pais":            {"paises", "id_pais"},
+		"paises":          {"paises", "id_pais"},
+		"certificacion":   {"certificaciones", "id_certificacion"},
+		"certificaciones": {"certificaciones", "id_certificacion"},
+		"licitacion":      {"licitaciones", "id_licitacion"},
+		"licitaciones":    {"licitaciones", "id_licitacion"},
+		"producto":        {"productos", "id_producto"},
+		"productos":       {"productos", "id_producto"},
+		"proyecto":        {"proyectos", "id_proyecto"},
+		"proyectos":       {"proyectos", "id_proyecto"},
+		"partida":         {"partidas", "id_partida"},
+		"partidas":        {"partidas", "id_partida"},
+	}
+
+	config, ok := tablas[tabla]
+	if !ok {
+		log.Printf("Tabla no configurada: %s", tabla)
+		return false
+	}
+
+	query := "SELECT COUNT(*) FROM " + config.nombreTabla + " WHERE " + config.columnaID + " = ?"
+	err := m.App.DB.QueryRow(query, id).Scan(&count)
+	if err != nil {
+		log.Printf("Error al verificar ID en tabla %s: %v\n", config.nombreTabla, err)
+		return false
+	}
+	return count > 0
 }
 
 // Función helper para verificar certificaciones seleccionadas
