@@ -1,0 +1,52 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <h2 class="mb-4">Propuestas para la partida #{{.Partida.NumPartidaConvocatoria}}</h2>
+        <a href="/nueva-propuesta/{{ .Partida.IDPartida }}" class="btn mt-2 verde">
+            <i class="fas fa-plus"></i> Nueva Propuesta
+        </a>
+    </div>
+
+    {{if .PropuestasPartida}}
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="thead-light">
+                <tr>
+                    <th>Empresa</th>
+                    <th>Producto</th>
+                    <th>Modelo</th>
+                    <th>Marca</th>
+                    <th>País de Origen</th>
+                    <th>Precio Ofertado</th>
+                    <th>Precio Min</th>
+                    <th>Precio Max</th>
+                    <th>Observaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .PropuestasPartida}}
+                <tr>
+                    <td>{{.Empresa.Nombre}}</td>
+                    <td>{{.ProductoExterno.Nombre}}</td>
+                    <td>{{.ProductoExterno.Modelo}}</td>
+                    <td>{{.ProductoExterno.Marca.Nombre}}</td>
+                    <td>{{.ProductoExterno.PaisOrigen.Nombre}}</td>
+                    <td>${{printf "%.2f" .PrecioOfertado}}</td>
+                    <td>${{printf "%.2f" .PrecioMin}}</td>
+                    <td>${{printf "%.2f" .PrecioMax}}</td>
+                    <td>{{.Observaciones}}</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="col-12 text-center">
+            <div class="alert alert-warning mt-4" role="alert">
+                No hay propuestas registradas para esta partida aún.
+            </div>
+        </div>
+    {{end}}
+</div>
+{{end}}

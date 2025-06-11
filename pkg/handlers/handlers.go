@@ -1777,7 +1777,102 @@ func (m *Repository) EditarProductoPartida(w http.ResponseWriter, r *http.Reques
         return
     }
     http.Redirect(w, r, "/productos-partida/"+strconv.Itoa(idPartida), http.StatusSeeOther)
+
 }
+
+func (m *Repository) MostrarPropuestas(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	idPartida, err := strconv.Atoi(idParam)
+	if err != nil {
+		http.Error(w, "ID inválido", http.StatusBadRequest)
+		return
+	}
+
+	// Obtener propuestas
+	propuestas, err := m.ObtenerPropuestasPorPartidaID(idPartida)
+	if err != nil {
+		http.Error(w, "No se pudo obtener las propuestas", http.StatusInternalServerError)
+		return
+	}
+
+	// Obtener partida
+	partida, err := m.ObtenerPartidaPorID(idPartida)
+	if err != nil {
+		http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
+		return
+	}
+
+	// Render
+	data := &models.TemplateData{
+		PropuestasPartida: propuestas,
+		Partida:           partida,
+		CSRFToken:         nosurf.Token(r),
+	}
+
+	render.RenderTemplate(w, "licitaciones/propuestas.page.tmpl", data)
+}
+
+func (m *Repository) MostrarNuevaPropuesta(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    // Obtener la partida para mostrar información
+    partida, err := m.ObtenerPartidaPorID(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo cargar la partida", http.StatusInternalServerError)
+        return
+    }
+
+    productos, _ := m.ObtenerTodosProductosExternos()
+
+    data := &models.TemplateData{
+        Partida:   partida,
+        ProductosExternos: productos,
+        CSRFToken: nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/nueva-propuesta.page.tmpl", data)
+}
+
+func (m *Repository) CrearNuevaPropuesta(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    err = r.ParseForm()
+    if err != nil {
+        http.Error(w, "No se pudo procesar el formulario", http.StatusBadRequest)
+        return
+    }
+
+
+    propuesta := models.PropuestasPartida{
+        IDPartida:         idPartida,
+        IDEmpresa:         atoi(r.FormValue("id_empresa")),
+        IDProductoExterno: atoi(r.FormValue("id_producto_externo")),
+        PrecioOfertado:    atof(r.FormValue("precio_ofertado")),
+        PrecioMin:         atof(r.FormValue("precio_min")),
+        PrecioMax:         atof(r.FormValue("precio_max")),
+        Observaciones:     r.FormValue("observaciones"),
+    }
+
+    err = m.InsertarPropuestaPartida(propuesta)
+    if err != nil {
+        http.Error(w, "Error al guardar la propuesta", http.StatusInternalServerError)
+        return
+    }
+
+    http.Redirect(w, r, fmt.Sprintf("/propuestas/%d", idPartida), http.StatusSeeOther)
+}
+
+
 
 
 

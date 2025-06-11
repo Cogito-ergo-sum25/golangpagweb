@@ -56,6 +56,12 @@ type TemplateData struct {
 	// --- Productos asociados a una partida ---
 	ProductosPartida []PartidaProductos
 
+	// Productos externos asociados a una propuesta
+	ProductosExternos []ProductosExternos 
+
+	// Propuestas asociadas a una partida
+	PropuestasPartida []PropuestasPartida 
+
 	// Listas para formularios
 	Marcas          []Marca
 	TiposProducto   []TipoProducto

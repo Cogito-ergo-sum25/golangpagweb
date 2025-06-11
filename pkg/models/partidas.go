@@ -49,9 +49,9 @@ type PartidaProductos struct {
 	PrecioOfertado    float64 `json:"precio_ofertado"`
 	Observaciones     string  `json:"observaciones"`
 
-    Partida    *Partida    `json:"partida"`
-    Producto   *Producto   `json:"producto"`
-    
+	Partida  *Partida  `json:"partida"`
+	Producto *Producto `json:"producto"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -87,6 +87,49 @@ type AclaracionesPartida struct {
 
 	Partida *Partida  `json:"id_partida"`
 	Empresa *Empresas `json:"id_empresa"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// ProductosExternos representa los productos externos asociados a una propuesta
+// que pueden ser parte de una partida en una licitación.
+type ProductosExternos struct {
+	IDProducto       int     `json:"id_producto"`
+	IDMarca          int     `json:"id_marca"`
+	IDPaisOrigen     int     `json:"id_pais_origen"`
+	IDEmpresaExterna int     `json:"id_empresa_externa"`
+	Nombre           string  `json:"nombre"`
+	Modelo           string  `json:"modelo"`
+	PrecioOfertado   float64 `json:"precio_ofertado"`
+	Observaciones    string  `json:"observaciones"`
+
+	Marca          *Marca    `json:"marca"`
+	PaisOrigen     *Pais     `json:"pais_origen"`
+	EmpresaExterna *Empresas `json:"empresa_externa"`
+
+	Partida  *Partida  `json:"partida"`
+	Producto *Producto `json:"producto"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// PropuestasPartida representa las propuestas realizadas por empresas para una partida específica
+// en una licitación. Incluye el precio ofertado, precios mínimo y máximo, y observaciones.
+type PropuestasPartida struct {
+	IDPropuesta       int     `json:"id_propuesta"`
+	IDPartida         int     `json:"id_partida"`
+	IDEmpresa         int     `json:"id_empresa"`
+	IDProductoExterno int     `json:"id_producto_externo"`
+	PrecioOfertado    float64 `json:"precio_ofertado"`
+	PrecioMin         float64 `json:"precio_min"`
+	PrecioMax         float64 `json:"precio_max"`
+	Observaciones     string  `json:"observaciones"`
+
+	ProductoExterno *ProductosExternos `json:"producto_externo"`
+	Partida *Partida  `json:"partida"`
+	Empresa *Empresas `json:"empresa"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

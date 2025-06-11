@@ -81,3 +81,36 @@ CREATE TABLE partida_productos (
     FOREIGN KEY (id_producto) REFERENCES productos(id_producto),
     FOREIGN KEY (id_partida) REFERENCES partidas(id_partida)
 );
+
+CREATE TABLE productos_externos (
+  id_producto INT AUTO_INCREMENT PRIMARY KEY,
+  id_marca INT,
+  id_pais_origen INT,
+  id_empresa_externa INT,
+  nombre VARCHAR(255),
+  modelo VARCHAR(100),
+  observaciones TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (id_marca) REFERENCES marcas(id_marca),
+  FOREIGN KEY (id_pais_origen) REFERENCES paises(id_pais),
+  FOREIGN KEY (id_empresa_externa) REFERENCES empresas_externas(id_empresa)
+);
+
+CREATE TABLE propuestas_partida (
+  id_propuesta INT AUTO_INCREMENT PRIMARY KEY,
+  id_partida INT,
+  id_empresa INT,
+  id_producto_externo INT,
+  precio_ofertado DECIMAL(10,2),
+  precio_min DECIMAL(10,2),
+  precio_max DECIMAL(10,2),
+  observaciones TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  FOREIGN KEY (id_partida) REFERENCES partidas(id_partida),
+  FOREIGN KEY (id_empresa) REFERENCES empresas_externas(id_empresa),
+  FOREIGN KEY (id_producto_externo) REFERENCES productos_externos(id_producto)
+);

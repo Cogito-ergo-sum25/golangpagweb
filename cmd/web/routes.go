@@ -69,6 +69,11 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/requerimientos-json/{id}", handlers.Repo.ObtenerRequerimientosJSON)
 	mux.Post("/guardar-requerimientos", handlers.Repo.GuardarRequerimientos)
 
+	// PROPUESTAS
+	mux.Get("/propuestas/{id}", handlers.Repo.MostrarPropuestas)
+	mux.Get("/nueva-propuesta/{id}", handlers.Repo.MostrarNuevaPropuesta)
+	mux.Post("/nueva-propuesta/{id}", handlers.Repo.CrearNuevaPropuesta)
+
 
 
 	

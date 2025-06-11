@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/models"
@@ -926,6 +928,182 @@ func (m *Repository) ObtenerIDPartidaPorIDPartidaProducto(idPartidaProducto int)
     return idPartida, nil
 }
 
+func (m *Repository) ObtenerPropuestasPorPartidaID(idPartida int) ([]models.PropuestasPartida, error) {
+	query := `
+		SELECT 
+			pp.id_propuesta,
+			pp.id_partida,
+			pp.id_empresa,
+			pp.id_producto_externo,
+			pp.precio_ofertado,
+			pp.precio_min,
+			pp.precio_max,
+			pp.observaciones,
+			pp.created_at,
+			pp.updated_at,
+
+			-- Empresa que hace la propuesta
+			e.id_empresa,
+			e.nombre,
+
+			-- Producto externo
+			pe.id_producto,
+			pe.nombre,
+			pe.modelo,
+			pe.observaciones,
+			pe.id_marca,
+			pe.id_pais_origen,
+			pe.id_empresa_externa,
+
+			-- Marca
+			m.id_marca,
+			m.nombre,
+
+			-- País
+			p.id_pais,
+			p.nombre,
+
+			-- Empresa externa (fabricante/distribuidor del producto)
+			ee.id_empresa,
+			ee.nombre
+
+		FROM propuestas_partida pp
+		LEFT JOIN empresas_externas e ON pp.id_empresa = e.id_empresa
+		LEFT JOIN productos_externos pe ON pp.id_producto_externo = pe.id_producto
+		LEFT JOIN marcas m ON pe.id_marca = m.id_marca
+		LEFT JOIN paises p ON pe.id_pais_origen = p.id_pais
+		LEFT JOIN empresas_externas ee ON pe.id_empresa_externa = ee.id_empresa
+		WHERE pp.id_partida = ?
+	`
+
+	rows, err := m.App.DB.Query(query, idPartida)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var propuestas []models.PropuestasPartida
+
+	for rows.Next() {
+		var (
+			p          models.PropuestasPartida
+			empresa    models.Empresas
+			producto   models.ProductosExternos
+			marca      models.Marca
+			pais       models.Pais
+			empresaExt models.Empresas
+		)
+
+		err := rows.Scan(
+			&p.IDPropuesta,
+			&p.IDPartida,
+			&p.IDEmpresa,
+			&p.IDProductoExterno,
+			&p.PrecioOfertado,
+			&p.PrecioMin,
+			&p.PrecioMax,
+			&p.Observaciones,
+			&p.CreatedAt,
+			&p.UpdatedAt,
+
+			// Empresa que hace la propuesta
+			&empresa.IDEmpresa,
+			&empresa.Nombre,
+
+			// Producto externo
+			&producto.IDProducto,
+			&producto.Nombre,
+			&producto.Modelo,
+			&producto.Observaciones,
+			&producto.IDMarca,
+			&producto.IDPaisOrigen,
+			&producto.IDEmpresaExterna,
+
+			// Marca
+			&marca.IDMarca,
+			&marca.Nombre,
+
+			// País
+			&pais.IDPais,
+			&pais.Nombre,
+
+			// Empresa externa (fabricante/distribuidor)
+			&empresaExt.IDEmpresa,
+			&empresaExt.Nombre,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		producto.Marca = &marca
+		producto.PaisOrigen = &pais
+		producto.EmpresaExterna = &empresaExt
+
+		p.Empresa = &empresa
+		p.ProductoExterno = &producto
+
+		propuestas = append(propuestas, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return propuestas, nil
+}
+
+func (m *Repository) ObtenerTodosProductosExternos() ([]models.ProductosExternos, error) {
+    query := `
+        SELECT 
+            pe.id_producto, pe.nombre, pe.modelo, pe.observaciones,
+            pe.id_marca, m.nombre AS marca_nombre,
+            pe.id_pais_origen, p.nombre AS pais_nombre,
+            pe.id_empresa_externa, e.nombre AS empresa_nombre
+        FROM productos_externos pe
+        LEFT JOIN marcas m ON pe.id_marca = m.id_marca
+        LEFT JOIN paises p ON pe.id_pais_origen = p.id_pais
+        LEFT JOIN empresas_externas e ON pe.id_empresa_externa = e.id_empresa
+        ORDER BY pe.nombre
+    `
+    rows, err := m.App.DB.Query(query)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var productos []models.ProductosExternos
+    for rows.Next() {
+        var p models.ProductosExternos
+        // Suponiendo que tu struct ProductosExternos tiene los campos correctos y punteros para marca, pais y empresa
+        var marcaNombre, paisNombre, empresaNombre string
+        err := rows.Scan(
+            &p.IDProducto,
+            &p.Nombre,
+            &p.Modelo,
+            &p.Observaciones,
+            &p.IDMarca,
+            &marcaNombre,
+            &p.IDPaisOrigen,
+            &paisNombre,
+            &p.IDEmpresaExterna,
+            &empresaNombre,
+        )
+        if err != nil {
+            return nil, err
+        }
+
+        // Asignar los nombres a las subestructuras, si existen
+        p.Marca = &models.Marca{Nombre: marcaNombre}
+        p.PaisOrigen = &models.Pais{Nombre: paisNombre}
+        p.EmpresaExterna = &models.Empresas{Nombre: empresaNombre}
+
+        productos = append(productos, p)
+    }
+    return productos, nil
+}
+
+
+
 
 
 
@@ -1093,6 +1271,30 @@ func (m *Repository) AgregarEmpresaNueva(nombre string) error {
 	return err
 }
 
+func (m *Repository) InsertarPropuestaPartida(p models.PropuestasPartida) error {
+    query := `
+        INSERT INTO propuestas_partida 
+        (id_partida, id_empresa, id_producto_externo, precio_ofertado, precio_min, precio_max, observaciones, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+    `
+    _, err := m.App.DB.Exec(query,
+        p.IDPartida,
+        p.IDEmpresa,
+        p.IDProductoExterno,
+        p.PrecioOfertado,
+        p.PrecioMin,
+        p.PrecioMax,
+        p.Observaciones,
+    )
+    if err != nil {
+        // log para debug (puedes usar log.Println o fmt.Println)
+        fmt.Println("Error InsertarPropuestaPartida:", err)
+    }
+    return err
+}
+
+
+
 //BORRADORES
 
 func (m *Repository) EliminarMarca(id string) error {
@@ -1186,4 +1388,13 @@ func isCertSelected(certID int, productCerts []models.Certificacion) bool {
 func parseDate(value string) time.Time {
 	t, _ := time.Parse("2006-01-02", value)
 	return t
+}
+func atoi(s string) int {
+    i, _ := strconv.Atoi(s)
+    return i
+}
+
+func atof(s string) float64 {
+    f, _ := strconv.ParseFloat(s, 64)
+    return f
 }
