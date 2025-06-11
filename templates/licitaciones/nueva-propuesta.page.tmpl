@@ -1,9 +1,9 @@
 {{template "base" .}}
 {{define "content"}}
 <div class="container mt-4">
-    <h1>
-        <i class="fas fa-file-invoice-dollar me-2"></i>Nueva Propuesta para Partida #{{.Partida.NumPartidaConvocatoria}}
-    </h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-invoice-dollar me-2"></i>Nueva Propuesta para Partida #{{.Partida.NumPartidaConvocatoria}}</h2>
+    </div>
     <div class="card shadow">
         <div class="card-header bg-primary text-white fw-bold azul">
             <i class="fas fa-info-circle me-1"></i> Información de la Propuesta
@@ -14,19 +14,25 @@
                 <input type="hidden" name="id_partida" value="{{.Partida.IDPartida}}">
                 <div class="mb-3">
                     <label for="producto" class="form-label">Producto Externo</label>
-                    <select class="form-select" name="id_producto_externo" id="producto" required>
-                        <option value="">Seleccione un producto</option>
-                        {{range .ProductosExternos}}
-                        <option 
-                            value="{{.IDProducto}}" 
-                            data-empresa="{{.EmpresaExterna.Nombre}}"
-                            data-empresa-id="{{.IDEmpresaExterna}}"
-                        >
-                            {{.Nombre}} - {{.Modelo}} ({{.Marca.Nombre}}, {{.PaisOrigen.Nombre}})
-                        </option>
-                        {{end}}
-                    </select>   
-                    <input type="hidden" name="id_empresa" id="id_empresa" value="">
+                        <div class="input-group">
+                            <select class="form-select" name="id_producto_externo" id="producto" required>
+                                <option value="">Seleccione un producto</option>
+                                {{range .ProductosExternos}}
+                                <option 
+                                    value="{{.IDProducto}}" 
+                                    data-empresa="{{.EmpresaExterna.Nombre}}"
+                                    data-empresa-id="{{.IDEmpresaExterna}}"
+                                >
+                                    {{.Nombre}} - {{.Modelo}} ({{.Marca.Nombre}}, {{.PaisOrigen.Nombre}})
+                                </option>
+                                {{end}}
+                            </select> 
+                            <button type="button" class="btn btn-primary azul" title="Agregar nueva empresa" data-bs-toggle="modal" data-bs-target="#modalNuevoProducto">
+                                    <i class="fas fa-solid fa-plus me-1"></i> 
+                                    <span class="d-none d-md-inline">Agregar nuevo producto</span>
+                            </button>  
+                            <input type="hidden" name="id_empresa" id="id_empresa" value="">
+                        </div>
                 </div>
 
                 <div class="mb-3">
@@ -60,6 +66,75 @@
                     <button type="submit" class="btn verde"><i class="fa-solid fa-floppy-disk"></i> Guardar Propuesta</button>
                 </div>
             </form>
+
+
+            <!-- Modal: Agregar Nuevo Producto Externo -->
+            <div class="modal fade" id="modalNuevoProducto" tabindex="-1" aria-labelledby="modalNuevoProductoLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <form action="/nuevo-producto-externo-contexto" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                            <input type="hidden" name="id_partida" value="{{.Partida.IDPartida}}">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold" id="modalNuevoProductoLabel">Nuevo Producto Externo</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="nombre" class="form-label">Nombre del Producto</label>
+                                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="modelo" class="form-label">Modelo</label>
+                                        <input type="text" class="form-control" id="modelo" name="modelo" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="id_marca" class="form-label">Marca</label>
+                                        <select name="id_marca" id="id_marca" class="form-select" required>
+                                            <option value="">Selecciona una marca</option>
+                                            {{range .Marcas}}
+                                            <option value="{{.IDMarca}}">{{.Nombre}}</option>
+                                            {{end}}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="id_pais" class="form-label">País de Origen</label>
+                                        <select name="id_pais_origen" id="id_pais" class="form-select" required>
+                                            <option value="">Selecciona un país</option>
+                                            {{range .Paises}}
+                                            <option value="{{.IDPais}}">{{.Nombre}}</option>
+                                            {{end}}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label for="id_empresa" class="form-label">Empresa Externa</label>
+                                        <select name="id_empresa_externa" id="id_empresa" class="form-select" required>
+                                            <option value="">Selecciona una empresa</option>
+                                            {{range .Empresas}}
+                                                <option value="{{.IDEmpresa}}">{{.Nombre}}</option>
+                                            {{end}}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label for="observaciones" class="form-label">Observaciones</label>
+                                        <textarea name="observaciones" id="observaciones" class="form-control" rows="2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn rojo" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn azul">Guardar Producto</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            
         </div>
     </div>
 </div>

@@ -73,6 +73,9 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/propuestas/{id}", handlers.Repo.MostrarPropuestas)
 	mux.Get("/nueva-propuesta/{id}", handlers.Repo.MostrarNuevaPropuesta)
 	mux.Post("/nueva-propuesta/{id}", handlers.Repo.CrearNuevaPropuesta)
+	mux.Post("/nuevo-producto-externo-contexto", handlers.Repo.NuevoProductoExternoContexto)
+
+
 
 
 
@@ -94,10 +97,13 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Get("/datos-entidades",handlers.Repo.Entidades)
 		mux.Get("/crear-entidad",handlers.Repo.MostrarNuevaEntidad)
 		mux.Post("/crear-entidad", handlers.Repo.CrearEntidad)
-	// OPCIONES DE EMPRESAS EXTERNAS
+	// OPCIONES DE EMPRESAS EXTERNAS Y PRODUCTOS COMPETENCIA
 		mux.Get("/datos-empresas-externas",handlers.Repo.EmpresasExternas)
 		mux.Post("/datos-empresas-externas-nueva", handlers.Repo.AgregarEmpresaExterna)
 		mux.Post("/crear-entidad", handlers.Repo.CrearEntidad)
+		mux.Get("/productos-externos",handlers.Repo.ProductosExternos)
+		mux.Post("/nuevo-producto-externo-contexto-menu", handlers.Repo.NuevoProductoExternoContextoMenu)
+	
 
 	    	
 	fileServer := http.FileServer(http.Dir("./static/"))

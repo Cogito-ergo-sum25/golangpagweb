@@ -1827,12 +1827,38 @@ func (m *Repository) MostrarNuevaPropuesta(w http.ResponseWriter, r *http.Reques
         return
     }
 
+    marcas, err := m.ObtenerMarcas()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener marcas")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+    paises, err := m.ObtenerPaises()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener países")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+    empresas, err := m.ObtenerTodasEmpresas()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+
     productos, _ := m.ObtenerTodosProductosExternos()
 
     data := &models.TemplateData{
         Partida:   partida,
         ProductosExternos: productos,
         CSRFToken: nosurf.Token(r),
+        Marcas: marcas,
+        Paises: paises,
+        Empresas:   empresas,
+
     }
 
     render.RenderTemplate(w, "licitaciones/nueva-propuesta.page.tmpl", data)
@@ -1870,6 +1896,41 @@ func (m *Repository) CrearNuevaPropuesta(w http.ResponseWriter, r *http.Request)
     }
 
     http.Redirect(w, r, fmt.Sprintf("/propuestas/%d", idPartida), http.StatusSeeOther)
+}
+
+func (m *Repository) NuevoProductoExternoContexto(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    err := r.ParseForm()
+    if err != nil {
+        http.Error(w, "Error parseando formulario", http.StatusInternalServerError)
+        return
+    }
+
+    nombre := r.FormValue("nombre")
+    modelo := r.FormValue("modelo")
+    idMarca, _ := strconv.Atoi(r.FormValue("id_marca"))
+    idPais, _ := strconv.Atoi(r.FormValue("id_pais_origen"))
+    idEmpresa, _ := strconv.Atoi(r.FormValue("id_empresa_externa"))
+    observaciones := r.FormValue("observaciones")
+    idPartida := r.FormValue("id_partida") // Para redirigir al regresar
+
+    _, err = m.App.DB.Exec(`
+        INSERT INTO productos_externos 
+        (nombre, modelo, id_marca, id_pais_origen, id_empresa_externa, observaciones, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+    `, nombre, modelo, idMarca, idPais, idEmpresa, observaciones)
+
+    if err != nil {
+        http.Error(w, "Error insertando producto externo", http.StatusInternalServerError)
+        return
+    }
+
+    // Redirige al formulario de nueva propuesta con el contexto de la partida
+    http.Redirect(w, r, "/nueva-propuesta/"+idPartida, http.StatusSeeOther)
 }
 
 
@@ -2189,7 +2250,7 @@ func (m *Repository) CrearEntidad(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/datos-entidades", http.StatusSeeOther)
 }
 
-// EMPRESAS EXTERNAS
+// EMPRESAS EXTERNAS Y PRODUCTOS EXTERNOS
 func (m *Repository) EmpresasExternas(w http.ResponseWriter, r *http.Request) {
     empresas, err := m.ObtenerTodasEmpresas()
     if err != nil {
@@ -2232,3 +2293,77 @@ func (m *Repository) AgregarEmpresaExterna(w http.ResponseWriter, r *http.Reques
     http.Redirect(w, r, "/datos-empresas-externas", http.StatusSeeOther)
 }
 
+func (m *Repository) ProductosExternos(w http.ResponseWriter, r *http.Request) {
+    marcas, err := m.ObtenerMarcas()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener marcas")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+    paises, err := m.ObtenerPaises()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al obtener países")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+    empresas, err := m.ObtenerTodasEmpresas()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo empresas: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+
+    productos, err := m.ObtenerTodosProductosExternos()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos externos: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    data := &models.TemplateData{
+        ProductosExternos: productos,
+        Marcas: marcas,
+        CSRFToken: nosurf.Token(r),
+        Paises: paises,
+        Empresas:   empresas,
+
+    }
+
+    render.RenderTemplate(w, "opciones/productos-externos.page.tmpl", data)
+}
+
+func (m *Repository) NuevoProductoExternoContextoMenu(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    err := r.ParseForm()
+    if err != nil {
+        http.Error(w, "Error parseando formulario", http.StatusInternalServerError)
+        return
+    }
+
+    nombre := r.FormValue("nombre")
+    modelo := r.FormValue("modelo")
+    idMarca, _ := strconv.Atoi(r.FormValue("id_marca"))
+    idPais, _ := strconv.Atoi(r.FormValue("id_pais_origen"))
+    idEmpresa, _ := strconv.Atoi(r.FormValue("id_empresa_externa"))
+    observaciones := r.FormValue("observaciones")
+
+    _, err = m.App.DB.Exec(`
+        INSERT INTO productos_externos 
+        (nombre, modelo, id_marca, id_pais_origen, id_empresa_externa, observaciones, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
+    `, nombre, modelo, idMarca, idPais, idEmpresa, observaciones)
+
+    if err != nil {
+        http.Error(w, "Error insertando producto externo", http.StatusInternalServerError)
+        return
+    }
+
+    http.Redirect(w, r, "/productos-externos", http.StatusSeeOther)
+}
