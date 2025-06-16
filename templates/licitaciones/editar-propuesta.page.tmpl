@@ -1,0 +1,95 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-invoice-dollar me-2"></i>Editar Propuesta para Partida #{{.Partida.NumPartidaConvocatoria}}</h2>
+    </div>
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white fw-bold azul">
+            <i class="fas fa-edit me-1"></i> Editar Información de la Propuesta
+        </div>
+        <div class="card-body">
+            <form method="POST" action="/editar-propuesta/{{.Propuesta.IDPropuesta}}">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <input type="hidden" name="id_partida" value="{{.Partida.IDPartida}}">
+                
+                <div class="mb-3">
+                    <label for="producto" class="form-label">Producto Externo</label>
+                    <div class="input-group">
+                        <select class="form-select" name="id_producto_externo" id="producto" required>
+                            <option value="">Seleccione un producto</option>
+                            {{range .ProductosExternos}}
+                            <option 
+                                value="{{.IDProducto}}" 
+                                data-empresa="{{.EmpresaExterna.Nombre}}"
+                                data-empresa-id="{{.IDEmpresaExterna}}"
+                                {{if eq .IDProducto $.Propuesta.IDProductoExterno}}selected{{end}}
+                            >
+                                {{.Nombre}} - {{.Modelo}} ({{.Marca.Nombre}}, {{.PaisOrigen.Nombre}})
+                            </option>
+                            {{end}}
+                        </select>
+                        <input type="hidden" name="id_empresa" id="id_empresa" value="{{.Propuesta.IDEmpresa}}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Empresa</label>
+                    <input type="text" id="empresa" class="form-control" disabled value="{{.Propuesta.ProductoExterno.EmpresaExterna.Nombre}}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="precio_ofertado" class="form-label">Precio Ofertado</label>
+                    <input type="number" step="0.01" class="form-control" name="precio_ofertado" value="{{.Propuesta.PrecioOfertado}}" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="precio_min" class="form-label">Precio Mínimo</label>
+                        <input type="number" step="0.01" class="form-control" name="precio_min" value="{{.Propuesta.PrecioMin}}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="precio_max" class="form-label">Precio Máximo</label>
+                        <input type="number" step="0.01" class="form-control" name="precio_max" value="{{.Propuesta.PrecioMax}}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea class="form-control" name="observaciones" rows="3">{{.Propuesta.Observaciones}}</textarea>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/propuestas/{{.Partida.IDPartida}}" class="btn rojo"><i class="fa-solid fa-ban"></i> Cancelar</a>
+                    <button type="submit" class="btn verde"><i class="fa-solid fa-floppy-disk"></i> Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const productoSelect = document.getElementById("producto");
+    const empresaInput = document.getElementById("empresa");
+    const idEmpresaInput = document.getElementById("id_empresa");
+
+    // Inicializar con los valores actuales
+    const selectedOption = productoSelect.options[productoSelect.selectedIndex];
+    if (selectedOption && selectedOption.value !== "") {
+        const empresa = selectedOption.getAttribute("data-empresa") || "";
+        const empresaId = selectedOption.getAttribute("data-empresa-id") || "";
+        
+        empresaInput.value = empresa;
+        idEmpresaInput.value = empresaId;
+    }
+
+    productoSelect.addEventListener("change", function () {
+        const selectedOption = this.options[this.selectedIndex];
+        const empresa = selectedOption.getAttribute("data-empresa") || "";
+        const empresaId = selectedOption.getAttribute("data-empresa-id") || "";
+
+        empresaInput.value = empresa;
+        idEmpresaInput.value = empresaId;
+    });
+</script>
+{{end}}

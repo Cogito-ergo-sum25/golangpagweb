@@ -1780,6 +1780,37 @@ func (m *Repository) EditarProductoPartida(w http.ResponseWriter, r *http.Reques
 
 }
 
+func (m *Repository) EliminarProductoPartida(w http.ResponseWriter, r *http.Request) {
+    // Obtener el ID de la relación partida_producto
+    idParam := chi.URLParam(r, "id")
+    idPartidaProducto, err := strconv.Atoi(idParam)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "ID inválido")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Primero obtenemos el id_partida para redireccionar después
+    var idPartida int
+    err = m.App.DB.QueryRow("SELECT id_partida FROM partida_productos WHERE id_partida_producto = ?", idPartidaProducto).Scan(&idPartida)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No se pudo encontrar la relación partida-producto")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Eliminar el producto de la partida
+    err = m.EliminarProductoDePartida(idPartidaProducto)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al eliminar el producto de la partida")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "flash", "Producto eliminado de la partida exitosamente")
+    http.Redirect(w, r, fmt.Sprintf("/productos-partida/%d", idPartida), http.StatusSeeOther)
+}
+
 func (m *Repository) MostrarPropuestas(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 	idPartida, err := strconv.Atoi(idParam)
@@ -1933,7 +1964,156 @@ func (m *Repository) NuevoProductoExternoContexto(w http.ResponseWriter, r *http
     http.Redirect(w, r, "/nueva-propuesta/"+idPartida, http.StatusSeeOther)
 }
 
+func (m *Repository) MostrarEditarPropuesta(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPropuesta, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
 
+    // Obtener la propuesta con todos los datos relacionados
+    propuesta, err := m.ObtenerPropuestaPorID(idPropuesta)
+    if err != nil {
+        http.Error(w, "No se pudo cargar la propuesta", http.StatusInternalServerError)
+        return
+    }
+
+    // Obtener la partida asociada a la propuesta
+    partida, err := m.ObtenerPartidaPorID(propuesta.IDPartida) // Asegúrate de tener esta función
+    if err != nil {
+        http.Error(w, "No se pudo cargar la partida", http.StatusInternalServerError)
+        return
+    }
+
+    // Obtener catálogo para selects
+    marcas, err := m.ObtenerMarcas()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al obtener marcas")
+        http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+        return
+    }
+
+    paises, err := m.ObtenerPaises()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al obtener países")
+        http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+        return
+    }
+
+    empresas, err := m.ObtenerTodasEmpresas()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo empresas")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    productos, _ := m.ObtenerTodosProductosExternos()
+
+    data := &models.TemplateData{
+        Propuesta: propuesta,  
+        ProductosExternos: productos,
+        Partida:   partida,
+        CSRFToken: nosurf.Token(r),
+        Marcas:    marcas,
+        Paises:    paises,
+        Empresas:  empresas,
+    }
+
+    render.RenderTemplate(w, "licitaciones/editar-propuesta.page.tmpl", data)
+}
+
+func (m *Repository) EditarPropuesta(w http.ResponseWriter, r *http.Request) {
+    // Obtener el ID de la propuesta de la URL
+    idParam := chi.URLParam(r, "id")
+    idPropuesta, err := strconv.Atoi(idParam)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "ID de propuesta inválido")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Parsear el formulario
+    err = r.ParseForm()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Obtener los valores del formulario
+    idProductoExterno, err := strconv.Atoi(r.Form.Get("id_producto_externo"))
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "ID de producto inválido")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    idEmpresa, err := strconv.Atoi(r.Form.Get("id_empresa"))
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "ID de empresa inválido")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    precioOfertado, err := strconv.ParseFloat(r.Form.Get("precio_ofertado"), 64)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Precio ofertado inválido")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Los campos precio_min y precio_max son opcionales
+    var precioMin, precioMax float64
+    if r.Form.Get("precio_min") != "" {
+        precioMin, err = strconv.ParseFloat(r.Form.Get("precio_min"), 64)
+        if err != nil {
+            m.App.Session.Put(r.Context(), "error", "Precio mínimo inválido")
+            http.Redirect(w, r, "/", http.StatusSeeOther)
+            return
+        }
+    }
+
+    if r.Form.Get("precio_max") != "" {
+        precioMax, err = strconv.ParseFloat(r.Form.Get("precio_max"), 64)
+        if err != nil {
+            m.App.Session.Put(r.Context(), "error", "Precio máximo inválido")
+            http.Redirect(w, r, "/", http.StatusSeeOther)
+            return
+        }
+    }
+
+    // Crear la estructura de propuesta actualizada
+    propuestaActualizada := models.PropuestasPartida{
+        IDPropuesta:       idPropuesta,
+        IDProductoExterno: idProductoExterno,
+        IDEmpresa:         idEmpresa,
+        PrecioOfertado:    precioOfertado,
+        PrecioMin:         precioMin,
+        PrecioMax:         precioMax,
+        Observaciones:     r.Form.Get("observaciones"),
+    }
+
+    // Actualizar en la base de datos
+    err = m.ActualizarPropuesta(propuestaActualizada)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al actualizar la propuesta: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Obtener el ID de partida para redireccionar
+    propuesta, err := m.ObtenerPropuestaPorID(idPropuesta)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al obtener datos de la propuesta")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    // Redireccionar a la lista de propuestas de esta partida
+    m.App.Session.Put(r.Context(), "flash", "Propuesta actualizada exitosamente")
+    http.Redirect(w, r, fmt.Sprintf("/propuestas/%d", propuesta.IDPartida), http.StatusSeeOther)
+}
 
 
 

@@ -1,6 +1,6 @@
 {{template "base" .}}
 {{define "content"}}
-<div class="container">
+<div class="container mt-4">
     <div class="d-flex justify-content-between align-items-start mb-4">
         <h2 class="mb-4">Propuestas para la partida #{{.Partida.NumPartidaConvocatoria}}</h2>
         <a href="/nueva-propuesta/{{ .Partida.IDPartida }}" class="btn mt-2 verde">
@@ -22,6 +22,7 @@
                     <th>Precio Min</th>
                     <th>Precio Max</th>
                     <th>Observaciones</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,6 +37,15 @@
                     <td>${{printf "%.2f" .PrecioMin}}</td>
                     <td>${{printf "%.2f" .PrecioMax}}</td>
                     <td>{{.Observaciones}}</td>
+                    <td>
+                        <a href="/editar-propuesta/{{.IDPropuesta}}" class="btn btn-sm px-1 py-1 azul">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                        <a href="/fallo-propuesta/{{.IDPropuesta}}" class="btn btn-sm px-1 py-1 rojo">
+                            <i class="fa-solid fa-circle-exclamation"></i> Fallo
+                        </a>
+                    </td>
+  
                 </tr>
                 {{end}}
             </tbody>

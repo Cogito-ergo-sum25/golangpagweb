@@ -83,6 +83,31 @@ func (m *Repository) ActualizarProductoPartida(p models.PartidaProductos) error 
     return err
 }
 
+func (m *Repository) ActualizarPropuesta(propuesta models.PropuestasPartida) error {
+    query := `
+        UPDATE propuestas_partida 
+        SET 
+            id_producto_externo = ?,
+            id_empresa = ?,
+            precio_ofertado = ?,
+            precio_min = ?,
+            precio_max = ?,
+            observaciones = ?
+        WHERE id_propuesta = ?`
+
+    _, err := m.App.DB.Exec(
+        query,
+        propuesta.IDProductoExterno,
+        propuesta.IDEmpresa,
+        propuesta.PrecioOfertado,
+        propuesta.PrecioMin,
+        propuesta.PrecioMax,
+        propuesta.Observaciones,
+        propuesta.IDPropuesta,
+    )
+
+    return err
+}
 
 // GETTERS
 
@@ -1102,6 +1127,79 @@ func (m *Repository) ObtenerTodosProductosExternos() ([]models.ProductosExternos
     return productos, nil
 }
 
+func (m *Repository) ObtenerPropuestaPorID(idPropuesta int) (models.PropuestasPartida, error) {
+	query := `
+	SELECT 
+		pp.id_propuesta,
+		pp.id_partida,
+		pp.id_empresa,
+		pp.id_producto_externo,
+		pp.precio_ofertado,
+		pp.precio_min,
+		pp.precio_max,
+		pp.observaciones,
+
+		pe.id_producto,
+		pe.nombre,
+		pe.modelo,
+		pe.observaciones,
+		pe.id_marca,
+		mar.nombre AS marca_nombre,
+		pe.id_pais_origen,
+		pa.nombre AS pais_nombre,
+		pe.id_empresa_externa,
+		ee.nombre AS empresa_nombre
+
+	FROM propuestas_partida pp
+	JOIN productos_externos pe ON pp.id_producto_externo = pe.id_producto
+	LEFT JOIN marcas mar ON pe.id_marca = mar.id_marca
+	LEFT JOIN paises pa ON pe.id_pais_origen = pa.id_pais
+	LEFT JOIN empresas_externas ee ON pe.id_empresa_externa = ee.id_empresa
+	WHERE pp.id_propuesta = ?
+	LIMIT 1
+	`
+
+	var propuesta models.PropuestasPartida
+	var producto models.ProductosExternos
+	var marcaNombre, paisNombre, empresaNombre string
+
+	err := m.App.DB.QueryRow(query, idPropuesta).Scan(
+		&propuesta.IDPropuesta,
+		&propuesta.IDPartida,
+		&propuesta.IDEmpresa,
+		&propuesta.IDProductoExterno,
+		&propuesta.PrecioOfertado,
+		&propuesta.PrecioMin,
+		&propuesta.PrecioMax,
+		&propuesta.Observaciones,
+
+		&producto.IDProducto,
+		&producto.Nombre,
+		&producto.Modelo,
+		&producto.Observaciones,
+		&producto.IDMarca,
+		&marcaNombre,
+		&producto.IDPaisOrigen,
+		&paisNombre,
+		&producto.IDEmpresaExterna,
+		&empresaNombre,
+	)
+
+	if err != nil {
+		return propuesta, err
+	}
+
+	// Asignar subestructuras al producto
+	producto.Marca = &models.Marca{IDMarca: producto.IDMarca, Nombre: marcaNombre}
+	producto.PaisOrigen = &models.Pais{IDPais: producto.IDPaisOrigen, Nombre: paisNombre}
+	producto.EmpresaExterna = &models.Empresas{IDEmpresa: producto.IDEmpresaExterna, Nombre: empresaNombre}
+
+	// Asignar el producto a la propuesta
+	propuesta.ProductoExterno = &producto
+
+	return propuesta, nil
+}
+
 
 
 
@@ -1326,6 +1424,11 @@ func (m *Repository) EliminarCertificacion(id string) error {
 func (m *Repository) EliminarCompañia(id string) error {
 	_, err := m.App.DB.Exec("DELETE FROM compañias WHERE id_compañia = ?", id)
 	return err
+}
+
+func (m *Repository) EliminarProductoDePartida(idPartidaProducto int) error {
+    _, err := m.App.DB.Exec("DELETE FROM partida_productos WHERE id_partida_producto = ?", idPartidaProducto)
+    return err
 }
 
 //FUNCIONES AUXILIARES

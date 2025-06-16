@@ -1,6 +1,6 @@
 {{template "base" .}}
 {{define "content"}}
-<div class="container">
+<div class="container mt-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Productos de la partida #{{.Partida.NumPartidaConvocatoria}}</h2>
@@ -24,19 +24,26 @@
                     {{if .Observaciones}}
                     <p class="mb-3"><strong>Observaciones:</strong> {{.Observaciones}}</p>
                     {{end}}
-                    
-                    <button 
-                        type="button" 
-                        class="btn azul mt-auto align-self-start"
-                        data-bs-toggle="modal" 
-                        data-bs-target="#editarProductoModal"
-                        data-id="{{.IDPartidaProducto}}"
-                        data-precio="{{printf "%.2f" .PrecioOfertado}}"
-                        data-observaciones="{{.Observaciones | html}}"
-                        >
-                        <i class="fa-solid fa-pen-to-square"></i>
-                        Editar
-                    </button>
+                    <div class="btn-group">
+                      <button 
+                          type="button" 
+                          class="btn azul flex-fill"
+                          data-bs-toggle="modal" 
+                          data-bs-target="#editarProductoModal"
+                          data-id="{{.IDPartidaProducto}}"
+                          data-precio="{{printf "%.2f" .PrecioOfertado}}"
+                          data-observaciones="{{.Observaciones | html}}"
+                          >
+                          <i class="fa-solid fa-pen-to-square"></i>
+                          Editar
+                      </button>
+                      <form action="/eliminar-producto-partida/{{.IDPartidaProducto}}" method="POST" class="d-inline">
+                          <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                          <button type="submit" class="btn rojo flex-fill" onclick="return confirm('¿Estás seguro?')">
+                              <i class="fa-solid fa-trash"></i> Eliminar Producto
+                          </button>
+                      </form>
+                    </div>
                 </div>
             </div>
         </div>

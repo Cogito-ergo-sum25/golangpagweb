@@ -60,6 +60,7 @@ type TemplateData struct {
 	ProductosExternos []ProductosExternos 
 
 	// Propuestas asociadas a una partida
+	Propuesta PropuestasPartida // Propuesta individual
 	PropuestasPartida []PropuestasPartida 
 
 	// Listas para formularios

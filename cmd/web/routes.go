@@ -54,6 +54,7 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/nuevo-producto-partida/{id}", handlers.Repo.MostrarNuevoProductoPartida)
 	mux.Post("/nuevo-producto-partida", handlers.Repo.CrearNuevoProductoPartida)
 	mux.Post("/editar-producto-partida", handlers.Repo.EditarProductoPartida)
+	mux.Post("/eliminar-producto-partida/{id}", handlers.Repo.EliminarProductoPartida)
 
 
 
@@ -74,6 +75,8 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/nueva-propuesta/{id}", handlers.Repo.MostrarNuevaPropuesta)
 	mux.Post("/nueva-propuesta/{id}", handlers.Repo.CrearNuevaPropuesta)
 	mux.Post("/nuevo-producto-externo-contexto", handlers.Repo.NuevoProductoExternoContexto)
+	mux.Get("/editar-propuesta/{id}", handlers.Repo.MostrarEditarPropuesta)
+	mux.Post("/editar-propuesta/{id}", handlers.Repo.EditarPropuesta)
 
 
 
