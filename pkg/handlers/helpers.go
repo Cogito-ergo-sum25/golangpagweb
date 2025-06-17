@@ -738,58 +738,79 @@ func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.Requerim
 
 	query := `
 	SELECT 
-		id_requerimientos,
-		requiere_mantenimiento,
-		requiere_instalacion,
-		requiere_puesta_marcha,
-		requiere_capacitacion,
-		requiere_visita_previa
+	id_requerimientos,
+	requiere_mantenimiento,
+	requiere_instalacion,
+	requiere_puesta_marcha,
+	requiere_capacitacion,
+	requiere_visita_previa,
+	fecha_visita,
+	comentarios_visita,
+	requiere_muestra,
+	fecha_muestra,
+	comentarios_muestra
 	FROM requerimientos_partida
 	WHERE id_partida = ?
 	LIMIT 1`
 
 	row := m.App.DB.QueryRow(query, idPartida)
 	err := row.Scan(
-		&r.IDRequerimientos,
-		&r.RequiereMantenimiento,
-		&r.RequiereInstalacion,
-		&r.RequierePuestaEnMarcha,
-		&r.RequiereCapacitacion,
-		&r.RequiereVisitaPrevia,
+	&r.IDRequerimientos,
+	&r.RequiereMantenimiento,
+	&r.RequiereInstalacion,
+	&r.RequierePuestaEnMarcha,
+	&r.RequiereCapacitacion,
+	&r.RequiereVisitaPrevia,
+	&r.FechaVisita,
+	&r.ComentariosVisita,
+	&r.RequiereMuestra,
+	&r.FechaMuestra,
+	&r.ComentariosMuestra,
 	)
 
+
 	if err == sql.ErrNoRows {
-		// No existe, lo creamos por defecto
-		insert := `
+	insert := `
 		INSERT INTO requerimientos_partida (
 			id_partida,
 			requiere_mantenimiento,
 			requiere_instalacion,
 			requiere_puesta_marcha,
 			requiere_capacitacion,
-			requiere_visita_previa
-		) VALUES (?, false, false, false, false, false)`
+			requiere_visita_previa,
+			fecha_visita,
+			comentarios_visita,
+			requiere_muestra,
+			fecha_muestra,
+			comentarios_muestra
+		) VALUES (?, false, false, false, false, false, NULL, '', false, NULL, '')`
 
-		res, err := m.App.DB.Exec(insert, idPartida)
-		if err != nil {
-			return r, err
-		}
-
-		lastID, err := res.LastInsertId()
-		if err != nil {
-			return r, err
-		}
-
-		// Devolver el registro recién creado
-		r.IDRequerimientos = int(lastID)
-		r.RequiereMantenimiento = false
-		r.RequiereInstalacion = false
-		r.RequierePuestaEnMarcha = false
-		r.RequiereCapacitacion = false
-		r.RequiereVisitaPrevia = false
-
-		return r, nil
+	res, err := m.App.DB.Exec(insert, idPartida)
+	if err != nil {
+		return r, err
 	}
+
+	lastID, err := res.LastInsertId()
+	if err != nil {
+		return r, err
+	}
+
+	// Devolver el registro recién creado
+	r.IDRequerimientos = int(lastID)
+	r.RequiereMantenimiento = false
+	r.RequiereInstalacion = false
+	r.RequierePuestaEnMarcha = false
+	r.RequiereCapacitacion = false
+	r.RequiereVisitaPrevia = false
+	r.FechaVisita = time.Time{}
+	r.ComentariosVisita = ""
+	r.RequiereMuestra = false
+	r.FechaMuestra = time.Time{}
+	r.ComentariosMuestra = ""
+
+	return r, nil
+	}
+
 
 	if err != nil {
 		return r, err

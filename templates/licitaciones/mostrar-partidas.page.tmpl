@@ -1,20 +1,38 @@
 {{template "base" .}}
 {{define "content"}}
-<div class="container">
+<div class="container mt-4">
 
     <!-- Encabezado -->
-    <div class="d-flex justify-content-between align-items-start mb-4">
-        <div>
-            <h2>Partidas de la Licitación</h2>
+    <div class="card shadow-sm p-4 mb-4">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">Partidas de la Licitación</h2>
+    </div>
+
+    <div class="row text-center">
+        <div class="col-md-6 mb-3">
             <p class="mb-1"><strong>Nombre:</strong> {{ .Licitacion.Nombre }}</p>
             <p class="mb-1"><strong>No. de Contratación:</strong> {{ .Licitacion.NumContratacion }}</p>
             <p class="mb-1"><strong>Entidad:</strong> {{ .Licitacion.EntidadNombre }} ({{ .Licitacion.EstadoNombre }})</p>
             <p class="mb-1"><strong>Tipo:</strong> {{ .Licitacion.Tipo }} | <strong>Carácter:</strong> {{ .Licitacion.Caracter }}</p>
         </div>
-        <a href="/nueva-partida/{{ .Licitacion.IDLicitacion }}" class="btn mt-2 verde">
+        <div class="col-md-6 mb-3">
+            <p class="mb-1"><strong>Junta de Aclaraciones:</strong> {{ .Licitacion.FechaJunta.Format "02/01/2006" }}</p>
+            <p class="mb-1"><strong>Recepción de Propuestas:</strong> {{ .Licitacion.FechaPropuestas.Format "02/01/2006" }}</p>
+            <p class="mb-1"><strong>Fallo:</strong> {{ .Licitacion.FechaFallo.Format "02/01/2006" }}</p>
+            <p class="mb-1"><strong>Entrega:</strong> {{ .Licitacion.FechaEntrega.Format "02/01/2006" }}</p>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center gap-3 mt-3">
+        <a href="/nueva-partida/{{ .Licitacion.IDLicitacion }}" class="btn verde px-4">
             <i class="fas fa-plus"></i> Nueva Partida
         </a>
+        <a href="/aclaraciones-licitacion/{{ .Licitacion.IDLicitacion }}" class="btn azul px-4">
+            <i class="fas fa-comments"></i> Aclaraciones Licitación
+        </a>
     </div>
+</div>
+
 
     <!-- Contenedor de tarjetas -->
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -24,7 +42,7 @@
                 <div class="card-body">
                     <h5 class="card-title">Partida #{{ .NumPartidaConvocatoria }}</h5>
 					<h6 class="card-subtitle mb-2 text-muted">{{ .NombreDescripcion }}</h6>
-					<p class="card-text"><strong>Fecha entrega:</strong> {{ .FechaDeEntrega.Format "2006-01-02" }}</p> 
+					<p class="card-text"><strong>Fecha entrega:</strong> {{ .FechaDeEntrega.Format "02/01/2006" }}</p> 
           <p class="card-text"><strong>Cantidad Minima:</strong> {{ .CantidadMinima }}</p>
           <p class="card-text"><strong>Cantidad:</strong> {{ .Cantidad }}</p>
           <p class="card-text"><strong>Cantidad Maxima:</strong> {{ .CantidadMaxima }}</p>                   
@@ -87,6 +105,27 @@
             <input class="form-check-input" type="checkbox" name="requiere_visita_previa" id="req_visita_previa">
             <label class="form-check-label" for="req_visita_previa">Requiere Visita Previa</label>
           </div>
+          <div class="mb-3">
+              <label for="fecha_visita" class="form-label">Fecha de Visita</label>
+              <input type="date" class="form-control" name="fecha_visita" id="req_fecha_visita">
+          </div>
+          <div class="mb-3">
+              <label for="comentarios_visita" class="form-label">Comentarios de la Visita</label>
+              <textarea class="form-control" name="comentarios_visita" id="req_comentarios_visita" rows="2"></textarea>
+          </div>
+
+          <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" name="requiere_muestra" id="req_requiere_muestra">
+              <label class="form-check-label" for="req_requiere_muestra">Requiere Muestra</label>
+          </div>
+          <div class="mb-3">
+              <label for="fecha_muestra" class="form-label">Fecha de Muestra</label>
+              <input type="date" class="form-control" name="fecha_muestra" id="req_fecha_muestra">
+          </div>
+          <div class="mb-3">
+              <label for="comentarios_muestra" class="form-label">Comentarios de la Muestra</label>
+              <textarea class="form-control" name="comentarios_muestra" id="req_comentarios_muestra" rows="2"></textarea>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-success">Guardar</button>
@@ -133,6 +172,13 @@ document.addEventListener("DOMContentLoaded", function () {
         checkboxes.puesta_marcha.checked = data.requiere_puesta_marcha;
         checkboxes.capacitacion.checked = data.requiere_capacitacion;
         checkboxes.visita_previa.checked = data.requiere_visita_previa;
+
+        modal.querySelector("#req_fecha_visita").value = data.fecha_visita || "";
+        modal.querySelector("#req_comentarios_visita").value = data.comentarios_visita || "";
+        modal.querySelector("#req_requiere_muestra").checked = data.requiere_muestra;
+        modal.querySelector("#req_fecha_muestra").value = data.fecha_muestra || "";
+        modal.querySelector("#req_comentarios_muestra").value = data.comentarios_muestra || "";
+
       } catch (error) {
         console.error("Error cargando requerimientos:", error);
       }

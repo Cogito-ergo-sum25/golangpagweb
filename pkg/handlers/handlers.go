@@ -1362,13 +1362,19 @@ func (m *Repository) ObtenerRequerimientosJSON(w http.ResponseWriter, r *http.Re
 
 	// Devolver como JSON
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]bool{
-		"requiere_mantenimiento": req.RequiereMantenimiento,
-		"requiere_instalacion": req.RequiereInstalacion,
-		"requiere_puesta_marcha": req.RequierePuestaEnMarcha,
-		"requiere_capacitacion": req.RequiereCapacitacion,
-		"requiere_visita_previa": req.RequiereVisitaPrevia,
-	})
+	json.NewEncoder(w).Encode(map[string]interface{}{
+	"requiere_mantenimiento": req.RequiereMantenimiento,
+	"requiere_instalacion": req.RequiereInstalacion,
+	"requiere_puesta_marcha": req.RequierePuestaEnMarcha,
+	"requiere_capacitacion": req.RequiereCapacitacion,
+	"requiere_visita_previa": req.RequiereVisitaPrevia,
+	"fecha_visita": req.FechaVisita.Format("2006-01-02"),
+	"comentarios_visita": req.ComentariosVisita,
+	"requiere_muestra": req.RequiereMuestra,
+	"fecha_muestra": req.FechaMuestra.Format("2006-01-02"),
+	"comentarios_muestra": req.ComentariosMuestra,
+    })
+
 }
 
 func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Request) {
@@ -1393,6 +1399,11 @@ func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Reques
     puestaMarcha := r.FormValue("requiere_puesta_marcha") == "on"
     capacitacion := r.FormValue("requiere_capacitacion") == "on"
     visitaPrevia := r.FormValue("requiere_visita_previa") == "on"
+    fechaVisita := r.FormValue("fecha_visita")
+    comentariosVisita := r.FormValue("comentarios_visita")
+    requiereMuestra := r.FormValue("requiere_muestra") == "on"
+    fechaMuestra := r.FormValue("fecha_muestra")
+    comentariosMuestra := r.FormValue("comentarios_muestra")
 
     // Asegurar que el registro existe (lo crea si no)
     _, err = m.ObtenerOCrearRequerimientos(idPartida)
@@ -1404,23 +1415,36 @@ func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Reques
 
     // Actualizar requerimientos
     update := `
-        UPDATE requerimientos_partida
-        SET 
-            requiere_mantenimiento = ?,
-            requiere_instalacion = ?,
-            requiere_puesta_marcha = ?,
-            requiere_capacitacion = ?,
-            requiere_visita_previa = ?
-        WHERE id_partida = ?
+	UPDATE requerimientos_partida
+	SET 
+		requiere_mantenimiento = ?,
+		requiere_instalacion = ?,
+		requiere_puesta_marcha = ?,
+		requiere_capacitacion = ?,
+		requiere_visita_previa = ?,
+		fecha_visita = ?,
+		comentarios_visita = ?,
+		requiere_muestra = ?,
+		fecha_muestra = ?,
+		comentarios_muestra = ?,
+		updated_at = NOW()
+	WHERE id_partida = ?;
     `
+
     _, err = m.App.DB.Exec(update,
         mantenimiento,
         instalacion,
         puestaMarcha,
         capacitacion,
         visitaPrevia,
+        fechaVisita,
+        comentariosVisita,
+        requiereMuestra,
+        fechaMuestra,
+        comentariosMuestra,
         idPartida,
     )
+
     if err != nil {
         log.Println("Error al actualizar requerimientos:", err)
         http.Error(w, "Error al guardar los requerimientos", http.StatusInternalServerError)

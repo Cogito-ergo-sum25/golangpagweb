@@ -38,6 +38,11 @@ CREATE TABLE requerimientos_partida (
   requiere_puesta_marcha BOOLEAN DEFAULT FALSE,
   requiere_capacitacion BOOLEAN DEFAULT FALSE,
   requiere_visita_previa BOOLEAN DEFAULT FALSE,
+  fecha_visita DATE,
+  comentarios_visita TEXT,
+  requiere_muestra BOOLEAN DEFAULT FALSE,
+  fecha_muestra DATE,
+  comentarios_muestra TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   

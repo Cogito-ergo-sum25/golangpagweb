@@ -71,6 +71,12 @@ type RequerimientosPartida struct {
 	RequierePuestaEnMarcha bool `json:"requiere_puesta_marcha"`
 	RequiereCapacitacion   bool `json:"requiere_capacitacion"`
 	RequiereVisitaPrevia   bool `json:"requiere_visita_previa"`
+	FechaVisita    time.Time `json:"fecha_visita"`
+	ComentariosVisita	string `json:"comentarios_visita"`
+	RequiereMuestra bool `json:"requiere_muestra_producto"`
+	FechaMuestra time.Time `json:"fecha_muestra"`
+	ComentariosMuestra string `json:"comentarios_muestra"`
+	
 
 	Partida *Partida `json:"partida"`
 
