@@ -880,6 +880,105 @@ func (m *Repository) ObtenerAclaracionesPorPartidaID(idPartida int) ([]models.Ac
 	return aclaraciones, nil
 }
 
+func (m *Repository) ObtenerAclaracionesPorLicitacionID(idLicitacion int) ([]models.AclaracionesLicitacion, error) {
+	query := `
+		SELECT 
+			a.id_aclaracion_licitacion,
+			a.id_licitacion,
+			a.id_partida,
+			a.id_empresa,
+			a.pregunta,
+			a.observaciones,
+			a.ficha_tecnica_id,
+			a.id_puntos_tecnicos_modif,
+			a.pregunta_tecnica,
+			a.created_at,
+			a.updated_at,
+
+			e.id_empresa,
+			e.nombre,
+			e.created_at AS empresa_created_at,
+			e.updated_at AS empresa_updated_at,
+
+			p.id_partida,
+			p.numero_partida_convocatoria,
+			p.nombre_descripcion
+
+		FROM aclaraciones_licitacion a
+		JOIN empresas_externas e ON a.id_empresa = e.id_empresa
+		LEFT JOIN partidas p ON a.id_partida = p.id_partida
+		WHERE a.id_licitacion = ?
+	`
+
+	rows, err := m.App.DB.Query(query, idLicitacion)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var aclaraciones []models.AclaracionesLicitacion
+
+	for rows.Next() {
+		var a models.AclaracionesLicitacion
+		var empresa models.Empresas
+
+		var (
+			idPartida, fichaTecnicaID, puntosTecnicosID sql.NullInt64
+			numConvocatoria                             sql.NullInt64
+			nombreDescripcion                           sql.NullString
+		)
+
+		err := rows.Scan(
+			&a.IDAclaracionLicitacion,
+			&a.IDLicitacion,
+			&idPartida,
+			&a.IDEmpresa,
+			&a.Pregunta,
+			&a.Observaciones,
+			&fichaTecnicaID,
+			&puntosTecnicosID,
+			&a.PreguntaTecnica,
+			&a.CreatedAt,
+			&a.UpdatedAt,
+			&empresa.IDEmpresa,
+			&empresa.Nombre,
+			&empresa.CreatedAt,
+			&empresa.UpdatedAt,
+			&idPartida, // nuevamente porque hicimos LEFT JOIN
+			&numConvocatoria,
+			&nombreDescripcion,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if idPartida.Valid {
+			a.IDPartida = int(idPartida.Int64)
+			a.Partida = &models.Partida{
+				IDPartida:              int(idPartida.Int64),
+				NumPartidaConvocatoria: int(numConvocatoria.Int64),
+				NombreDescripcion:      nombreDescripcion.String,
+			}
+		}
+
+		if fichaTecnicaID.Valid {
+			a.FichaTecnicaID = int(fichaTecnicaID.Int64)
+		}
+		if puntosTecnicosID.Valid {
+			a.IDPuntosTecnicosModif = int(puntosTecnicosID.Int64)
+		}
+
+		a.Empresa = &empresa
+		aclaraciones = append(aclaraciones, a)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return aclaraciones, nil
+}
+
 func (m *Repository) ObtenerTodasEmpresas() ([]models.Empresas, error) {
 	query := `
 		SELECT id_empresa, nombre, created_at, updated_at
@@ -1230,6 +1329,8 @@ func (m *Repository) ObtenerPropuestaPorID(idPropuesta int) (models.PropuestasPa
 
 
 
+
+
 // SETTERS
 
 // AgregarMarca inserta una nueva marca en la base de datos
@@ -1411,6 +1512,53 @@ func (m *Repository) InsertarPropuestaPartida(p models.PropuestasPartida) error 
     }
     return err
 }
+
+func (m *Repository) InsertarAclaracionGeneral(a models.AclaracionesLicitacion) error {
+	query := `
+		INSERT INTO aclaraciones_licitacion (
+			id_licitacion, 
+			id_partida, 
+			id_empresa, 
+			pregunta, 
+			observaciones, 
+			ficha_tecnica_id, 
+			id_puntos_tecnicos_modif, 
+			created_at, 
+			updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
+	`
+
+	// Campos que pueden ser NULL
+	var (
+		idPartida interface{} = nil
+		ftID      interface{} = nil
+		ptID      interface{} = nil
+	)
+
+	if a.Partida != nil {
+		idPartida = a.Partida.IDPartida
+	}
+	if a.FichaTecnicaID != 0 {
+		ftID = a.FichaTecnicaID
+	}
+	if a.IDPuntosTecnicosModif != 0 {
+		ptID = a.IDPuntosTecnicosModif
+	}
+
+	_, err := m.App.DB.Exec(query,
+		a.IDLicitacion,
+		idPartida,
+		a.IDEmpresa,
+		a.Pregunta,
+		a.Observaciones,
+		ftID,
+		ptID,
+	)
+
+	return err
+}
+
+
 
 
 

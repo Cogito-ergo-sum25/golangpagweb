@@ -48,6 +48,13 @@ func routes(app *config.AppConfig) http.Handler {
 		mux.Post("/nueva-partida",handlers.Repo.CrearNuevaPartida)
 		mux.Get("/editar-partida/{id}", handlers.Repo.MostrarEditarPartida)
 		mux.Post("/editar-partida/{id}", handlers.Repo.EditarPartida)
+
+	// ACLARACIONES-LICITACION
+	mux.Get("/aclaraciones-licitacion/{id}", handlers.Repo.MostrarAclaracionesLicitacion)
+	mux.Get("/nueva-aclaracion-general/{id}", handlers.Repo.MostrarNuevaAclaracionGeneral)
+	mux.Post("/datos-empresas-externas-nueva-contexto-aclaraciones", handlers.Repo.AgregarEmpresaExternaContextoAclaraciones)
+	mux.Post("/nueva-aclaracion-licitacion", handlers.Repo.CrearNuevaAclaracionGeneral)
+
 	
 	// PRODUCTOS PARTIDA
 	mux.Get("/productos-partida/{id}", handlers.Repo.MostrarProductosPartida)

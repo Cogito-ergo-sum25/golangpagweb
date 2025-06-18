@@ -53,6 +53,9 @@ type TemplateData struct {
 	// --- Datos de aclaraciones ---
 	Aclaraciones []AclaracionesPartida
 
+	// --- Datos de aclaraciones por licitacion ---
+	AclaracionesLicitacion []AclaracionesLicitacion
+
 	// --- Productos asociados a una partida ---
 	ProductosPartida []PartidaProductos
 

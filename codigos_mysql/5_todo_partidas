@@ -18,6 +18,34 @@ CREATE TABLE partidas (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) 
 
+-- Tabla 'empresas'
+CREATE TABLE empresas_externas (
+  id_empresa INT PRIMARY KEY AUTO_INCREMENT,
+  nombre VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)
+
+CREATE TABLE aclaraciones_licitacion (
+  id_aclaracion_licitacion INT AUTO_INCREMENT PRIMARY KEY,
+  id_licitacion INT,  -- Puede ser NULL según tu modelo
+  id_partida INT,     -- Puede ser NULL según tu modelo
+  id_empresa INT,
+  pregunta TEXT,
+  observaciones TEXT,
+  ficha_tecnica_id INT,
+  id_puntos_tecnicos_modif INT,
+  pregunta_tecnica TINYINT(1) GENERATED ALWAYS AS (
+    CASE WHEN id_partida IS NOT NULL AND id_licitacion IS NOT NULL THEN 1 ELSE 0 END
+  ) STORED,  -- STORED para mejor rendimiento en filtros
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_licitacion) REFERENCES licitaciones(id_licitacion),
+  FOREIGN KEY (id_partida) REFERENCES partidas(id_partida),
+  FOREIGN KEY (id_empresa) REFERENCES empresas_externas(id_empresa),
+  INDEX idx_pregunta_tecnica (pregunta_tecnica, id_licitacion)  -- Índice compuesto para búsquedas frecuentes
+);
+
 -- Tabla licitacion_partidas (relación entre licitaciones y partidas)
 CREATE TABLE licitacion_partidas (
   id_licitacion_partida INT AUTO_INCREMENT PRIMARY KEY,
@@ -50,13 +78,6 @@ CREATE TABLE requerimientos_partida (
   FOREIGN KEY (id_partida) REFERENCES partidas(id_partida)
 )
 
--- Tabla 'empresas'
-CREATE TABLE empresas_externas (
-  id_empresa INT PRIMARY KEY AUTO_INCREMENT,
-  nombre VARCHAR(100) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)
 
 -- Tabla 'aclaraciones_partida'
 CREATE TABLE aclaraciones_partida (

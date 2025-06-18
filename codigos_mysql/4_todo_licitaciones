@@ -21,3 +21,6 @@ CREATE TABLE licitaciones (
   criterio_evaluacion VARCHAR(100),
   FOREIGN KEY (id_entidad) REFERENCES entidades(id_entidad)
 )
+
+
+

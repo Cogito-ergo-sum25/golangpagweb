@@ -1070,6 +1070,8 @@ func (m *Repository) EditarLicitacion(w http.ResponseWriter, r *http.Request) {
 
 
 
+
+
 // TODO LO DE PARTIDAS
 func (m *Repository) MostrarPartidasPorID(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
@@ -1100,6 +1102,175 @@ func (m *Repository) MostrarPartidasPorID(w http.ResponseWriter, r *http.Request
 
 	render.RenderTemplate(w, "licitaciones/mostrar-partidas.page.tmpl", data)
 }
+
+func (m *Repository) MostrarAclaracionesLicitacion(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		http.Error(w, "ID de licitación inválido", http.StatusBadRequest)
+		return
+	}
+
+    licitacion, err := m.ObtenerLicitacionPorID(id)
+	if err != nil {
+		http.Error(w, "Error al obtener licitación", http.StatusInternalServerError)
+		return
+	}
+
+    partidas, err := m.ObtenerPartidasPorLicitacionID(id)
+	if err != nil {
+		log.Printf("Error al obtener partidas para licitación %d: %v", id, err)
+		http.Error(w, "Error al obtener las partidas", http.StatusInternalServerError)
+		return
+	}
+
+    empresas, err := m.ObtenerTodasEmpresas()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    aclaraciones, err := m.ObtenerAclaracionesPorLicitacionID(id)
+    if err != nil {
+        log.Printf("Error al obtener aclaraciones de la licitación %d: %v", id, err)
+        http.Error(w, "Error al obtener aclaraciones", http.StatusInternalServerError)
+        return
+    }
+
+
+	data := &models.TemplateData{
+		CSRFToken: nosurf.Token(r),
+        Partidas:  partidas,
+        Empresas:   empresas,
+        Licitacion: licitacion,
+        AclaracionesLicitacion: aclaraciones,
+	}
+
+	render.RenderTemplate(w, "licitaciones/aclaraciones-licitacion.page.tmpl", data)
+}
+
+func (m *Repository) MostrarNuevaAclaracionGeneral(w http.ResponseWriter, r *http.Request) {
+    idParam := chi.URLParam(r, "id")
+    idPartida, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
+
+    licitacion, err := m.ObtenerLicitacionPorID(idPartida)
+	if err != nil {
+		http.Error(w, "Error al obtener licitación", http.StatusInternalServerError)
+		return
+	}
+
+    // Obtener partida
+    partidas, err := m.ObtenerPartidasPorLicitacionID(idPartida)
+    if err != nil {
+        http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
+        return
+    }
+
+    empresas, err := m.ObtenerTodasEmpresas()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    data := &models.TemplateData{
+        Empresas:   empresas,
+        Partidas:    partidas,
+        Licitacion: licitacion,
+        CSRFToken:  nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/nueva-aclaracion-licitacion.page.tmpl", data)
+}
+
+func (m *Repository) AgregarEmpresaExternaContextoAclaraciones(w http.ResponseWriter, r *http.Request) {
+    if err := r.ParseForm(); err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    nombre := r.FormValue("nombre")
+    idLicitacion := r.FormValue("id_licitacion")
+
+    if nombre == "" || idLicitacion == "" {
+        m.App.Session.Put(r.Context(), "error", "Todos los campos son obligatorios")
+        http.Redirect(w, r, "/", http.StatusSeeOther)
+        return
+    }
+
+    err := m.AgregarEmpresaNueva(nombre)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al agregar la empresa")
+        fmt.Println("Error al agregar empresa:", err)
+        http.Redirect(w, r, "/nueva-aclaracion-general/"+idLicitacion, http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "success", "Empresa agregada correctamente")
+    http.Redirect(w, r, "/nueva-aclaracion-general/"+idLicitacion, http.StatusSeeOther)
+}
+
+func (m *Repository) CrearNuevaAclaracionGeneral(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "No se pudo procesar el formulario", http.StatusBadRequest)
+		return
+	}
+
+	idLicitacion, err := strconv.Atoi(r.FormValue("id_licitacion"))
+	if err != nil {
+		http.Error(w, "ID de licitación inválido", http.StatusBadRequest)
+		return
+	}
+
+	// id_partida puede ser opcional
+	var partida *models.Partida
+	if idPartidaStr := r.FormValue("id_partida"); idPartidaStr != "" {
+		idPartida, err := strconv.Atoi(idPartidaStr)
+		if err != nil {
+			http.Error(w, "ID de partida inválido", http.StatusBadRequest)
+			return
+		}
+		partida = &models.Partida{IDPartida: idPartida}
+	}
+
+	idEmpresa, err := strconv.Atoi(r.FormValue("id_empresa"))
+	if err != nil {
+		http.Error(w, "Empresa inválida", http.StatusBadRequest)
+		return
+	}
+
+	// Campos opcionales
+	fichaID, _ := strconv.Atoi(r.FormValue("ficha_tecnica_id"))
+	puntosID, _ := strconv.Atoi(r.FormValue("id_puntos_tecnicos_modif"))
+
+	// Aquí podrías agregar lógica extra si deseas distinguir preguntas técnicas o no
+	aclaracion := models.AclaracionesLicitacion{
+		IDLicitacion:           idLicitacion,
+		Partida:                partida,
+		IDEmpresa:              idEmpresa,
+		Pregunta:               r.FormValue("pregunta"),
+		Observaciones:          r.FormValue("observaciones"),
+		FichaTecnicaID:         fichaID,
+		IDPuntosTecnicosModif:  puntosID,
+	}
+
+	err = m.InsertarAclaracionGeneral(aclaracion)
+	if err != nil {
+		http.Error(w, "Error al guardar la aclaración: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	m.App.Session.Put(r.Context(), "flash", "Aclaración registrada correctamente")
+	http.Redirect(w, r, fmt.Sprintf("/aclaraciones-licitacion/%d", idLicitacion), http.StatusSeeOther)
+}
+
 
 func (m *Repository) MostrarNuevaPartida(w http.ResponseWriter, r *http.Request) {
     idParam := chi.URLParam(r, "id") // <- Extrae ID desde URL
