@@ -1320,6 +1320,119 @@ func (m *Repository) ObtenerPropuestaPorID(idPropuesta int) (models.PropuestasPa
 	return propuesta, nil
 }
 
+func (m *Repository) ObtenerOCrearFalloPorPropuestaID(idPropuesta int) (*models.FallosPropuesta, error) {
+	var fallo models.FallosPropuesta
+
+	query := `
+		SELECT id_fallo, id_propuesta, cumple_legal, cumple_administrativo, cumple_tecnico,
+		       puntos_obtenidos, ganador, observaciones, created_at, updated_at
+		FROM fallos_propuesta
+		WHERE id_propuesta = ?
+		LIMIT 1;
+	`
+	row := m.App.DB.QueryRow(query, idPropuesta)
+
+	err := row.Scan(
+		&fallo.IDFallo,
+		&fallo.IDPropuesta,
+		&fallo.CumpleLegal,
+		&fallo.CumpleAdministrativo,
+		&fallo.CumpleTecnico,
+		&fallo.PuntosObtenidos,
+		&fallo.Ganador,
+		&fallo.Observaciones,
+		&fallo.CreatedAt,
+		&fallo.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		// Si no existe, lo insertamos en blanco
+		insert := `
+			INSERT INTO fallos_propuesta (
+				id_propuesta, cumple_legal, cumple_administrativo, cumple_tecnico,
+				puntos_obtenidos, ganador, observaciones, created_at, updated_at
+			) VALUES (?, false, false, false, 0, false, '', NOW(), NOW())
+		`
+		_, err = m.App.DB.Exec(insert, idPropuesta)
+		if err != nil {
+			return nil, err
+		}
+
+		// Reconsultamos el fallo ya insertado
+		return m.ObtenerOCrearFalloPorPropuestaID(idPropuesta)
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &fallo, nil
+}
+
+func (m *Repository) ObtenerOCrearFallo(idPropuesta int) (*models.FallosPropuesta, error) {
+	var fallo models.FallosPropuesta
+
+	query := `
+	SELECT 
+		id_fallo, id_propuesta, cumple_legal, cumple_administrativo, cumple_tecnico,
+		puntos_obtenidos, ganador, observaciones, created_at, updated_at
+	FROM fallos_propuesta
+	WHERE id_propuesta = ?
+	LIMIT 1;
+	`
+
+	row := m.App.DB.QueryRow(query, idPropuesta)
+
+	err := row.Scan(
+		&fallo.IDFallo,
+		&fallo.IDPropuesta,
+		&fallo.CumpleLegal,
+		&fallo.CumpleAdministrativo,
+		&fallo.CumpleTecnico,
+		&fallo.PuntosObtenidos,
+		&fallo.Ganador,
+		&fallo.Observaciones,
+		&fallo.CreatedAt,
+		&fallo.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		// Si no existe, lo creamos
+		insert := `
+		INSERT INTO fallos_propuesta (id_propuesta, cumple_legal, cumple_administrativo, cumple_tecnico, puntos_obtenidos, ganador, observaciones, created_at, updated_at)
+		VALUES (?, false, false, false, 0, false, '', NOW(), NOW())
+		`
+
+		res, err := m.App.DB.Exec(insert, idPropuesta)
+		if err != nil {
+			return nil, err
+		}
+
+		lastID, err := res.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+
+		fallo.IDFallo = int(lastID)
+		fallo.IDPropuesta = idPropuesta
+		fallo.CumpleLegal = false
+		fallo.CumpleAdministrativo = false
+		fallo.CumpleTecnico = false
+		fallo.PuntosObtenidos = 0
+		fallo.Ganador = false
+		fallo.Observaciones = ""
+		fallo.CreatedAt = time.Now()
+		fallo.UpdatedAt = time.Now()
+
+		return &fallo, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &fallo, nil
+}
+
+
+
+
 
 
 
@@ -1557,6 +1670,36 @@ func (m *Repository) InsertarAclaracionGeneral(a models.AclaracionesLicitacion) 
 
 	return err
 }
+
+func (m *Repository) InsertarFalloPropuesta(f models.FallosPropuesta) error {
+	query := `
+		INSERT INTO fallos_propuesta (
+			id_propuesta,
+			cumple_legal,
+			cumple_administrativo,
+			cumple_tecnico,
+			puntos_obtenidos,
+			ganador,
+			observaciones,
+			created_at,
+			updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+	`
+
+	_, err := m.App.DB.Exec(
+		query,
+		f.IDPropuesta,
+		f.CumpleLegal,
+		f.CumpleAdministrativo,
+		f.CumpleTecnico,
+		f.PuntosObtenidos,
+		f.Ganador,
+		f.Observaciones,
+	)
+
+	return err
+}
+
 
 
 

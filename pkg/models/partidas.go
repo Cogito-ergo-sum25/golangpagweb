@@ -134,9 +134,27 @@ type PropuestasPartida struct {
 	Observaciones     string  `json:"observaciones"`
 
 	ProductoExterno *ProductosExternos `json:"producto_externo"`
-	Partida *Partida  `json:"partida"`
-	Empresa *Empresas `json:"empresa"`
+	Partida         *Partida           `json:"partida"`
+	Empresa         *Empresas          `json:"empresa"`
+	Fallo *FallosPropuesta `json:"fallo"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+// FallosPropuesta representa el resultado de la evaluación de una propuesta
+type FallosPropuesta struct {
+	IDFallo              int       `json:"id_fallo"`
+	IDPropuesta          int       `json:"id_propuesta"`
+	CumpleLegal          bool      `json:"cumple_legal"`
+	CumpleAdministrativo bool      `json:"cumple_administrativo"`
+	CumpleTecnico        bool      `json:"cumple_tecnico"`
+	PuntosObtenidos      int       `json:"puntos_obtenidos"`
+	Ganador              bool      `json:"ganador"`
+	Observaciones        string    `json:"observaciones"`
+
+	Propuesta            *PropuestasPartida `json:"propuesta"`
+
+	CreatedAt            time.Time `json:"created_at"`
+	UpdatedAt            time.Time `json:"updated_at"`
+};

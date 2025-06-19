@@ -66,6 +66,10 @@ type TemplateData struct {
 	Propuesta PropuestasPartida // Propuesta individual
 	PropuestasPartida []PropuestasPartida 
 
+	// Fallos de propuestas
+	Fallo *FallosPropuesta
+	Fallos []FallosPropuesta
+
 	// Listas para formularios
 	Marcas          []Marca
 	TiposProducto   []TipoProducto

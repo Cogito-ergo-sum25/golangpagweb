@@ -85,6 +85,13 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/editar-propuesta/{id}", handlers.Repo.MostrarEditarPropuesta)
 	mux.Post("/editar-propuesta/{id}", handlers.Repo.EditarPropuesta)
 
+	// FALLOS
+	mux.Get("/fallo/{id}", handlers.Repo.ObtenerFalloPropuesta)
+	mux.Get("/fallo-json/{id}", handlers.Repo.ObtenerFalloPropuestaJSON)
+	mux.Post("/guardar-fallo", handlers.Repo.GuardarFalloPropuesta)
+
+
+
 
 
 

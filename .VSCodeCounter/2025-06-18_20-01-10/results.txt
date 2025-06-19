@@ -1,0 +1,98 @@
+Date : 2025-06-18 20:01:10
+Directory : c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO
+Total : 49 files,  8056 codes, 587 comments, 1302 blanks, all 9945 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| Go                 |         14 |      4,365 |        426 |        818 |      5,609 |
+| HTML               |         30 |      3,245 |        138 |        344 |      3,727 |
+| PostCSS            |          1 |        312 |         23 |         79 |        414 |
+| Markdown           |          1 |        107 |          0 |         56 |        163 |
+| Go Checksum File   |          1 |         10 |          0 |          1 |         11 |
+| Go Module File     |          1 |          9 |          0 |          4 |         13 |
+| JSON with Comments |          1 |          8 |          0 |          0 |          8 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                                 | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                    |         49 |      8,056 |        587 |      1,302 |      9,945 |
+| . (Files)                                                                                                            |          4 |        134 |          0 |         61 |        195 |
+| cmd                                                                                                                  |          3 |        151 |         22 |         61 |        234 |
+| cmd\web                                                                                                              |          3 |        151 |         22 |         61 |        234 |
+| pkg                                                                                                                  |         11 |      4,214 |        404 |        757 |      5,375 |
+| pkg\config                                                                                                           |          1 |         15 |          1 |          3 |         19 |
+| pkg\database                                                                                                         |          1 |         30 |          3 |          6 |         39 |
+| pkg\handlers                                                                                                         |          2 |      3,719 |        342 |        628 |      4,689 |
+| pkg\models                                                                                                           |          6 |        323 |         45 |         89 |        457 |
+| pkg\render                                                                                                           |          1 |        127 |         13 |         31 |        171 |
+| static                                                                                                               |          1 |        312 |         23 |         79 |        414 |
+| static\css                                                                                                           |          1 |        312 |         23 |         79 |        414 |
+| templates                                                                                                            |         30 |      3,245 |        138 |        344 |      3,727 |
+| templates\base                                                                                                       |          1 |        104 |          8 |         11 |        123 |
+| templates\catalogo                                                                                                   |          1 |         82 |          7 |          5 |         94 |
+| templates\home                                                                                                       |          1 |         59 |          2 |          5 |         66 |
+| templates\inventario                                                                                                 |          4 |        496 |         50 |         54 |        600 |
+| templates\licitaciones                                                                                               |         15 |      1,668 |         52 |        191 |      1,911 |
+| templates\opciones                                                                                                   |          6 |        611 |         16 |         57 |        684 |
+| templates\proyectos                                                                                                  |          2 |        225 |          3 |         21 |        249 |
++----------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                                                                             | language           | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\GOLANGUEANDO.code-workspace                                  | JSON with Comments |          8 |          0 |          0 |          8 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\README.md                                                    | Markdown           |        107 |          0 |         56 |        163 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\cmd\web\main.go                                              | Go                 |         59 |          3 |         18 |         80 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\cmd\web\middleware.go                                        | Go                 |         18 |          2 |          5 |         25 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\cmd\web\routes.go                                            | Go                 |         74 |         17 |         38 |        129 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\go.mod                                                       | Go Module File     |          9 |          0 |          4 |         13 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\go.sum                                                       | Go Checksum File   |         10 |          0 |          1 |         11 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\config\config.go                                         | Go                 |         15 |          1 |          3 |         19 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\database\database.go                                     | Go                 |         30 |          3 |          6 |         39 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\handlers\handlers.go                                     | Go                 |      2,186 |        306 |        382 |      2,874 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\handlers\helpers.go                                      | Go                 |      1,533 |         36 |        246 |      1,815 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\entidades.go                                      | Go                 |         27 |          0 |          6 |         33 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\licitaciones.go                                   | Go                 |         45 |          3 |         11 |         59 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\partidas.go                                       | Go                 |        122 |         10 |         29 |        161 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\producto.go                                       | Go                 |         48 |          7 |         13 |         68 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\proyecto.go                                       | Go                 |         33 |          4 |          8 |         45 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\models\templatedata.go                                   | Go                 |         48 |         21 |         22 |         91 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\pkg\render\render.go                                         | Go                 |        127 |         13 |         31 |        171 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\static\css\styles.css                                        | PostCSS            |        312 |         23 |         79 |        414 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\base\base.layout.tmpl                              | HTML               |        104 |          8 |         11 |        123 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\catalogo\catalogo.page.tmpl                        | HTML               |         82 |          7 |          5 |         94 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\home\home.page.tmpl                                | HTML               |         59 |          2 |          5 |         66 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\inventario\crear-producto.page.tmpl                | HTML               |        177 |         22 |         23 |        222 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\inventario\editar-producto.page.tmpl               | HTML               |        187 |         22 |         23 |        232 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\inventario\inventario.page.tmpl                    | HTML               |         39 |          0 |          0 |         39 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\inventario\ver_producto.page.tmpl                  | HTML               |         93 |          6 |          8 |        107 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\aclaraciones-licitacion.page.tmpl     | HTML               |         45 |          0 |          4 |         49 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\aclaraciones.page.tmpl                | HTML               |         27 |          0 |          0 |         27 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\editar-licitacion.page.tmpl           | HTML               |        163 |          6 |         16 |        185 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\editar-partida.page.tmpl              | HTML               |         88 |          8 |         20 |        116 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\editar-propuesta.page.tmpl            | HTML               |         84 |          0 |         11 |         95 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\licitaciones.page.tmpl                | HTML               |        152 |          0 |         12 |        164 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\mostrar-partidas.page.tmpl            | HTML               |        169 |          2 |         20 |        191 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nueva-aclaracion-licitacion.page.tmpl | HTML               |         89 |          9 |          7 |        105 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nueva-aclaracion.page.tmpl            | HTML               |         77 |          8 |         13 |         98 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nueva-licitacion.page.tmpl            | HTML               |        169 |          6 |         17 |        192 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nueva-partida.page.tmpl               | HTML               |         88 |          8 |         20 |        116 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nueva-propuesta.page.tmpl             | HTML               |        140 |          1 |         15 |        156 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\nuevo-producto-partida.page.tmpl      | HTML               |        105 |          2 |          2 |        109 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\productos-partida.page.tmpl           | HTML               |         96 |          1 |         10 |        107 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\licitaciones\propuestas.page.tmpl                  | HTML               |        176 |          1 |         24 |        201 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\datos-referencia.page.tmpl                | HTML               |        304 |          6 |         30 |        340 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\empresas-externas.page.tmpl               | HTML               |         61 |          1 |          2 |         64 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\entidades-nueva.page.tmpl                 | HTML               |         66 |          8 |         14 |         88 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\entidades-opciones.page.tmpl              | HTML               |         35 |          0 |          3 |         38 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\opciones.page.tmpl                        | HTML               |         42 |          0 |          2 |         44 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\opciones\productos-externos.page.tmpl              | HTML               |        103 |          1 |          6 |        110 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\proyectos\nuevo-proyecto.page.tmpl                 | HTML               |        158 |          3 |         19 |        180 |
+| c:\Users\josec\OneDrive\Documentos\AUTISMO\GOLANGUEANDO\templates\proyectos\proyectos-vista.page.tmpl                | HTML               |         67 |          0 |          2 |         69 |
+| Total                                                                                                                |                    |      8,056 |        587 |      1,302 |      9,945 |
++----------------------------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+

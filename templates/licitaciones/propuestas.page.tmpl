@@ -7,6 +7,13 @@
             <i class="fas fa-plus"></i> Nueva Propuesta
         </a>
     </div>
+    <div class="btn-group mb-4" role="group" aria-label="Filtros de propuestas">
+        <button type="button" class="btn btn-outline-primary filtro-btn" data-filtro="todas">Todas</button>
+        <button type="button" class="btn btn-outline-success filtro-btn" data-filtro="ganadora">Ganadora</button>
+        <button type="button" class="btn btn-outline-warning filtro-btn" data-filtro="con-fallo">Con fallo</button>
+        <button type="button" class="btn btn-outline-secondary filtro-btn" data-filtro="sin-fallo">Sin fallo</button>
+    </div>
+
 
     {{if .PropuestasPartida}}
     <div class="table-responsive">
@@ -27,7 +34,7 @@
             </thead>
             <tbody>
                 {{range .PropuestasPartida}}
-                <tr>
+                <tr data-ganador="{{.Fallo.Ganador}}" data-fallo="{{if .Fallo}}true{{else}}false{{end}}">
                     <td>{{.Empresa.Nombre}}</td>
                     <td>{{.ProductoExterno.Nombre}}</td>
                     <td>{{.ProductoExterno.Modelo}}</td>
@@ -41,9 +48,13 @@
                         <a href="/editar-propuesta/{{.IDPropuesta}}" class="btn btn-sm px-1 py-1 azul">
                             <i class="fas fa-edit"></i> Editar
                         </a>
-                        <a href="/fallo-propuesta/{{.IDPropuesta}}" class="btn btn-sm px-1 py-1 rojo">
+                        <button class="btn btn-sm px-1 py-1 rojo btn-abrir-fallo" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalFallo" 
+                                data-id="{{.IDPropuesta}}">
                             <i class="fa-solid fa-circle-exclamation"></i> Fallo
-                        </a>
+                        </button>
+
                     </td>
   
                 </tr>
@@ -58,5 +69,132 @@
             </div>
         </div>
     {{end}}
+
+    <!-- Modal: Registrar o Editar Fallo -->
+    <div class="modal fade" id="modalFallo" tabindex="-1" aria-labelledby="modalFalloLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+        <form id="formFalloPropuesta" method="POST" action="/guardar-fallo">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="hidden" name="id_propuesta" id="inputIdPropuesta">
+
+            <div class="modal-header">
+            <h5 class="modal-title" id="modalFalloLabel"><i class="fas fa-check-double me-2"></i> Evaluar Propuesta</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="cumple_legal" id="cumpleLegal">
+                <label class="form-check-label" for="cumpleLegal">Cumple Legal</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="cumple_administrativo" id="cumpleAdministrativo">
+                <label class="form-check-label" for="cumpleAdministrativo">Cumple Administrativo</label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="cumple_tecnico" id="cumpleTecnico">
+                <label class="form-check-label" for="cumpleTecnico">Cumple Técnico</label>
+            </div>
+            <div class="form-group mb-3">
+                <label for="puntosObtenidos">Puntos Obtenidos</label>
+                <input type="number" class="form-control" name="puntos_obtenidos" id="puntosObtenidos" min="0" max="100">
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="ganador" id="esGanador">
+                <label class="form-check-label" for="esGanador">Es Ganador</label>
+            </div>
+            <div class="form-group mb-3">
+                <label for="observacionesFallo">Observaciones</label>
+                <textarea class="form-control" name="observaciones" id="observacionesFallo" rows="2"></textarea>
+            </div>
+            </div>
+
+            <div class="modal-footer">
+            <button type="button" class="btn rojo" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn verde">Guardar Fallo</button>
+            </div>
+        </form>
+        </div>
+    </div>
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const modalFallo = document.getElementById('modalFallo');
+
+  modalFallo.addEventListener('show.bs.modal', async function (event) {
+    const button = event.relatedTarget;
+    const idPropuesta = button.getAttribute('data-id');
+
+    // Cargar el ID de propuesta en el input hidden
+    document.getElementById('inputIdPropuesta').value = idPropuesta;
+
+    try {
+      const res = await fetch(`/fallo-json/${idPropuesta}`);
+      if (!res.ok) throw new Error("No se pudo obtener el fallo");
+
+      const data = await res.json();
+
+      // Asignar valores a los inputs del modal
+      document.getElementById('cumpleLegal').checked = data.cumple_legal;
+      document.getElementById('cumpleAdministrativo').checked = data.cumple_administrativo;
+      document.getElementById('cumpleTecnico').checked = data.cumple_tecnico;
+      document.getElementById('puntosObtenidos').value = data.puntos_obtenidos || 0;
+      document.getElementById('esGanador').checked = data.ganador;
+      document.getElementById('observacionesFallo').value = data.observaciones || "";
+    } catch (err) {
+      console.error("Error al cargar datos del fallo:", err);
+      // Opcional: mostrar un alert o limpiar el modal
+      document.getElementById('cumpleLegal').checked = false;
+      document.getElementById('cumpleAdministrativo').checked = false;
+      document.getElementById('cumpleTecnico').checked = false;
+      document.getElementById('puntosObtenidos').value = '';
+      document.getElementById('esGanador').checked = false;
+      document.getElementById('observacionesFallo').value = '';
+    }
+  });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const botonesFiltro = document.querySelectorAll('.filtro-btn');
+  const filas = document.querySelectorAll('table tbody tr');
+
+  botonesFiltro.forEach(boton => {
+    boton.addEventListener('click', () => {
+      const filtro = boton.dataset.filtro;
+
+      filas.forEach(fila => {
+        const esGanador = fila.getAttribute('data-ganador') === 'true';
+        const tieneFallo = fila.getAttribute('data-fallo') === 'true';
+
+        let mostrar = true;
+        switch (filtro) {
+          case 'ganadora':
+            mostrar = esGanador;
+            break;
+          case 'con-fallo':
+            mostrar = tieneFallo && !esGanador;
+            break;
+          case 'sin-fallo':
+            mostrar = !tieneFallo;
+            break;
+          case 'todas':
+          default:
+            mostrar = true;
+        }
+
+        fila.style.display = mostrar ? '' : 'none';
+      });
+    });
+  });
+});
+</script>
+
+
+
+
 {{end}}

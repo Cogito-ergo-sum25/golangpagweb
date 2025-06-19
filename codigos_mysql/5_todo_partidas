@@ -140,3 +140,19 @@ CREATE TABLE propuestas_partida (
   FOREIGN KEY (id_empresa) REFERENCES empresas_externas(id_empresa),
   FOREIGN KEY (id_producto_externo) REFERENCES productos_externos(id_producto)
 );
+
+CREATE TABLE fallos_propuesta (
+  id_fallo INT NOT NULL AUTO_INCREMENT,
+  id_propuesta INT NOT NULL,
+  cumple_legal BOOLEAN,
+  cumple_administrativo BOOLEAN,
+  cumple_tecnico BOOLEAN,
+  puntos_obtenidos INT,
+  ganador BOOLEAN,
+  observaciones TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  PRIMARY KEY (id_fallo),
+  FOREIGN KEY (id_propuesta) REFERENCES propuestas_partida(id_propuesta)
+);
