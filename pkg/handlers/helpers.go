@@ -748,7 +748,9 @@ func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.Requerim
 	comentarios_visita,
 	requiere_muestra,
 	fecha_muestra,
-	comentarios_muestra
+	comentarios_muestra,
+	fecha_entrega,
+	comentarios_entrega
 	FROM requerimientos_partida
 	WHERE id_partida = ?
 	LIMIT 1`
@@ -766,6 +768,8 @@ func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.Requerim
 	&r.RequiereMuestra,
 	&r.FechaMuestra,
 	&r.ComentariosMuestra,
+	&r.FechaEntrega,
+	&r.ComentariosEntrega,
 	)
 
 
@@ -782,8 +786,10 @@ func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.Requerim
 			comentarios_visita,
 			requiere_muestra,
 			fecha_muestra,
-			comentarios_muestra
-		) VALUES (?, false, false, false, false, false, NULL, '', false, NULL, '')`
+			comentarios_muestra,
+			fecha_entrega,
+			comentarios_entrega
+		) VALUES (?, false, false, false, false, false, NULL, '', false, NULL, '', NULL, '')`
 
 	res, err := m.App.DB.Exec(insert, idPartida)
 	if err != nil {
@@ -807,6 +813,8 @@ func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.Requerim
 	r.RequiereMuestra = false
 	r.FechaMuestra = time.Time{}
 	r.ComentariosMuestra = ""
+	r.FechaEntrega = time.Time{}
+	r.ComentariosEntrega = ""
 
 	return r, nil
 	}

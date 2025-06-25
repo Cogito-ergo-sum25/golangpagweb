@@ -915,7 +915,7 @@ func (m *Repository) MostrarNuevaLicitacion(w http.ResponseWriter, r *http.Reque
             "tipos": []string{"Directa", "Apoyo", "Estudio de mercado", "Adjudicación directa", "Producto no adecuado", "No solicitan productos INTEVI"},
             "caracter": []string{"Internacional - Cobertura Tratados", "Nacional", "Internacional Abierto"},
             "criterio": []string{"Mixta", "Binario", "Puntos y porcentajes"},
-            "estatus": []string{"Vigente", "En aclaraciones"},
+            "estatus": []string{"Vigente", "En aclaraciones", "Presentada", "Finalizada"},
             
         },
     }
@@ -1002,7 +1002,7 @@ func (m *Repository) MostrarFormularioEditarLicitacion(w http.ResponseWriter, r 
             "tipos": []string{"Directa", "Apoyo", "Estudio de mercado", "Adjudicación directa", "Producto no adecuado", "No solicitan productos INTEVI"},
             "caracter": []string{"Internacional - Cobertura Tratados", "Nacional", "Internacional Abierto"},
             "criterio": []string{"Mixta", "Binario", "Puntos y porcentajes"},
-            "estatus": []string{"Vigente", "En aclaraciones"},
+            "estatus": []string{"Vigente", "En aclaraciones","Presentada", "Finalizada"},
         },
     }
 
@@ -1619,6 +1619,8 @@ func (m *Repository) ObtenerRequerimientosJSON(w http.ResponseWriter, r *http.Re
 	"requiere_muestra": req.RequiereMuestra,
 	"fecha_muestra": req.FechaMuestra.Format("2006-01-02"),
 	"comentarios_muestra": req.ComentariosMuestra,
+    "fecha_entrega": req.FechaEntrega.Format("2006-01-02"),
+    "comentarios_entrega": req.ComentariosEntrega,
     })
 
 }
@@ -1650,6 +1652,9 @@ func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Reques
     requiereMuestra := r.FormValue("requiere_muestra") == "on"
     fechaMuestra := r.FormValue("fecha_muestra")
     comentariosMuestra := r.FormValue("comentarios_muestra")
+    fechaEntrega := r.FormValue("fecha_entrega")
+    comentariosEntrega := r.FormValue("comentarios_entrega")
+
 
     // Asegurar que el registro existe (lo crea si no)
     _, err = m.ObtenerOCrearRequerimientos(idPartida)
@@ -1673,6 +1678,8 @@ func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Reques
 		requiere_muestra = ?,
 		fecha_muestra = ?,
 		comentarios_muestra = ?,
+        fecha_entrega = ?,
+        comentarios_entrega = ?,
 		updated_at = NOW()
 	WHERE id_partida = ?;
     `
@@ -1688,6 +1695,8 @@ func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Reques
         requiereMuestra,
         fechaMuestra,
         comentariosMuestra,
+        fechaEntrega,
+        comentariosEntrega,
         idPartida,
     )
 

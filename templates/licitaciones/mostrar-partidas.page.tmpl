@@ -126,6 +126,14 @@
               <label for="comentarios_muestra" class="form-label">Comentarios de la Muestra</label>
               <textarea class="form-control" name="comentarios_muestra" id="req_comentarios_muestra" rows="2"></textarea>
           </div>
+          <div class="mb-3">
+              <label for="fecha_entrega" class="form-label">Fecha de Entrega</label>
+              <input type="date" class="form-control" name="fecha_entrega" id="req_fecha_entrega">
+          </div>
+          <div class="mb-3">
+              <label for="comentarios_entrega" class="form-label">Comentarios de la Entrega</label>
+              <textarea class="form-control" name="comentarios_entrega" id="req_comentarios_entrega" rows="2"></textarea>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-success">Guardar</button>
@@ -178,6 +186,9 @@ document.addEventListener("DOMContentLoaded", function () {
         modal.querySelector("#req_requiere_muestra").checked = data.requiere_muestra;
         modal.querySelector("#req_fecha_muestra").value = data.fecha_muestra || "";
         modal.querySelector("#req_comentarios_muestra").value = data.comentarios_muestra || "";
+        modal.querySelector("#req_fecha_entrega").value = data.fecha_entrega || "";
+        modal.querySelector("#req_comentarios_entrega").value = data.comentarios_entrega || "";
+
 
       } catch (error) {
         console.error("Error cargando requerimientos:", error);

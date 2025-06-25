@@ -71,6 +71,8 @@ CREATE TABLE requerimientos_partida (
   requiere_muestra BOOLEAN DEFAULT FALSE,
   fecha_muestra DATE,
   comentarios_muestra TEXT,
+  fecha_entrega DATE,
+  comentarios_entrega TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   

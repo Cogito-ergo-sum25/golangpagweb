@@ -76,7 +76,8 @@ type RequerimientosPartida struct {
 	RequiereMuestra bool `json:"requiere_muestra_producto"`
 	FechaMuestra time.Time `json:"fecha_muestra"`
 	ComentariosMuestra string `json:"comentarios_muestra"`
-	
+	FechaEntrega time.Time `json:"fecha_entrega"`
+	ComentariosEntrega string `json:"comentarios_entrega"`
 
 	Partida *Partida `json:"partida"`
 
