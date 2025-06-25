@@ -41,6 +41,9 @@ func routes(app *config.AppConfig) http.Handler {
 	mux.Get("/editar-licitacion/{id}", handlers.Repo.MostrarFormularioEditarLicitacion)
 	mux.Post("/editar-licitacion/{id}", handlers.Repo.EditarLicitacion)
 
+	// CALENDARIO
+	mux.Get("/calendario", handlers.Repo.Calendario)
+
 
 	// PARTIDAS
 	mux.Get("/mostrar-partidas/{id}",handlers.Repo.MostrarPartidasPorID)

@@ -1064,7 +1064,83 @@ func (m *Repository) EditarLicitacion(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
 }
 
+// CALENDARIO
+func (m *Repository) Calendario(w http.ResponseWriter, r *http.Request) {
+    licitaciones, err := m.ObtenerTodasLicitaciones()
+    if err != nil {
+        http.Error(w, "No se pudieron obtener las licitaciones", http.StatusInternalServerError)
+        return
+    }
 
+    // Prepara eventos JS
+    type Evento struct {
+        Title         string `json:"title"`
+        Start         string `json:"start"`
+        Color         string            `json:"color,omitempty"` 
+        ExtendedProps map[string]string `json:"extendedProps"`
+    }
+
+    var eventos []Evento
+    for _, l := range licitaciones {
+        eventos = append(eventos,
+            Evento{
+                Title: "📋 Junta: " + l.Nombre,
+                Start: l.FechaJunta.Format("2006-01-02"),
+                Color: "#0d6efd",
+                ExtendedProps: map[string]string{
+                    "num":     l.NumContratacion,
+                    "tipo":    l.Tipo,
+                    "estatus": l.Estatus,
+                    "id":      fmt.Sprintf("%d", l.IDLicitacion),
+                },
+            },
+            Evento{
+                Title: "📑 Propuestas: " + l.Nombre,
+                Start: l.FechaPropuestas.Format("2006-01-02"),
+                Color: "#6610f2",
+                ExtendedProps: map[string]string{
+                    "num":     l.NumContratacion,
+                    "tipo":    l.Tipo,
+                    "estatus": l.Estatus,
+                    "id":      fmt.Sprintf("%d", l.IDLicitacion),
+                },
+            },
+            Evento{
+                Title: "⛔ Fallo: " + l.Nombre,
+                Start: l.FechaFallo.Format("2006-01-02"),
+                Color: "#d66666",
+                ExtendedProps: map[string]string{
+                    "num":     l.NumContratacion,
+                    "tipo":    l.Tipo,
+                    "estatus": l.Estatus,
+                    "id":      fmt.Sprintf("%d", l.IDLicitacion),
+                },
+            },
+            Evento{
+                Title: "📦 Entrega: " + l.Nombre,
+                Start: l.FechaEntrega.Format("2006-01-02"),
+                Color: "#28a745",
+                ExtendedProps: map[string]string{
+                    "num":     l.NumContratacion,
+                    "tipo":    l.Tipo,
+                    "estatus": l.Estatus,
+                    "id":      fmt.Sprintf("%d", l.IDLicitacion),
+                },
+            },
+        )
+    }
+
+    data := &models.TemplateData{
+    Licitaciones: licitaciones,
+    CSRFToken:    nosurf.Token(r),
+    Data: map[string]interface{}{
+        "Eventos": eventos,
+        },
+    }
+
+
+    render.RenderTemplate(w, "calendario/calendario-vista.page.tmpl", data)
+}
 
 
 

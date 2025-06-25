@@ -1,0 +1,140 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container mt-4">
+    <h2>Calendario de Licitaciones</h2>
+    <div id="calendar"></div>
+</div>
+
+<style>
+/* Estilo base para el día actual */
+.fc .fc-day-today {
+    background-color: #fff3cd !important; /* amarillo suave */
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+    position: relative;
+    animation: pulse-border 1.2s ease-in-out;
+}
+
+/* Vista semanal/diaria también */
+.fc .fc-timegrid-col.fc-day-today,
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: #fff3cd !important;
+    border: 2px solid #ffc107;
+    box-shadow: inset 0 0 8px rgba(255, 193, 7, 0.25);
+    border-radius: 10px;
+    position: relative;
+    animation: pulse-border 1.2s ease-in-out;
+}
+
+/* Ícono 📅 en la esquina superior derecha */
+.fc .fc-day-today::after {
+    content: "📅";
+    position: absolute;
+    top: 6px;
+    right: 150px;
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+/* 🌙 Estilos especiales para el día actual en modo oscuro */
+.dark-mode .fc .fc-day-today,
+.dark-mode .fc .fc-timegrid-col.fc-day-today,
+.dark-mode .fc .fc-daygrid-day.fc-day-today {
+    background-color: #3b3b3b !important;
+    border: 2px solid #ffc107;
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.4);
+    border-radius: 10px;
+    color: #fff;
+}
+
+/* 📅 Ícono en modo oscuro */
+.dark-mode .fc .fc-day-today::after {
+    content: "📅";
+    position: absolute;
+    top: 6px;
+    right: 150px;
+    font-size: 1rem;
+    pointer-events: none;
+    color: #ffc107;
+}
+
+
+</style>
+
+
+
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.css" rel="stylesheet" />
+
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- FullCalendar JS -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Parse eventos JSON seguro
+        const eventos = JSON.parse('{{ toJson .Data.Eventos }}');
+        console.log("Eventos desde Go (parsed):", eventos);
+
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'es',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            events: eventos,
+            eventClick: function(info) {
+                const props = info.event.extendedProps;
+                const eventDate = new Date(info.event.start);
+                const today = new Date();
+                const diffTime = eventDate - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                let tiempoRestante = "";
+                    if (diffDays > 0) {
+                        tiempoRestante = `
+                            <div class="alert alert-info d-flex align-items-center gap-2 mb-2" role="alert">
+                                ⏳ <div>Faltan <strong>${diffDays}</strong> día(s)</div>
+                            </div>`;
+                    } else if (diffDays === 0) {
+                        tiempoRestante = `
+                            <div class="alert alert-warning d-flex align-items-center gap-2 mb-2" role="alert">
+                                📅 <div><strong>¡Es hoy!</strong> Este evento ocurre hoy.</div>
+                            </div>`;
+                    } else {
+                        tiempoRestante = `
+                            <div class="alert alert-secondary d-flex align-items-center gap-2 mb-2" role="alert">
+                                🕓 <div>Ocurrió hace <strong>${Math.abs(diffDays)}</strong> día(s)</div>
+                            </div>`;
+                    }
+                const content = `
+                    <div class="text-start">
+                        <h5 class="mb-2">${info.event.title}</h5>
+                        <p><b>No. Contratación:</b> ${props.num}<br>
+                        <b>Tipo:</b> ${props.tipo}<br>
+                        <b>Estatus:</b> ${props.estatus}<br>
+                        <b>Fecha:</b> ${eventDate.toLocaleDateString('es-MX')}<br>
+                        ${tiempoRestante}</p>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="/editar-licitacion/${props.id}" class="btn btn-sm amarillo">Editar</a>
+                            <a href="/mostrar-partidas/${props.id}" class="btn btn-sm azul">Partidas</a>
+                        </div>
+                    </div>
+                `;
+                Swal.fire({
+                    html: content,
+                    showConfirmButton: false,
+                    width: 500
+                });
+            }
+        });
+
+        calendar.render();
+    });
+</script>
+{{end}}

@@ -67,6 +67,9 @@ var functions = template.FuncMap{
 	"isCertSelected": isCertSelected,
 	"formatPrice": formatPrice,
 	"toJson": toJson,
+	"safeJS": func(s string) template.JS {
+		return template.JS(s)
+	},
 }
 
 var app *config.AppConfig
