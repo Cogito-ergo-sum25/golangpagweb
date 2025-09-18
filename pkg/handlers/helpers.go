@@ -291,7 +291,7 @@ func (m *Repository) ObtenerCompañias() ([]models.Compañias, error) {
 func (m *Repository) ObtenerTodosProductos() ([]models.Producto, error) {
 	query := `SELECT p.id_producto, p.sku, m.nombre as marca, c.nombre as clasificacion,
               p.nombre_corto, p.modelo, p.nombre, p.version, p.serie,
-              p.codigo_fabricante, p.descripcion
+              p.codigo_fabricante, p.descripcion, p.imagen_url, p.ficha_tecnica_url
               FROM productos p
               LEFT JOIN marcas m ON p.id_marca = m.id_marca
               LEFT JOIN clasificaciones c ON p.id_clasificacion = c.id_clasificacion
@@ -309,7 +309,7 @@ func (m *Repository) ObtenerTodosProductos() ([]models.Producto, error) {
 		err := rows.Scan(
 			&p.IDProducto, &p.SKU, &p.Marca, &p.Clasificacion,
 			&p.NombreCorto, &p.Modelo, &p.Nombre, &p.Version,
-			&p.Serie, &p.CodigoFabricante, &p.Descripcion,
+			&p.Serie, &p.CodigoFabricante, &p.Descripcion, &p.ImagenURL, &p.FichaTecnicaURL,
 		)
 		if err != nil {
 			return nil, err

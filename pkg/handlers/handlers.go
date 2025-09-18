@@ -711,80 +711,63 @@ func (m *Repository) procesarProductosProyecto(r *http.Request, idProyecto int64
 }
 
 // TODO LO CATALOGO
-/*
 
 func (m *Repository) Catalogo(w http.ResponseWriter, r *http.Request) {
     // Obtener parámetros de los filtros
     marca := r.URL.Query().Get("marca")
     clasificacion := r.URL.Query().Get("clasificacion")
     busqueda := r.URL.Query().Get("busqueda")
-    enPromocion := r.URL.Query().Get("en_promocion") == "true"
 
-    // Consulta SQL con filtros
-    query := "SELECT id_producto, marca, nombre, imagen_url, precio_lista, en_promocion FROM productos WHERE 1=1"
-    var args []interface{}
-
-    if marca != "" {
-        query += " AND marca = ?"
-        args = append(args, marca)
-    }
-
-    if clasificacion != "" {
-        query += " AND clasificacion = ?"
-        args = append(args, clasificacion)
-    }
-
-    if busqueda != "" {
-        query += " AND nombre LIKE ?"
-        args = append(args, "%"+busqueda+"%")
-    }
-
-    if enPromocion {
-        query += " AND en_promocion = TRUE"
-    }
-
-    // Ejecutar consulta
-    rows, err := m.App.DB.Query(query, args...)
+    // Obtener todos los productos
+    productos, err := m.ObtenerTodosProductos()
     if err != nil {
         http.Error(w, "Error al obtener productos: "+err.Error(), http.StatusInternalServerError)
         return
     }
-    defer rows.Close()
 
-    var productos []models.Producto
-    for rows.Next() {
-        var p models.Producto
-        var promocion bool
-        err := rows.Scan(&p.IDProducto, &p.Marca, &p.Nombre, &p.ImagenURL, &p.PrecioLista, &promocion)
-        if err != nil {
-            http.Error(w, "Error al leer producto: "+err.Error(), http.StatusInternalServerError)
-            return
+    // Aplicar filtros en memoria
+    var filteredProductos []models.Producto
+    for _, p := range productos {
+        if marca != "" && p.Marca != marca {
+            continue
         }
-        p.EnPromocion = promocion
-        productos = append(productos, p)
+        if clasificacion != "" && p.Clasificacion != clasificacion {
+            continue
+        }
+        if busqueda != "" && !strings.Contains(strings.ToLower(p.Nombre), strings.ToLower(busqueda)) {
+            continue
+        }
+        filteredProductos = append(filteredProductos, p)
     }
 
     // Obtener opciones para los selectores de filtro
-    marcas, _ := m.obtenerDatosUnicos("SELECT DISTINCT marca FROM productos WHERE marca != ''")
-    clasificaciones, _ := m.obtenerDatosUnicos("SELECT DISTINCT clasificacion FROM productos WHERE clasificacion != ''")
+    marcas, err := m.obtenerDatosUnicos("SELECT DISTINCT nombre FROM marcas WHERE nombre != ''")
+    if err != nil {
+        http.Error(w, "Error al obtener marcas: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+    clasificaciones, err := m.obtenerDatosUnicos("SELECT DISTINCT nombre FROM clasificaciones WHERE nombre != ''")
+    if err != nil {
+        http.Error(w, "Error al obtener clasificaciones: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
 
-    // Preparar datos para la plantilla usando tu estructura TemplateData
+    // Preparar datos para la plantilla
     data := &models.TemplateData{
-        Productos: productos, // Esto ya está en tu struct
+        Productos: filteredProductos,
         Data: map[string]interface{}{
-            "Marcas":          marcas,
+            "Marcas":         marcas,
             "Clasificaciones": clasificaciones,
             "Filtros": map[string]interface{}{
-                "Marca":         marca,
+                "Marca":        marca,
                 "Clasificacion": clasificacion,
-                "Busqueda":      busqueda,
-                "EnPromocion":   enPromocion,
+                "Busqueda":     busqueda,
             },
         },
         CSRFToken: nosurf.Token(r),
     }
 
-    render.RenderTemplate(w, "catalogo.page.tmpl", data)
+    render.RenderTemplate(w, "catalogo/catalogo.page.tmpl", data)
 }
 
 func (m *Repository) obtenerDatosUnicos(query string) ([]string, error) {
@@ -805,82 +788,124 @@ func (m *Repository) obtenerDatosUnicos(query string) ([]string, error) {
     return resultados, nil
 }
 
-func (m *Repository) VerProducto(w http.ResponseWriter, r *http.Request) {
-    // Obtener ID del producto de la URL
+func (m *Repository) ProductoDetalles(w http.ResponseWriter, r *http.Request) {
+    // Obtener el ID del producto desde la URL
     idStr := chi.URLParam(r, "id")
     id, err := strconv.Atoi(idStr)
     if err != nil {
-        http.Error(w, "ID de producto inválido", http.StatusBadRequest)
+        log.Printf("Error al convertir ID: %v", err)
+        m.App.Session.Put(r.Context(), "error", "ID inválido")
+        http.Redirect(w, r, "/catalogo", http.StatusSeeOther)
         return
     }
 
-    // Consulta SQL para obtener todos los detalles del producto
+    // Obtener el producto con JOIN para Marca y Clasificación
     var producto models.Producto
     err = m.App.DB.QueryRow(`
-        SELECT 
-            id_producto, marca, tipo, sku, nombre, descripcion, cantidad,
-            COALESCE(imagen_url, '') as imagen_url,
-            COALESCE(ficha_tecnica_url, '') as ficha_tecnica_url,
-            COALESCE(modelo, '') as modelo,
-            COALESCE(codigo_fabricante, '') as codigo_fabricante,
-            precio_lista,
-            COALESCE(precio_minimo, 0) as precio_minimo,
-            COALESCE(clasificacion, '') as clasificacion,
-            COALESCE(serie, '') as serie,
-            COALESCE(pais_origen, '') as pais_origen,
-            COALESCE(certificaciones, '') as certificaciones,
-            requiere_instalacion,
-            COALESCE(tiempo_entrega, 0) as tiempo_entrega,
-            COALESCE(stock_minimo, 0) as stock_minimo,
-            en_promocion,
-            COALESCE(clave_producto_sat, '') as clave_producto_sat,
-            COALESCE(unidad_medida_sat, '') as unidad_medida_sat
-        FROM productos 
-        WHERE id_producto = ?`, id).Scan(
-            &producto.IDProducto,
-            &producto.Marca,
-            &producto.Tipo,
-            &producto.SKU,
-            &producto.Nombre,
-            &producto.Descripcion,
-            &producto.Cantidad,
-            &producto.ImagenURL,
-            &producto.FichaTecnicaURL,
-            &producto.Modelo,
-            &producto.CodigoFabricante,
-            &producto.PrecioLista,
-            &producto.PrecioMinimo,
-            &producto.Clasificacion,
-            &producto.Serie,
-            &producto.PaisOrigen,
-            &producto.Certificaciones,
-            &producto.RequiereInstalacion,
-            &producto.TiempoEntrega,
-            &producto.StockMinimo,
-            &producto.EnPromocion,
-            &producto.ClaveProductoSAT,
-            &producto.UnidadMedidaSAT,
+        SELECT
+            p.id_producto, p.id_marca, p.id_tipo, p.id_clasificacion, p.id_pais_origen,
+            p.sku, p.nombre, p.nombre_corto, p.modelo, p.version, p.serie,
+            p.codigo_fabricante, p.descripcion, p.imagen_url, p.ficha_tecnica_url,
+            m.nombre AS marca, c.nombre AS clasificacion
+        FROM productos p
+        LEFT JOIN marcas m ON p.id_marca = m.id_marca
+        LEFT JOIN clasificaciones c ON p.id_clasificacion = c.id_clasificacion
+        WHERE p.id_producto = ?`, id).Scan(
+        &producto.IDProducto, &producto.IDMarca, &producto.IDTipo,
+        &producto.IDClasificacion, &producto.IDPaisOrigen,
+        &producto.SKU, &producto.Nombre, &producto.NombreCorto,
+        &producto.Modelo, &producto.Version, &producto.Serie,
+        &producto.CodigoFabricante, &producto.Descripcion,
+        &producto.ImagenURL, &producto.FichaTecnicaURL,
+        &producto.Marca, &producto.Clasificacion,
     )
-
     if err != nil {
-        if err == sql.ErrNoRows {
-            http.Error(w, "Producto no encontrado", http.StatusNotFound)
-        } else {
-            log.Println("Error al obtener producto:", err)
-            http.Error(w, "Error interno al obtener el producto", http.StatusInternalServerError)
-        }
+        log.Printf("Error al obtener producto %d: %v", id, err)
+        m.App.Session.Put(r.Context(), "error", "Producto no encontrado")
+        http.Redirect(w, r, "/catalogo", http.StatusSeeOther)
         return
+    }
+
+    // Obtener datos para los selects (si es necesario mostrarlos en la vista)
+    marcas, err := m.ObtenerMarcas()
+    if err != nil {
+        log.Printf("Error al obtener marcas: %v", err)
+        m.App.Session.Put(r.Context(), "error", "Error al cargar datos")
+        http.Redirect(w, r, "/catalogo", http.StatusSeeOther)
+        return
+    }
+    tipos, err := m.ObtenerTiposProducto()
+    if err != nil {
+        log.Printf("Error al obtener tipos: %v", err)
+        m.App.Session.Put(r.Context(), "error", "Error al cargar datos")
+        http.Redirect(w, r, "/catalogo", http.StatusSeeOther)
+        return
+    }
+    clasificaciones, err := m.ObtenerClasificaciones()
+    if err != nil {
+        log.Printf("Error al obtener clasificaciones: %v", err)
+        m.App.Session.Put(r.Context(), "error", "Error al cargar datos")
+        http.Redirect(w, r, "/catalogo", http.StatusSeeOther)
+        return
+    }
+    paises, err := m.ObtenerPaises()
+    if err != nil {
+        log.Printf("Error al obtener países: %v", err)
+        m.App.Session.Put(r.Context(), "error", "Error al cargar datos")
+        http.Redirect(w, r, "/catalogo", http.StatusSeeOther)
+        return
+    }
+    certificaciones, err := m.ObtenerCertificaciones()
+    if err != nil {
+        log.Printf("Error al obtener certificaciones: %v", err)
+        m.App.Session.Put(r.Context(), "error", "Error al cargar datos")
+        http.Redirect(w, r, "/catalogo", http.StatusSeeOther)
+        return
+    }
+
+    // Obtener certificaciones del producto
+    var certs []models.Certificacion
+    rows, err := m.App.DB.Query(`
+        SELECT c.id_certificacion, c.nombre
+        FROM producto_certificaciones pc
+        JOIN certificaciones c ON pc.id_certificacion = c.id_certificacion
+        WHERE pc.id_producto = ?`, id)
+    if err == nil {
+        defer rows.Close()
+        for rows.Next() {
+            var c models.Certificacion
+            if err := rows.Scan(&c.IDCertificacion, &c.Nombre); err != nil {
+                log.Printf("Error al escanear certificación: %v", err)
+                continue
+            }
+            certs = append(certs, c)
+        }
+    } else {
+        log.Printf("Error al obtener certificaciones del producto %d: %v", id, err)
     }
 
     // Preparar datos para la plantilla
     data := &models.TemplateData{
-        Producto:   producto,
-        CSRFToken: nosurf.Token(r),
+        Producto:                producto,
+        Marcas:                 marcas,
+        TiposProducto:          tipos,
+        Clasificaciones:        clasificaciones,
+        Paises:                 paises,
+        Certificaciones:        certificaciones,
+        CertificacionesProducto: certs,
+        CSRFToken:              nosurf.Token(r),
     }
-        render.RenderTemplate(w, "ver_producto.page.tmpl", data)
+
+    // Log para depurar datos enviados
+    log.Printf("Producto: ID=%d, Nombre=%s, Marca=%s, Clasificacion=%s, Modelo=%s, Version=%s, Serie=%s, CodigoFabricante=%s",
+        producto.IDProducto, producto.Nombre, producto.Marca, producto.Clasificacion,
+        producto.Modelo, producto.Version, producto.Serie, producto.CodigoFabricante)
+
+    // Renderizar la plantilla
+    render.RenderTemplate(w, "catalogo/producto-detalle.page.tmpl", data)
 }
 
-*/
+
 
 
 // TODO LO DE LICITACIONES
@@ -1141,10 +1166,6 @@ func (m *Repository) Calendario(w http.ResponseWriter, r *http.Request) {
 
     render.RenderTemplate(w, "calendario/calendario-vista.page.tmpl", data)
 }
-
-
-
-
 
 
 

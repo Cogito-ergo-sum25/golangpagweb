@@ -1,0 +1,49 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container mt-4">
+    <div class="card">
+        <div class="row g-0">
+            <!-- Imagen del producto -->
+            <div class="col-md-4">
+                {{if .Producto.ImagenURL}}
+                <img src="{{.Producto.ImagenURL}}" class="img-fluid rounded-start" alt="{{.Producto.Nombre}}" style="max-height: 300px; object-fit: contain;" onerror="console.log('Error al cargar imagen: {{.Producto.ImagenURL}}')">
+                {{else}}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                </div>
+                {{end}}
+            </div>
+            <!-- Detalles del producto -->
+            <div class="col-md-8">
+                <div class="card-body">
+                    <h2 class="card-title">{{.Producto.Nombre}}</h2>
+                    <p class="card-text"><strong>SKU:</strong> {{.Producto.SKU}}</p>
+                    <p class="card-text"><strong>Marca:</strong> {{.Producto.Marca}}</p>
+                    <p class="card-text"><strong>Clasificación:</strong> {{.Producto.Clasificacion}}</p>
+                    <p class="card-text"><strong>Modelo:</strong> {{.Producto.Modelo}}</p>
+                    <p class="card-text"><strong>Versión:</strong> {{.Producto.Version}}</p>
+                    <p class="card-text"><strong>Serie:</strong> {{.Producto.Serie}}</p>
+                    <p class="card-text"><strong>Código Fabricante:</strong> {{.Producto.CodigoFabricante}}</p>
+                    <p class="card-text"><strong>Descripción:</strong> {{.Producto.Descripcion}}</p>
+                    {{if .Producto.FichaTecnicaURL}}
+                    <p class="card-text"><a href="{{.Producto.FichaTecnicaURL}}" target="_blank" class="btn btn-sm btn-outline-primary">Ver Ficha Técnica</a></p>
+                    {{end}}
+                    <!-- Certificaciones -->
+                    {{if .CertificacionesProducto}}
+                    <p class="card-text"><strong>Certificaciones:</strong></p>
+                    <ul>
+                        {{range .CertificacionesProducto}}
+                        <li>{{.Nombre}}</li>
+                        {{end}}
+                    </ul>
+                    {{else}}
+                    <p class="card-text text-muted">No hay certificaciones asociadas.</p>
+                    {{end}}
+                    <!-- Botón para volver -->
+                    <a href="/catalogo" class="btn btn-secondary mt-3 verde">Volver al Catálogo</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

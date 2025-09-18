@@ -103,8 +103,8 @@ func routes(app *config.AppConfig) http.Handler {
 	
 
 	// CATALOGO 
-	//mux.Get("/catalogo", handlers.Repo.Catalogo) 
-	//mux.Get("/producto/{id}", handlers.Repo.VerProducto)// Para la vista detallada
+	mux.Get("/catalogo", handlers.Repo.Catalogo) 
+	mux.Get("/producto/{id}", handlers.Repo.ProductoDetalles)// Para la vista detallada
 
 
 	// OPCIONES
