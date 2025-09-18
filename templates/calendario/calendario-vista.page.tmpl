@@ -38,27 +38,24 @@
 }
 
 /* 🌙 Estilos especiales para el día actual en modo oscuro */
-.dark-mode .fc .fc-day-today,
-.dark-mode .fc .fc-timegrid-col.fc-day-today,
-.dark-mode .fc .fc-daygrid-day.fc-day-today {
-    background-color: #3b3b3b !important;
-    border: 2px solid #ffc107;
-    box-shadow: 0 0 12px rgba(255, 193, 7, 0.4);
-    border-radius: 10px;
-    color: #fff;
-}
+    /* Estilos generales */
+    .dark-mode .fc { color: #e0e0e0; }
+    .dark-mode .fc-theme-standard th, .dark-mode .fc-theme-standard td { border-color: #404040; }
+    .dark-mode .fc-view-harness { background-color: #1e1e1e; }
+    .dark-mode .fc-col-header-cell-cushion { color: #bb86fc; font-weight: bold; }
+    .dark-mode .fc-button { background-color: #333 !important; color: #f1f1f1 !important; border-color: #555 !important; }
+    .dark-mode .fc .fc-day-today { background-color: #3b3b3b !important; border: 2px solid #ffc107; }
 
-/* 📅 Ícono en modo oscuro */
-.dark-mode .fc .fc-day-today::after {
-    content: "📅";
-    position: absolute;
-    top: 6px;
-    right: 150px;
-    font-size: 1rem;
-    pointer-events: none;
-    color: #ffc107;
-}
+    /* Estilos para la vista multiMonthYear */
+    .dark-mode .fc-multimonth-month .fc-scrollgrid { background-color: #1e1e1e; border: none; }
+    .dark-mode .fc-multimonth-title { color: #e0e0e0 !important; }
 
+    body.dark-mode .fc-daygrid-day {
+        background: #1e1e1e !important;
+    }
+    body.dark-mode .fc-daygrid-day-bg {
+        background: #1e1e1e !important;
+    }
 
 </style>
 
@@ -83,10 +80,18 @@
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'es',
+            firstDay: 1,
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek'
+                right: 'multiMonthYear,dayGridMonth,listWeek'
+            },
+            buttonText: {
+                today: 'Hoy',
+                year:  'Año', 
+                month: 'Mes',
+                list: 'Agenda Semanal',
+
             },
             events: eventos,
             eventClick: function(info) {

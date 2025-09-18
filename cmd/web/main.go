@@ -66,7 +66,7 @@ func main() {
 
 	render.NewTemplates(&app)
 
-	fmt.Println(fmt.Sprintf("Staring application on port %s", portNumber))
+	fmt.Printf("Staring application on port %s\n", portNumber)
 
 	srv := &http.Server{
 		Addr:    portNumber,

@@ -896,11 +896,6 @@ func (m *Repository) ProductoDetalles(w http.ResponseWriter, r *http.Request) {
         CSRFToken:              nosurf.Token(r),
     }
 
-    // Log para depurar datos enviados
-    log.Printf("Producto: ID=%d, Nombre=%s, Marca=%s, Clasificacion=%s, Modelo=%s, Version=%s, Serie=%s, CodigoFabricante=%s",
-        producto.IDProducto, producto.Nombre, producto.Marca, producto.Clasificacion,
-        producto.Modelo, producto.Version, producto.Serie, producto.CodigoFabricante)
-
     // Renderizar la plantilla
     render.RenderTemplate(w, "catalogo/producto-detalle.page.tmpl", data)
 }
