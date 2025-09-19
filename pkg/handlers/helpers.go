@@ -1,14 +1,46 @@
 package handlers
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
 	"time"
 
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/models"
+	"golang.org/x/crypto/bcrypt"
 )
+
+//AUTENTICACIÓN
+func (m *Repository) Authenticate(email string) (int, string, error) {
+    // Establecemos un timeout para la consulta para evitar que se quede colgada.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var id int
+	var hashedPassword string // Usaremos el nombre de columna 'pass' de tu tabla
+
+    // QueryRowContext es ideal porque esperamos solo una fila (o ninguna).
+	row := m.App.DB.QueryRowContext(ctx, "SELECT id, pass FROM usuarios WHERE email = ?", email)
+	
+    err := row.Scan(&id, &hashedPassword)
+	if err != nil {
+        // Si el error es sql.ErrNoRows, significa que el usuario no fue encontrado.
+        // Esto no es un error del sistema, sino un fallo de autenticación esperado.
+		if err == sql.ErrNoRows {
+			return 0, "", errors.New("usuario no encontrado")
+		}
+        // Para cualquier otro error, sí es un problema del sistema.
+		log.Println("Error al escanear usuario:", err)
+		return 0, "", err
+	}
+
+	return id, hashedPassword, nil
+}
+
+
 
 // FUNCIONES EXTRA DEL RENDER
 
@@ -107,6 +139,27 @@ func (m *Repository) ActualizarPropuesta(propuesta models.PropuestasPartida) err
     )
 
     return err
+}
+
+func (m *Repository) ActualizarUsuario(u models.Usuario, password string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if password != "" {
+		// Si se proveyó una nueva contraseña, la hasheamos y la actualizamos
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+		if err != nil {
+			return err
+		}
+		query := `UPDATE usuarios SET nombre = ?, email = ?, nivel_acceso = ?, pass = ? WHERE id = ?`
+		_, err = m.App.DB.ExecContext(ctx, query, u.Nombre, u.Email, u.NivelAcceso, string(hashedPassword), u.ID)
+		return err
+	} else {
+		// Si no hay contraseña nueva, actualizamos todo lo demás
+		query := `UPDATE usuarios SET nombre = ?, email = ?, nivel_acceso = ? WHERE id = ?`
+		_, err := m.App.DB.ExecContext(ctx, query, u.Nombre, u.Email, u.NivelAcceso, u.ID)
+		return err
+	}
 }
 
 // GETTERS
@@ -1438,7 +1491,44 @@ func (m *Repository) ObtenerOCrearFallo(idPropuesta int) (*models.FallosPropuest
 	return &fallo, nil
 }
 
+func (m *Repository) ObtenerTodosLosUsuarios() ([]models.Usuario, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
+	var usuarios []models.Usuario
+
+	query := `SELECT id, nombre, email, nivel_acceso FROM usuarios ORDER BY nombre`
+	rows, err := m.App.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var u models.Usuario
+		err := rows.Scan(&u.ID, &u.Nombre, &u.Email, &u.NivelAcceso)
+		if err != nil {
+			return nil, err
+		}
+		usuarios = append(usuarios, u)
+	}
+
+	return usuarios, nil
+}
+
+func (m *Repository) ObtenerUsuarioPorID(id int) (*models.Usuario, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var u models.Usuario
+	query := `SELECT id, nombre, email, nivel_acceso FROM usuarios WHERE id = ?`
+	row := m.App.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(&u.ID, &u.Nombre, &u.Email, &u.NivelAcceso)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}
 
 
 
@@ -1708,7 +1798,22 @@ func (m *Repository) InsertarFalloPropuesta(f models.FallosPropuesta) error {
 	return err
 }
 
+func (m *Repository) CrearUsuarioUnico(u models.Usuario, password string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return err
+	}
+
+	query := `INSERT INTO usuarios (nombre, email, pass, nivel_acceso) VALUES (?, ?, ?, ?)`
+	_, err = m.App.DB.ExecContext(ctx, query, u.Nombre, u.Email, string(hashedPassword), u.NivelAcceso)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 
 
@@ -1750,6 +1855,19 @@ func (m *Repository) EliminarProductoDePartida(idPartidaProducto int) error {
     _, err := m.App.DB.Exec("DELETE FROM partida_productos WHERE id_partida_producto = ?", idPartidaProducto)
     return err
 }
+
+func (m *Repository) EliminarUsuarioUnico(id int) error { // <- ¡Asegúrate que devuelva 'error'!
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `DELETE FROM usuarios WHERE id = ?`
+	// La operación ExecContext devuelve un error que debemos capturar.
+	_, err := m.App.DB.ExecContext(ctx, query, id)
+	
+	// Devolvemos ese error (que puede ser 'nil' si todo salió bien).
+	return err 
+}
+
 
 //FUNCIONES AUXILIARES
 

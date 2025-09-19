@@ -1,0 +1,148 @@
+{{template "base" .}}
+
+{{define "content"}}
+<div class="container mt-5">
+    <div class="card shadow p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Administración de Usuarios</h2>
+            <!-- Este botón abrirá el modal en modo "Crear" -->
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#usuarioModal" id="btnCrearUsuario">
+                <i class="fas fa-plus me-2"></i> Crear Nuevo Usuario
+            </button>
+        </div>
+
+        <!-- Bloques para mostrar mensajes -->
+        {{with .Flash}}
+        <div class="alert alert-success" role="alert">{{.}}</div>
+        {{end}}
+        {{with .Error}}
+        <div class="alert alert-danger" role="alert">{{.}}</div>
+        {{end}}
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Nivel de Acceso</th>
+                        <th scope="col" class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Data.Usuarios}}
+                    <tr>
+                        <td>{{.Nombre}}</td>
+                        <td>{{.Email}}</td>
+                        <td>
+                            {{if eq .NivelAcceso 1}}<span class="badge bg-danger">Admin Total</span>{{else if eq .NivelAcceso 2}}<span class="badge bg-warning text-dark">Admin</span>{{else}}<span class="badge bg-secondary">Usuario</span>{{end}}
+                        </td>
+                        <td class="text-end">
+                            <!-- Botón para editar, con data-* attributes para pasar datos al JS -->
+                            <button type="button" class="btn btn-sm btn-primary me-2 btn-editar"
+                                    data-bs-toggle="modal" data-bs-target="#usuarioModal"
+                                    data-id="{{.ID}}"
+                                    data-nombre="{{.Nombre}}"
+                                    data-email="{{.Email}}"
+                                    data-nivel="{{.NivelAcceso}}">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <form action="/eliminar-usuario/{{.ID}}" method="post" class="d-inline" onsubmit="return confirm('¿Estás seguro?');">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL PARA CREAR/EDITAR USUARIO ==================== -->
+<div class="modal fade" id="usuarioModal" tabindex="-1" aria-labelledby="usuarioModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="usuarioForm" method="post" action=""> <!-- El action se llenará con JS -->
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="usuarioModalLabel"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre Completo</label>
+                        <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="password" name="password">
+                        <small id="passwordHelp" class="form-text text-muted"></small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nivel_acceso" class="form-label">Nivel de Acceso</label>
+                        <select class="form-select" id="nivel_acceso" name="nivel_acceso" required>
+                            <option value="3">Usuario</option>
+                            <option value="2">Admin</option>
+                            <option value="1">Admin Total</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "js"}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const usuarioModal = document.getElementById('usuarioModal');
+    const modalTitle = document.getElementById('usuarioModalLabel');
+    const usuarioForm = document.getElementById('usuarioForm');
+    const passwordInput = document.getElementById('password');
+    const passwordHelp = document.getElementById('passwordHelp');
+
+    // Evento para cuando se abre el modal
+    usuarioModal.addEventListener('show.bs.modal', function (event) {
+        // Botón que disparó el modal
+        const button = event.relatedTarget;
+        
+        // Verificamos si es el botón de "Crear"
+        if (button.id === 'btnCrearUsuario') {
+            modalTitle.textContent = 'Crear Nuevo Usuario';
+            usuarioForm.action = '/crear-usuario';
+            usuarioForm.reset(); // Limpiamos el formulario
+            passwordInput.required = true;
+            passwordHelp.textContent = 'La contraseña es obligatoria.';
+        } else {
+            // Si es un botón de "Editar"
+            modalTitle.textContent = 'Editar Usuario';
+            const id = button.getAttribute('data-id');
+            const nombre = button.getAttribute('data-nombre');
+            const email = button.getAttribute('data-email');
+            const nivel = button.getAttribute('data-nivel');
+
+            usuarioForm.action = `/editar-usuario/${id}`;
+            
+            // Llenamos el formulario con los datos del usuario
+            usuarioForm.querySelector('#nombre').value = nombre;
+            usuarioForm.querySelector('#email').value = email;
+            usuarioForm.querySelector('#nivel_acceso').value = nivel;
+
+            passwordInput.required = false;
+            passwordHelp.textContent = 'Dejar en blanco para no cambiar la contraseña.';
+        }
+    });
+});
+</script>
+{{end}}

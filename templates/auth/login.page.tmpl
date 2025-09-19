@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es_MX">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Iniciar Sesión - Intevi</title>
+    <style>
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+        }
+        .form-signin {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px;
+            margin: auto;
+            background-color: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="text-center">
+    
+    <main class="form-signin">
+        <form action="/login" method="post" novalidate>
+            <!-- El token CSRF es crucial para la seguridad -->
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+
+            <h1 class="h3 mb-4 fw-normal">INTEVI</h1>
+            
+            <!-- Aquí se mostrarán los mensajes de error o de éxito -->
+            {{with .Error}}
+                <div class="alert alert-danger" role="alert">
+                    {{.}}
+                </div>
+            {{end}}
+            {{with .Flash}}
+                 <div class="alert alert-success" role="alert">
+                    {{.}}
+                </div>
+            {{end}}
+
+            <div class="form-floating mb-2">
+                <input type="email" class="form-control" id="email" name="email" placeholder="nombre@ejemplo.com" required autocomplete="email">
+                <label for="email">Correo Electrónico</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="Contraseña" required>
+                <label for="password">Contraseña</label>
+            </div>
+
+            <button class="w-100 btn btn-lg btn-success" type="submit">Iniciar Sesión</button>
+            <p class="mt-5 mb-3 text-muted">&copy; INTEVI 2025</p>
+        </form>
+    </main>
+
+</body>
+</html>

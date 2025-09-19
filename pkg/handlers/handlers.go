@@ -14,6 +14,7 @@ import (
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/render"
 	"github.com/go-chi/chi/v5"
 	"github.com/justinas/nosurf"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Repo the repository used by the handlers
@@ -34,6 +35,62 @@ func NewRepo(a *config.AppConfig) *Repository {
 // NewHandlers sets the repository for the handlers
 func NewHandlers(r *Repository) {
 	Repo = r
+}
+
+// AUTENTICACIÓN
+// En tu archivo de handlers (ej. pkg/handlers/handlers.go)
+
+// ShowLoginPage renderiza la página de inicio de sesión.
+func (m *Repository) ShowLoginPage(w http.ResponseWriter, r *http.Request) {
+    data := &models.TemplateData{
+        CSRFToken: nosurf.Token(r),
+    }
+    render.RenderTemplate(w, "auth/login.page.tmpl", data)
+}
+
+// PostLoginPage procesa el envío del formulario de inicio de sesión.
+func (m *Repository) PostLoginPage(w http.ResponseWriter, r *http.Request) {
+	_ = m.App.Session.RenewToken(r.Context())
+
+	err := r.ParseForm()
+	if err != nil {
+		// ... manejar error ...
+		return
+	}
+
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+	
+    // AQUÍ ESTÁ LA MAGIA: Llamamos a nuestra nueva función helper.
+	id, hashedPassword, err := m.Authenticate(email)
+	if err != nil {
+        // Si hay un error (ej. "usuario no encontrado"), redirigimos.
+		m.App.Session.Put(r.Context(), "error", "Credenciales inválidas.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+    // El resto de la lógica es la misma: comparar la contraseña
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Credenciales inválidas.")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+    // Si todo es correcto, guardamos en la sesión y redirigimos.
+	m.App.Session.Put(r.Context(), "user_id", id)
+	m.App.Session.Put(r.Context(), "flash", "¡Bienvenido!")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// Logout destruye la sesión del usuario.
+func (m *Repository) Logout(w http.ResponseWriter, r *http.Request) {
+	_ = m.App.Session.Destroy(r.Context())
+	_ = m.App.Session.RenewToken(r.Context())
+	
+	m.App.Session.Put(r.Context(), "flash", "Has cerrado sesión correctamente.")
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 // Home is the handler for the home page
@@ -2972,4 +3029,113 @@ func (m *Repository) NuevoProductoExternoContextoMenu(w http.ResponseWriter, r *
     }
 
     http.Redirect(w, r, "/productos-externos", http.StatusSeeOther)
+}
+
+// USUARIOS
+func (m *Repository) MostrarUsuarios(w http.ResponseWriter, r *http.Request) {
+	usuarios, err := m.ObtenerTodosLosUsuarios()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se pudieron cargar los usuarios.")
+		http.Redirect(w, r, "opciones/opciones.page.tmpl", http.StatusSeeOther)
+		return
+	}
+
+	data := make(map[string]interface{})
+	data["Usuarios"] = usuarios
+
+    render.RenderTemplate(w, "opciones/usuarios.page.tmpl", &models.TemplateData{
+        Data:      data,
+        CSRFToken: nosurf.Token(r),
+    })
+}
+
+func (m *Repository) CrearUsuario(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Formulario inválido.")
+		http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+		return
+	}
+
+	nivel, _ := strconv.Atoi(r.Form.Get("nivel_acceso"))
+	usuario := models.Usuario{
+		Nombre:      r.Form.Get("nombre"),
+		Email:       r.Form.Get("email"),
+		NivelAcceso: nivel,
+	}
+	password := r.Form.Get("password")
+
+	if password == "" {
+		m.App.Session.Put(r.Context(), "error", "La contraseña no puede estar vacía.")
+		http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+		return
+	}
+
+	// Llama al HELPER de la base de datos (el que ya tenías en helpers.go)
+	err = m.CrearUsuarioUnico(usuario, password)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se pudo crear el usuario. El email podría ya estar en uso.")
+		http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+		return
+	}
+
+	m.App.Session.Put(r.Context(), "flash", "Usuario creado con éxito.")
+	http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+}
+
+func (m *Repository) EditarUsuario(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	err := r.ParseForm()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Formulario inválido.")
+		http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+		return
+	}
+
+	nivel, _ := strconv.Atoi(r.Form.Get("nivel_acceso"))
+	usuario := models.Usuario{
+		ID:          id,
+		Nombre:      r.Form.Get("nombre"),
+		Email:       r.Form.Get("email"),
+		NivelAcceso: nivel,
+	}
+	password := r.Form.Get("password")
+
+	// Llama al HELPER de la base de datos (el que pusiste en el archivo de handlers por error)
+	err = m.ActualizarUsuario(usuario, password)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se pudo actualizar el usuario.")
+		http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+		return
+	}
+
+	m.App.Session.Put(r.Context(), "flash", "Usuario actualizado con éxito.")
+	http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+}
+
+func (m *Repository) EliminarUsuario(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "ID de usuario inválido.")
+		http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+		return
+	}
+
+	sesionUserID := m.App.Session.GetInt(r.Context(), "user_id")
+	if id == sesionUserID {
+		m.App.Session.Put(r.Context(), "error", "No puedes eliminar tu propia cuenta.")
+		http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+		return
+	}
+
+	// Llama al HELPER de la base de datos (tu función se llama EliminarUsuarioUnico)
+	err = m.EliminarUsuarioUnico(id)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al eliminar el usuario.")
+		http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
+		return
+	}
+
+	m.App.Session.Put(r.Context(), "flash", "Usuario eliminado correctamente.")
+	http.Redirect(w, r, "/usuarios", http.StatusSeeOther)
 }
