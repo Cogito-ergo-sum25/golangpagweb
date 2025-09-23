@@ -1,0 +1,59 @@
+{{template "base" .}}
+
+{{define "content"}}
+<div class="container mt-4">
+    <h2 class="mb-4 amarillo">Editar Proyecto: <span class="text-primary">{{.Data.Proyecto.Nombre}}</span></h2>
+    
+    <form action="/proyectos/editar/{{.Data.Proyecto.IDProyecto}}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">Información Básica del Proyecto</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre del Proyecto *</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" required value="{{.Data.Proyecto.Nombre}}">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="descripcion" class="form-label">Descripción *</label>
+                    <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{.Data.Proyecto.Descripcion}}</textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_licitacion" class="form-label">Licitación Relacionada *</label>
+                    <select class="form-select" id="id_licitacion" name="id_licitacion" required>
+                        {{range .Data.Licitaciones}}
+                        <!-- La lógica 'if eq' selecciona la licitación actual del proyecto -->
+                        <option value="{{.IDLicitacion}}" {{if eq .IDLicitacion $.Data.Proyecto.IDLicitacion}}selected{{end}}>
+                            {{.Nombre}} ({{.NumContratacion}})
+                        </option>
+                        {{end}}
+                    </select>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="fecha_inicio" class="form-label">Fecha de Inicio *</label>
+                        <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" required value="{{.Data.Proyecto.FechaInicio.Format "2006-01-02"}}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="fecha_fin" class="form-label">Fecha de Fin (Opcional)</label>
+                        <!-- Si la fecha no es cero, la formatea. Si es cero, deja el campo vacío. -->
+                        <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" value="{{if not .Data.Proyecto.FechaFin.IsZero}}{{.Data.Proyecto.FechaFin.Format "2006-01-02"}}{{end}}">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="/proyectos-vista" class="btn btn-secondary rojo">Cancelar</a>
+            <button type="submit" class="btn btn-warning btn-lg">
+                <i class="fas fa-save me-2"></i> Guardar Cambios
+            </button>
+        </div>
+    </form>
+</div>
+{{end}}

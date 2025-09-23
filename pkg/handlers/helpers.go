@@ -162,6 +162,42 @@ func (m *Repository) ActualizarUsuario(u models.Usuario, password string) error 
 	}
 }
 
+func (m *Repository) ActualizarProyectoEnDB(proyecto models.Proyecto) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var fechaFinParaDB interface{}
+	// Si la fecha de fin no es la fecha "cero" de Go, la usamos.
+	// Si es la fecha cero, la dejamos como nil para que se inserte NULL en la BD.
+	if !proyecto.FechaFin.IsZero() {
+		fechaFinParaDB = proyecto.FechaFin
+	} else {
+		fechaFinParaDB = nil
+	}
+
+	stmt := `
+		UPDATE proyectos SET
+			nombre = ?,
+			descripcion = ?,
+			id_licitacion = ?,
+			fecha_inicio = ?,
+			fecha_fin = ?,
+			updated_at = ?
+		WHERE id_proyecto = ?`
+
+	_, err := m.App.DB.ExecContext(ctx, stmt,
+		proyecto.Nombre,
+		proyecto.Descripcion,
+		proyecto.IDLicitacion,
+		proyecto.FechaInicio,
+		fechaFinParaDB,
+		time.Now(),
+		proyecto.IDProyecto,
+	)
+
+	return err
+}
+
 // GETTERS
 
 // ObtenerMarcas devuelve todas las marcas para los selects
@@ -393,85 +429,87 @@ func (m *Repository) ObtenerLicitacionesParaSelect() ([]models.Licitacion, error
 	return licitaciones, nil
 }
 
-func (m *Repository) ObtenerProyectosConRelaciones() ([]models.Proyecto, error) {
-	query := `
-        SELECT 
-            p.id_proyecto, p.nombre, p.descripcion, p.fecha_inicio, 
-            COALESCE(p.fecha_fin, CAST('1970-01-01' AS DATE)) AS fecha_fin,
-            p.created_at, p.updated_at,
-            l.id_licitacion, l.nombre as licitacion_nombre, l.num_contratacion,
-            COALESCE(l.lugar, 'indefinido') AS lugar,
-            COALESCE(l.fecha_junta, CAST('1970-01-01' AS DATE)) AS fecha_junta,
-            COALESCE(l.fecha_propuestas, CAST('1970-01-01' AS DATE)) AS fecha_propuestas,
-            COALESCE(l.fecha_fallo, CAST('1970-01-01' AS DATE)) AS fecha_fallo,
-            COALESCE(l.fecha_entrega, CAST('1970-01-01' AS DATE)) AS fecha_entrega,
-            COALESCE(l.estado, 'indefinido') AS estado,
-            e.nombre as entidad_nombre,
-            pp.id_producto, pp.cantidad, pp.precio_unitario, pp.especificaciones,
-            pr.nombre as producto_nombre, pr.sku, pr.imagen_url, pr.modelo
-        FROM 
-            proyectos p
-        LEFT JOIN 
-            licitaciones l ON p.id_licitacion = l.id_licitacion
-        LEFT JOIN 
-            entidades e ON l.id_entidad = e.id_entidad
-        LEFT JOIN 
-            producto_proyecto pp ON p.id_proyecto = pp.id_proyecto
-        LEFT JOIN 
-            productos pr ON pp.id_producto = pr.id_producto
-        ORDER BY 
-            p.id_proyecto, pp.id_producto
-    `
+func (m *Repository) ObtenerProyectosParaVista() ([]models.Proyecto, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-	rows, err := m.App.DB.Query(query)
+	var proyectos []models.Proyecto
+
+	// ¡CONSULTA ACTUALIZADA! Ahora también seleccionamos l.estatus
+	query := `
+		SELECT 
+			p.id_proyecto, p.nombre, p.fecha_inicio, p.fecha_fin,
+			l.num_contratacion, l.estatus
+		FROM proyectos p
+		JOIN licitaciones l ON p.id_licitacion = l.id_licitacion
+		ORDER BY p.created_at DESC
+	`
+
+	rows, err := m.App.DB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var proyectos []models.Proyecto
-	var currentProyectoID int
-	var currentProyecto *models.Proyecto
-
 	for rows.Next() {
 		var p models.Proyecto
-		var pp models.ProductoProyecto
+		var fechaFin sql.NullTime
 
+		// ¡SCAN ACTUALIZADO! Añadimos el campo para el estatus
 		err := rows.Scan(
-			&p.IDProyecto, &p.Nombre, &p.Descripcion, &p.FechaInicio, &p.FechaFin,
-			&p.CreatedAt, &p.UpdatedAt,
-			&p.IDLicitacion, &p.LicitacionNombre, &p.NumContratacion,
-			&p.Lugar,
-			&p.FechaJunta, &p.FechaPropuestas, &p.FechaFallo, &p.FechaEntrega,
-			&p.EstadoLicitacion,
-			&p.EntidadNombre,
-			&pp.IDProducto, &pp.Cantidad, &pp.PrecioUnitario, &pp.Especificaciones,
-			&pp.ProductoNombre, &pp.SKU, &pp.ImagenURL, &pp.Modelo,
+			&p.IDProyecto,
+			&p.Nombre,
+			&p.FechaInicio,
+			&fechaFin,
+			&p.NumContratacion,
+			&p.Estatus, // Escaneamos el estatus de la licitación
 		)
-
 		if err != nil {
 			return nil, err
 		}
 
-		if p.IDProyecto != currentProyectoID {
-			if currentProyecto != nil {
-				proyectos = append(proyectos, *currentProyecto)
-			}
-			currentProyectoID = p.IDProyecto
-			currentProyecto = &p
-			currentProyecto.Productos = []models.ProductoProyecto{}
+		if fechaFin.Valid {
+			p.FechaFin = fechaFin.Time
 		}
 
-		if pp.IDProducto != 0 {
-			currentProyecto.Productos = append(currentProyecto.Productos, pp)
-		}
+		proyectos = append(proyectos, p)
 	}
-
-	if currentProyecto != nil {
-		proyectos = append(proyectos, *currentProyecto)
-	}
-
 	return proyectos, nil
+}
+
+func (m *Repository) ObtenerProyectoPorID(id int) (*models.Proyecto, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var p models.Proyecto
+	var fechaFin sql.NullTime // Usamos sql.NullTime para manejar fechas que pueden ser NULL
+
+	query := `
+		SELECT 
+			p.id_proyecto, p.nombre, p.descripcion, p.id_licitacion, 
+			p.fecha_inicio, p.fecha_fin
+		FROM proyectos p
+		WHERE p.id_proyecto = ?
+	`
+	row := m.App.DB.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&p.IDProyecto,
+		&p.Nombre,
+		&p.Descripcion,
+		&p.IDLicitacion,
+		&p.FechaInicio,
+		&fechaFin, // Escaneamos en nuestra variable especial
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Si la fecha de fin es válida (no era NULL en la BD), la asignamos al struct.
+	if fechaFin.Valid {
+		p.FechaFin = fechaFin.Time
+	}
+
+	return &p, nil
 }
 
 func (m *Repository) ObtenerTodasEntidades() ([]models.Entidad, error) {
@@ -1542,6 +1580,8 @@ func (m *Repository) ObtenerUsuarioPorID(id int) (*models.Usuario, error) {
 
 
 
+
+
 // SETTERS
 
 // AgregarMarca inserta una nueva marca en la base de datos
@@ -1813,6 +1853,46 @@ func (m *Repository) CrearUsuarioUnico(u models.Usuario, password string) error 
 		return err
 	}
 	return nil
+}
+
+func (m *Repository) CrearProyectoEnDB(proyecto models.Proyecto) (int64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Preparamos la fecha de fin para que pueda ser NULL en la base de datos.
+	var fechaFinParaDB interface{}
+	// El método IsZero() comprueba si la fecha es '0001-01-01', el valor por defecto.
+	if !proyecto.FechaFin.IsZero() {
+		fechaFinParaDB = proyecto.FechaFin // Si hay fecha, la usamos.
+	} else {
+		fechaFinParaDB = nil // Si no hay fecha, usamos nil.
+	}
+
+	stmt := `
+		INSERT INTO proyectos (
+			nombre, descripcion, id_licitacion, 
+			fecha_inicio, fecha_fin, created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?)`
+
+	result, err := m.App.DB.ExecContext(ctx, stmt,
+		proyecto.Nombre,
+		proyecto.Descripcion,
+		proyecto.IDLicitacion,
+		proyecto.FechaInicio,
+		fechaFinParaDB, // Usamos nuestra variable especial aquí
+		time.Now(),
+		time.Now(),
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 

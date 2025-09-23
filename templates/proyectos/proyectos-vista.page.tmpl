@@ -1,62 +1,120 @@
 {{template "base" .}}
+
 {{define "content"}}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Proyectos</h2>
-        <a href="/nuevo-proyecto" class="btn btn-primary mt-3 btn-outline-success verde" role="button">
-            <i class="fas fa-plus"></i> Nuevo Proyecto
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Gestión de Proyectos</h2>
+        <a href="/nuevo-proyecto" class="btn verde" role="button">
+            <i class="fas fa-plus me-2"></i> Nuevo Proyecto
         </a>
     </div>
 
-    <div class="card shadow">
+    {{with .Flash}}
+    <div class="alert alert-success" role="alert">{{.}}</div>
+    {{end}}
+    {{with .Error}}
+    <div class="alert alert-danger" role="alert">{{.}}</div>
+    {{end}}
+
+
+    <!-- ==================== TABLA DE PROYECTOS VIGENTES ==================== -->
+    <div class="card shadow mb-5">
+        <div class="card-header bg-primary text-white azul">
+            <h5 class="mb-0"><i class="fas fa-play-circle me-2"></i>Proyectos Vigentes</h5>
+        </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead class="table-dark">
+                <table class="table table-hover align-middle">
+                    <thead>
                         <tr>
-                            <th>Número Contratación</th>
-                            <th>Unidad compradora</th> 
-                            <th>Lugar</th>
-                            <th>Nombre</th>
-                            <th>Productos</th>
-                            <th>Fechas</th>
-                            <th>Tipo</th>
-                            <th>Acciones</th>
+                            <th>Nombre del Proyecto</th>
+                            <th>Nº Contratación</th>
+                            <th>Estatus Licitación</th>
+                            <th>Fecha de Fin</th>
+                            <th class="text-end">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {{range .Proyectos}}
+                        {{range .Data.ProyectosVigentes}}
                         <tr>
-                            <td>{{.NumContratacion}}</td>
-                            <td>{{.EntidadNombre}}</td> 
-                            <td>{{.Lugar}}</td>
-                            <td>{{.LicitacionNombre}}</td>
+                            <td><strong>{{.Nombre}}</strong></td>
+                            <td><span class="badge bg-secondary">{{.NumContratacion}}</span></td>
                             <td>
-                                <ul class="list-unstyled">
-                                    {{range .Productos}}
-                                    <li>
-                                        <small>{{.Cantidad}}x {{.ProductoNombre}} (${{formatPrice .PrecioUnitario}})</small>                                    </li>
-                                    {{end}}
-                                </ul>
+                                <!-- Muestra el estatus "Vigente" con un badge de éxito -->
+                                <span class="badge bg-success">{{.Estatus}}</span>
                             </td>
                             <td>
-                                Junta: {{ .FechaJunta }}<br>
-                                Propuestas: {{ .FechaPropuestas }}<br>
-                                Fallo: {{ .FechaFallo }}<br>
-                                Entrega: {{ .FechaEntrega }}
+                                {{if .FechaFin.IsZero}}
+                                    <span class="text-muted">Indefinida</span>
+                                {{else}}
+                                    {{.FechaFin.Format "02-01-2006"}}
+                                {{end}}
                             </td>
-                            <td>
-                                {{ .EstadoLicitacion }}
+                            <td class="text-end">
+                                <a href="/proyectos/editar/{{.IDProyecto}}" class="btn btn-sm amarillo"><i class="fas fa-pencil-alt"></i> Editar</a>
+                                <a href="/proyectos/gestionar/{{.IDProyecto}}" class="btn btn-sm azul"><i class="fas fa-cogs"></i> Gestionar</a>
                             </td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <a href="/proyectos/editar/{{.IDProyecto}}" class="btn btn-sm btn-warning">Actualizar</a>
-                                </div>
-                            </td>                            
                         </tr>
                         {{else}}
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">No hay proyectos registrados</td>
+                            <td colspan="5" class="text-center text-muted py-4">No hay proyectos vigentes.</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TABLA DE PROYECTOS ARCHIVADOS ==================== -->
+    <div class="card shadow">
+         <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-archive me-2"></i>Proyectos Archivados</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                     <thead>
+                        <tr>
+                            <th>Nombre del Proyecto</th>
+                            <th>Nº Contratación</th>
+                            <th>Estatus Licitación</th>
+                            <th>Fecha de Fin</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Data.ProyectosArchivados}}
+                        <tr class="text-muted">
+                            <td>{{.Nombre}}</td>
+                            <td><span class="badge badge bg-secondary">{{.NumContratacion}}</span></td>
+                            <td>
+                                <!-- Lógica de color para estatus no vigentes -->
+                                {{if eq .Estatus "Cancelado"}}
+                                    <span class="badge bg-danger">{{.Estatus}}</span>
+                                {{else if eq .Estatus "Adjudicado"}}
+                                     <span class="badge bg-primary">{{.Estatus}}</span>
+                                {{else if eq .Estatus "Desierto"}}
+                                     <span class="badge bg-warning text-dark">{{.Estatus}}</span>
+                                {{else}}
+                                    <span class="badge bg-secondary">{{.Estatus}}</span>
+                                {{end}}
+                            </td>
+                            <td>
+                                {{if .FechaFin.IsZero}}
+                                     <span class="text-muted">-</span>
+                                {{else}}
+                                    {{.FechaFin.Format "02-01-2006"}}
+                                {{end}}
+                            </td>
+                            <td class="text-end">
+                                <a href="/proyectos/editar/{{.IDProyecto}}" class="btn btn-sm amarillo"><i class="fas fa-pencil-alt"></i> Editar</a>
+                                <a href="/proyectos/gestionar/{{.IDProyecto}}" class="btn btn-sm azul"><i class="fas fa-cogs"></i> Gestionar</a>
+                            </td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No hay proyectos archivados.</td>
                         </tr>
                         {{end}}
                     </tbody>

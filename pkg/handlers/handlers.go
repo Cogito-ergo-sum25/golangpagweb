@@ -543,20 +543,40 @@ func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {
 
 // TODO LO DE PROYECTOS
 func (m *Repository) ProyectosVista(w http.ResponseWriter, r *http.Request) {
-	/*proyectos, err := m.ObtenerProyectosConRelaciones()
+	// 1. Llamamos al helper para obtener los proyectos con el estatus de su licitación.
+	todosLosProyectos, err := m.ObtenerProyectosParaVista()
 	if err != nil {
 		m.App.Session.Put(r.Context(), "error", "Error al obtener proyectos: "+err.Error())
 		log.Println("Error al obtener proyectos:", err)
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
-	}*/
-
-	data := &models.TemplateData{
-		//Proyectos: proyectos,
-		CSRFToken: nosurf.Token(r),
 	}
 
-	render.RenderTemplate(w, "proyectos/proyectos-vista.page.tmpl", data)
+	// 2. Creamos dos listas vacías para la clasificación.
+	var proyectosVigentes []models.Proyecto
+	var proyectosArchivados []models.Proyecto
+
+	// 3. Iteramos y clasificamos basándonos en el texto del estatus.
+	for _, p := range todosLosProyectos {
+		// Convertimos el estatus a minúsculas para una comparación segura.
+		// Si el estatus es "vigente", va a la primera lista.
+		if strings.ToLower(p.Estatus) == "vigente" {
+			proyectosVigentes = append(proyectosVigentes, p)
+		} else {
+			// Cualquier otro estatus ("Cancelado", "Adjudicado", "Desierto", etc.) se considera archivado.
+			proyectosArchivados = append(proyectosArchivados, p)
+		}
+	}
+
+	// 4. Pasamos ambas listas a la plantilla.
+	data := make(map[string]interface{})
+	data["ProyectosVigentes"] = proyectosVigentes
+	data["ProyectosArchivados"] = proyectosArchivados
+
+    render.RenderTemplate(w, "proyectos/proyectos-vista.page.tmpl", &models.TemplateData{
+        Data:      data,
+        CSRFToken: nosurf.Token(r),
+    })
 }
 
 func (m *Repository) MostrarNuevoProyecto(w http.ResponseWriter, r *http.Request) {
@@ -585,186 +605,140 @@ func (m *Repository) MostrarNuevoProyecto(w http.ResponseWriter, r *http.Request
 }
 
 func (m *Repository) NuevoProyecto(w http.ResponseWriter, r *http.Request) {
-    // 1. Verificar método HTTP
-    if r.Method != http.MethodPost {
-        m.App.Session.Put(r.Context(), "error", "Método no permitido")
-        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-        return
-    }
+	// ... tus validaciones de formulario (que están perfectas) ...
+	err := r.ParseForm()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+		http.Redirect(w, r, "/nuevo-proyecto", http.StatusSeeOther)
+		return
+	}
 
-    // 2. Parsear formulario
-    err := r.ParseForm()
-    if err != nil {
-        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
-        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-        return
-    }
+	requiredFields := []string{"nombre", "descripcion", "id_licitacion", "fecha_inicio"}
+	for _, field := range requiredFields {
+		if r.Form.Get(field) == "" {
+			m.App.Session.Put(r.Context(), "error", "El campo "+field+" es requerido")
+			http.Redirect(w, r, "/nuevo-proyecto", http.StatusSeeOther)
+			return
+		}
+	}
 
-    // 3. Validar campos requeridos
-    requiredFields := []string{"nombre", "descripcion", "id_licitacion", "fecha_inicio"}
-    for _, field := range requiredFields {
-        if r.Form.Get(field) == "" {
-            m.App.Session.Put(r.Context(), "error", "El campo "+field+" es requerido")
-            http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-            return
-        }
-    }
+	idLicitacion, _ := strconv.Atoi(r.Form.Get("id_licitacion"))
+	fechaInicio, _ := time.Parse("2006-01-02", r.Form.Get("fecha_inicio"))
 
-    // 4. Convertir IDs a enteros
-    idLicitacion, err := strconv.Atoi(r.Form.Get("id_licitacion"))
-    if err != nil {
-        m.App.Session.Put(r.Context(), "error", "ID de licitación inválido")
-        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-        return
-    }
+	proyecto := models.Proyecto{
+		Nombre:       r.Form.Get("nombre"),
+		Descripcion:  r.Form.Get("descripcion"),
+		IDLicitacion: idLicitacion,
+		FechaInicio:  fechaInicio,
+	}
 
-    // 5. Validar que la licitación exista
-    if !m.ExisteID("licitaciones", idLicitacion) {
-        m.App.Session.Put(r.Context(), "error", "La licitación seleccionada no existe")
-        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-        return
-    }
+	if fechaFinStr := r.Form.Get("fecha_fin"); fechaFinStr != "" {
+		proyecto.FechaFin, err = time.Parse("2006-01-02", fechaFinStr)
+		if err != nil {
+			m.App.Session.Put(r.Context(), "error", "Formato de fecha fin inválido")
+			http.Redirect(w, r, "/nuevo-proyecto", http.StatusSeeOther)
+			return
+		}
+	}
 
-    // 6. Procesar fechas
-    fechaInicio, err := time.Parse("2006-01-02", r.Form.Get("fecha_inicio"))
-    if err != nil {
-        m.App.Session.Put(r.Context(), "error", "Formato de fecha de inicio inválido")
-        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-        return
-    }
+	// Llamamos al helper para que realice la inserción
+	_, err = m.CrearProyectoEnDB(proyecto)
+	if err != nil {
+		log.Println("Error al llamar a CrearProyectoEnDB:", err)
+		m.App.Session.Put(r.Context(), "error", "Error interno al crear el proyecto")
+		http.Redirect(w, r, "/nuevo-proyecto", http.StatusSeeOther)
+		return
+	}
 
-    var fechaFin time.Time
-    if fechaFinStr := r.Form.Get("fecha_fin"); fechaFinStr != "" {
-        fechaFin, err = time.Parse("2006-01-02", fechaFinStr)
-        if err != nil {
-            m.App.Session.Put(r.Context(), "error", "Formato de fecha fin inválido")
-            http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-            return
-        }
-    }
-
-    // 7. Insertar el proyecto
-    stmt := `
-        INSERT INTO proyectos (
-            nombre, descripcion, id_licitacion, 
-            fecha_inicio, fecha_fin, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`
-
-    result, err := m.App.DB.Exec(stmt,
-        r.Form.Get("nombre"),
-        r.Form.Get("descripcion"),
-        idLicitacion,
-        fechaInicio,
-        fechaFin,
-        time.Now(),
-        time.Now(),
-    )
-
-    if err != nil {
-        log.Println("Error al insertar proyecto:", err)
-        m.App.Session.Put(r.Context(), "error", "Error al crear el proyecto")
-        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-        return
-    }
-
-    // 8. Obtener ID del proyecto insertado
-    idProyecto, err := result.LastInsertId()
-    if err != nil {
-        m.App.Session.Put(r.Context(), "error", "Error al obtener ID del proyecto")
-        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-        return
-    }
-
-    // 9. Procesar productos seleccionados
-    if err := m.procesarProductosProyecto(r, idProyecto); err != nil {
-        log.Println("Error al procesar productos:", err)
-        m.App.Session.Put(r.Context(), "error", "Error al guardar los productos del proyecto")
-        http.Redirect(w, r, "/proyectos/nuevo", http.StatusSeeOther)
-        return
-    }
-
-    // 10. Redireccionar con mensaje de éxito
-    m.App.Session.Put(r.Context(), "flash", "Proyecto creado exitosamente!")
-    http.Redirect(w, r, fmt.Sprintf("/proyectos/%d", idProyecto), http.StatusSeeOther)
+	// ¡CORREGIDO! Redirigimos a la vista general de proyectos.
+	m.App.Session.Put(r.Context(), "flash", "¡Proyecto creado exitosamente!")
+	http.Redirect(w, r, "/proyectos-vista", http.StatusSeeOther)
 }
 
-// Función auxiliar para procesar productos del proyecto
-func (m *Repository) procesarProductosProyecto(r *http.Request, idProyecto int64) error {
-    // Obtener todos los valores del formulario para productos
-    productos := make([]struct {
-        IDProducto      string
-        Cantidad       string
-        PrecioUnitario string
-        Especificaciones string
-    }, 0)
+func (m *Repository) MostrarFormularioEditarProyecto(w http.ResponseWriter, r *http.Request) {
+	// Obtenemos el ID del proyecto desde la URL (ej: /proyectos/editar/123)
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "ID de proyecto inválido.")
+		http.Redirect(w, r, "/proyectos-vista", http.StatusSeeOther)
+		return
+	}
 
-    // Recorrer todos los productos del formulario
-    for key, values := range r.Form {
-        if strings.HasPrefix(key, "productos[") && strings.Contains(key, "][id_producto]") {
-            // Extraer el índice del producto (ej: "productos[0][id_producto]" -> "0")
-            idx := strings.Split(key, "[")[1]
-            idx = strings.Split(idx, "]")[0]
+	// 1. Obtenemos los datos del proyecto específico que se va a editar.
+	proyecto, err := m.ObtenerProyectoPorID(id)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se encontró el proyecto.")
+		http.Redirect(w, r, "/proyectos-vista", http.StatusSeeOther)
+		return
+	}
 
-            producto := struct {
-                IDProducto      string
-                Cantidad       string
-                PrecioUnitario string
-                Especificaciones string
-            }{
-                IDProducto:      values[0],
-                Cantidad:       r.Form.Get(fmt.Sprintf("productos[%s][cantidad]", idx)),
-                PrecioUnitario: r.Form.Get(fmt.Sprintf("productos[%s][precio_unitario]", idx)),
-                Especificaciones: r.Form.Get(fmt.Sprintf("productos[%s][especificaciones]", idx)),
-            }
+	// 2. Obtenemos la lista de todas las licitaciones para llenar el menú desplegable.
+	licitaciones, err := m.ObtenerLicitacionesParaSelect()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error obteniendo licitaciones.")
+		http.Redirect(w, r, "/proyectos-vista", http.StatusSeeOther)
+		return
+	}
 
-            // Solo agregar si se seleccionó un producto
-            if producto.IDProducto != "" {
-                productos = append(productos, producto)
-            }
-        }
-    }
+	// 3. Preparamos los datos y los pasamos a la plantilla HTML.
+	data := make(map[string]interface{})
+	data["Proyecto"] = proyecto
+	data["Licitaciones"] = licitaciones
 
-    // Insertar cada producto asociado al proyecto
-    for _, p := range productos {
-        idProducto, err := strconv.Atoi(p.IDProducto)
-        if err != nil {
-            continue // Saltar si el ID no es válido
-        }
+    render.RenderTemplate(w, "proyectos/editar-proyecto.page.tmpl", &models.TemplateData{
+        Data:      data,
+        CSRFToken: nosurf.Token(r),
+    })
+}
 
-        cantidad, err := strconv.Atoi(p.Cantidad)
-        if err != nil || cantidad <= 0 {
-            continue // Saltar si la cantidad no es válida
-        }
+// ProcesarFormularioEditarProyecto (POST) procesa la actualización de un proyecto.
+func (m *Repository) ProcesarFormularioEditarProyecto(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "ID de proyecto inválido.")
+		http.Redirect(w, r, "/proyectos-vista", http.StatusSeeOther)
+		return
+	}
 
-        precioUnitario, err := strconv.ParseFloat(p.PrecioUnitario, 64)
-        if err != nil || precioUnitario <= 0 {
-            continue // Saltar si el precio no es válido
-        }
+	if err := r.ParseForm(); err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario.")
+		http.Redirect(w, r, fmt.Sprintf("/proyectos/editar/%d", id), http.StatusSeeOther)
+		return
+	}
 
-        // Verificar que el producto exista
-        if !m.ExisteID("productos", idProducto) {
-            continue
-        }
+	// Creamos un struct 'Proyecto' con los datos actualizados del formulario.
+	idLicitacion, _ := strconv.Atoi(r.Form.Get("id_licitacion"))
+	fechaInicio, _ := time.Parse("2006-01-02", r.Form.Get("fecha_inicio"))
 
-        // Insertar en la tabla de relación
-        _, err = m.App.DB.Exec(`
-            INSERT INTO productos_proyecto (
-                id_proyecto, id_producto, cantidad, 
-                precio_unitario, especificaciones, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?)`,
-            idProyecto,
-            idProducto,
-            cantidad,
-            precioUnitario,
-            p.Especificaciones,
-            time.Now(),
-        )
-        if err != nil {
-            return err
-        }
-    }
+	proyecto := models.Proyecto{
+		IDProyecto:   id,
+		Nombre:       r.Form.Get("nombre"),
+		Descripcion:  r.Form.Get("descripcion"),
+		IDLicitacion: idLicitacion,
+		FechaInicio:  fechaInicio,
+	}
 
-    return nil
+	// Manejamos la fecha de fin opcional.
+	if fechaFinStr := r.Form.Get("fecha_fin"); fechaFinStr != "" {
+		proyecto.FechaFin, err = time.Parse("2006-01-02", fechaFinStr)
+		if err != nil {
+			m.App.Session.Put(r.Context(), "error", "Formato de fecha fin inválido.")
+			http.Redirect(w, r, fmt.Sprintf("/proyectos/editar/%d", id), http.StatusSeeOther)
+			return
+		}
+	}
+
+	// Llamamos al helper para que guarde los cambios en la base de datos.
+	if err := m.ActualizarProyectoEnDB(proyecto); err != nil {
+		log.Println("Error al actualizar proyecto:", err)
+		m.App.Session.Put(r.Context(), "error", "Error interno al actualizar el proyecto.")
+		http.Redirect(w, r, fmt.Sprintf("/proyectos/editar/%d", id), http.StatusSeeOther)
+		return
+	}
+
+	// Si todo sale bien, redirigimos a la lista principal con un mensaje de éxito.
+	m.App.Session.Put(r.Context(), "flash", "¡Proyecto actualizado exitosamente!")
+	http.Redirect(w, r, "/proyectos-vista", http.StatusSeeOther)
 }
 
 // TODO LO CATALOGO

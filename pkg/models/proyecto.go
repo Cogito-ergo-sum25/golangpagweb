@@ -8,6 +8,7 @@ type Proyecto struct {
     Descripcion   string    `json:"descripcion"`
     FechaInicio   time.Time `json:"fecha_inicio"`
 	FechaFin   time.Time 	`json:"fecha_fin"`
+    Estatus      string    `json:"estatus"`
     
     // Relaciones para mostrar
     IDLicitacion  int       `json:"id_licitacion"`

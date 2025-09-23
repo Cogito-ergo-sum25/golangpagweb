@@ -47,6 +47,8 @@ func routes(app *config.AppConfig) http.Handler {
 		r.Get("/proyectos-vista", handlers.Repo.ProyectosVista)
 		r.Get("/nuevo-proyecto", handlers.Repo.MostrarNuevoProyecto)
 		r.Post("/nuevo-proyecto", handlers.Repo.NuevoProyecto)
+		r.Get("/proyectos/editar/{id}", handlers.Repo.MostrarFormularioEditarProyecto)
+		r.Post("/proyectos/editar/{id}", handlers.Repo.ProcesarFormularioEditarProyecto)
 
 		// LICITACIONES
 		r.Get("/licitaciones", handlers.Repo.Licitaciones)
