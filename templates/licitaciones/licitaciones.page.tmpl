@@ -1,8 +1,8 @@
 {{template "base" .}}
 {{define "content"}}
-<div class="container">
+<div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Licitaciones</h2>
+        <h2><i class="fa-regular fa-file-lines"></i> Licitaciones</h2>
         
         <a href="/nueva-licitacion" class="btn btn-primary mt-3 btn-outline-success verde">
             <i class="fas fa-plus"></i> Nueva Licitación
@@ -155,8 +155,8 @@
     <td>Fecha Entrega: {{.FechaEntrega.Format "02/01/2006"}}</td>
     <td>
         <div class="d-flex align-items-center gap-1">
-            <a href="/editar-licitacion/{{.IDLicitacion}}" class="btn btn-sm amarillo">Editar</a>   
-            <a href="/mostrar-partidas/{{.IDLicitacion}}" class="btn btn-sm azul">Partidas</a>
+            <a href="/editar-licitacion/{{.IDLicitacion}}" class="btn btn-sm amarillo"><i class="fas fa-pencil-alt"></i> Editar</a>   
+            <a href="/mostrar-partidas/{{.IDLicitacion}}" class="btn btn-sm azul"><i class="fa-regular fa-square-check"></i> Partidas</a>
         </div>
     </td>
 </tr>

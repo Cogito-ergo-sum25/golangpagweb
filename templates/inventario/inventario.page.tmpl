@@ -1,9 +1,10 @@
 {{template "base" .}}
 {{define "content"}}
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Inventario de Productos</h2>
-        <a name="" id="" class="btn btn-primary mt-3 btn-outline-success verde" href="/crear-producto" role="button">Agregar Producto</a>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fa-regular fa-bookmark"></i> Inventario de Productos</h2>
+        <a name="" id="" class="btn btn-primary mt-3 btn-outline-success verde" href="/crear-producto" role="button">
+            <i class="fas fa-plus me-2"></i>Agregar Producto</a>
     </div>
     <table class="table table-hover">
         <thead class="table-dark">
@@ -25,10 +26,10 @@
                 <td>{{.Version}}</td>
                 <td>{{.Nombre}}</td>
                 <td>
-                    <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm amarillo py-1 px-2">Editar</a>
+                    <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm amarillo py-1 px-2"><i class="fas fa-pencil-alt"></i> Editar</a>
                     <form action="/eliminar/{{.IDProducto}}" method="POST" class="d-inline">
                         <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-                        <button type="submit" class="btn btn-sm rojo py-1 px-2">Eliminar</button>
+                        <button type="submit" class="btn btn-sm rojo py-1 px-2"><i class="fa-regular fa-circle-xmark"></i> Eliminar</button>
                     </form>
                 </td>
             </tr>

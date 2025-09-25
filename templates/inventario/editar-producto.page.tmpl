@@ -1,7 +1,8 @@
 {{template "base" .}}
 {{define "content"}}
 <div class="container">
-    <h2 class="my-4">Editar Producto</h2>
+    <h2 class="my-4">
+        <i class="fa-regular fa-pen-to-square"></i> Editar Producto</h2>
     
     {{with .Flash}}
     <div class="alert alert-success">{{.}}</div>
@@ -200,8 +201,11 @@
         
         <!-- Botones de acción -->
         <div class="d-flex justify-content-end gap-2 mb-4">
-            <button type="submit" class="btn btn-secondary verde">Actualizar Producto</button>
-            <a href="/inventario" class="btn btn-secondary rojo">Cancelar</a>
+            <a href="/inventario" class="btn btn-lg rojo">
+                <i class="fa-regular fa-circle-xmark"></i> Cancelar</a>
+            <button type="submit" class="btn btn-lg verde">
+                <i class="fas fa-save me-2"></i>Actualizar Producto</button>
+            
         </div>
     </form>
 </div>

@@ -1,7 +1,7 @@
 {{template "base" .}}
 {{define "content"}}
 <div class="container mt-4">
-    <h2>Calendario de Licitaciones</h2>
+    <h2><i class="fa-regular fa-calendar"></i> Calendario de Licitaciones</h2>
     <div id="calendar"></div>
 </div>
 
@@ -57,9 +57,32 @@
         background: #1e1e1e !important;
     }
 
+    /* ======================================================= */
+    /* === ¡AQUÍ ESTÁ LA SOLUCIÓN PARA EL POPOVER DE EVENTOS! === */
+    /* ======================================================= */
+    .dark-mode .fc-popover {
+        background-color: #2c2c2e; /* Fondo oscuro para el popover */
+        border: 1px solid #444;    /* Borde oscuro */
+    }
+
+    .dark-mode .fc-popover-header {
+        background-color: #333;      /* Fondo un poco más oscuro para la cabecera */
+        color: #f1f1f1;             /* Texto claro para la fecha */
+        border-bottom-color: #444; /* Borde inferior oscuro */
+    }
+
+    .dark-mode .fc-popover-close {
+        color: #ccc; /* Color claro para el ícono de cerrar 'x' */
+    }
+    
+    .dark-mode .fc-popover-body {
+        background-color: #2c2c2e; /* Aseguramos que el cuerpo también sea oscuro */
+    }
+    /* ======================================================= */
+    /* =================== FIN DE LA SOLUCIÓN =================== */
+    /* ======================================================= */
+
 </style>
-
-
 
 <!-- FullCalendar CSS -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.css" rel="stylesheet" />
@@ -71,6 +94,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.7/index.global.min.js"></script>
 
 <script>
+    // ... Tu JavaScript existente (no necesita cambios) ...
     document.addEventListener('DOMContentLoaded', function () {
         // Parse eventos JSON seguro
         const eventos = JSON.parse('{{ toJson .Data.Eventos }}');
@@ -91,7 +115,6 @@
                 year:  'Año', 
                 month: 'Mes',
                 list: 'Agenda Semanal',
-
             },
             events: eventos,
             eventClick: function(info) {

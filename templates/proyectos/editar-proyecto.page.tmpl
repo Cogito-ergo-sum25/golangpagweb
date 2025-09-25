@@ -2,13 +2,13 @@
 
 {{define "content"}}
 <div class="container mt-4">
-    <h2 class="mb-4 amarillo">Editar Proyecto: <span class="text-primary">{{.Data.Proyecto.Nombre}}</span></h2>
+    <h2 class="mb-4 amarillo">
+        <i class="fa-regular fa-pen-to-square"></i> Editar Proyecto: {{.Data.Proyecto.Nombre}}</h2>
     
     <form action="/proyectos/editar/{{.Data.Proyecto.IDProyecto}}" method="POST">
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-        
         <div class="card mb-4 shadow-sm">
-            <div class="card-header bg-warning">
+            <div class="card-header azul">
                 <h5 class="mb-0">Información Básica del Proyecto</h5>
             </div>
             <div class="card-body">
@@ -49,9 +49,10 @@
         </div>
         
         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-            <a href="/proyectos-vista" class="btn btn-secondary rojo">Cancelar</a>
-            <button type="submit" class="btn btn-warning btn-lg">
-                <i class="fas fa-save me-2"></i> Guardar Cambios
+            <a href="/proyectos-vista" class="btn btn-lg rojo">
+                <i class="fa-regular fa-circle-xmark"></i> Cancelar</a>
+            <button type="submit" class="btn verde btn-lg">
+                <i class="fas fa-save me-2"></i> Actualizar Proyecto
             </button>
         </div>
     </form>
