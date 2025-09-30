@@ -72,6 +72,9 @@ func routes(app *config.AppConfig) http.Handler {
 		r.Get("/nueva-aclaracion-general/{id}", handlers.Repo.MostrarNuevaAclaracionGeneral)
 		r.Post("/datos-empresas-externas-nueva-contexto-aclaraciones", handlers.Repo.AgregarEmpresaExternaContextoAclaraciones)
 		r.Post("/nueva-aclaracion-licitacion", handlers.Repo.CrearNuevaAclaracionGeneral)
+		r.Get("/editar-aclaracion/{id}", handlers.Repo.MostrarFormularioEditarAclaracion)
+		r.Post("/editar-aclaracion/{id}", handlers.Repo.ProcesarFormularioEditarAclaracion)
+
 
 		// PRODUCTOS PARTIDA
 		r.Get("/productos-partida/{id}", handlers.Repo.MostrarProductosPartida)

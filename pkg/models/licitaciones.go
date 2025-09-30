@@ -45,7 +45,7 @@ type AclaracionesLicitacion struct {
     IDEmpresa              int       `json:"id_empresa"`
     Pregunta               string    `json:"pregunta"`
     Observaciones          string    `json:"observaciones"`
-    FichaTecnicaID        int       `json:"ficha_tecnica_id,omitempty"` // Puede ser NULL si no aplica
+    FichaTecnicaID        string           `json:"ficha_tecnica_id,omitempty"` // Puede ser NULL si no aplica
     IDPuntosTecnicosModif int       `json:"id_puntos_tecnicos_modif,omitempty"` // Puede ser NULL si no aplica
     PreguntaTecnica       bool      `json:"pregunta_tecnica"` // TRUE si es una pregunta técnica, FALSE si es general
     CreatedAt             time.Time `json:"created_at"`

@@ -40,9 +40,9 @@
                     <td>{{.ProductoExterno.Modelo}}</td>
                     <td>{{.ProductoExterno.Marca.Nombre}}</td>
                     <td>{{.ProductoExterno.PaisOrigen.Nombre}}</td>
-                    <td>${{printf "%.2f" .PrecioOfertado}}</td>
-                    <td>${{printf "%.2f" .PrecioMin}}</td>
-                    <td>${{printf "%.2f" .PrecioMax}}</td>
+                    <td>${{formatPrice .PrecioOfertado}}</td>
+                    <td>${{formatPrice .PrecioMin}}</td>
+                    <td>${{formatPrice .PrecioMax}}</td>
                     <td>{{.Observaciones}}</td>
                     <td>
                         <a href="/editar-propuesta/{{.IDPropuesta}}" class="btn btn-sm px-1 py-1 azul">

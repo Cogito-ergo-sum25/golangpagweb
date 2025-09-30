@@ -412,3 +412,40 @@ dark-mode footer {
 .dark-mode #modalNuevoProducto .form-control:focus {
     box-shadow: 0 0 0 0.25rem rgba(62, 136, 171, 0.25) !important;
 }
+
+/* --- Estilos para Acordeón en Modo Oscuro --- */
+
+/* Para el botón/encabezado del acordeón */
+.dark-mode .accordion-button {
+    background-color: #343a40 !important; /* Un gris oscuro */
+    color: #f8f9fa !important; /* Texto claro */
+}
+
+/* Cambia el color del ícono del acordeón (la flecha) a blanco */
+.dark-mode .accordion-button::after {
+    filter: brightness(0) invert(1) !important;
+}
+
+/* Estilo para el botón cuando el acordeón está abierto */
+.dark-mode .accordion-button:not(.collapsed) {
+    background-color: #495057 !important; /* Un gris un poco más claro */
+    color: #f8f9fa !important;
+}
+
+/* Para el cuerpo del acordeón que se despliega */
+.dark-mode .accordion-body {
+    background-color: #212529 !important; /* Fondo principal oscuro (Bootstrap Dark) */
+    color: #dee2e6 !important; /* Texto un poco menos brillante que el blanco puro */
+}
+
+/* Para cada elemento de la lista dentro del acordeón */
+.dark-mode .list-group-item {
+    background-color: #212529 !important; /* Mismo fondo que el accordion-body para que se fusione */
+    color: #dee2e6 !important;
+    border-color: #495057 !important; /* Borde sutil entre elementos */
+}
+
+/* Para la línea divisora (border-top) sobre el botón de Editar */
+.dark-mode .border-top {
+    border-top-color: #495057 !important; /* Mismo color que los otros bordes */
+}

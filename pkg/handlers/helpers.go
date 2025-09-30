@@ -198,6 +198,50 @@ func (m *Repository) ActualizarProyectoEnDB(proyecto models.Proyecto) error {
 	return err
 }
 
+func (m *Repository) ActualizarAclaracion(a models.AclaracionesLicitacion) error {
+    query := `
+        UPDATE aclaraciones_licitacion SET
+            id_partida = ?, 
+            id_empresa = ?, 
+            pregunta = ?, 
+            observaciones = ?,
+            ficha_tecnica_id = ?, 
+            id_puntos_tecnicos_modif = ?, 
+            updated_at = NOW()
+        WHERE id_aclaracion_licitacion = ?
+    `
+
+    // Preparamos las variables para los campos que pueden ser NULL,
+    // usando la misma lógica que en la función de Insertar.
+    var (
+        idPartida interface{} = nil
+        ftID      interface{} = nil
+        ptID      interface{} = nil
+    )
+
+    if a.IDPartida != 0 {
+        idPartida = a.IDPartida
+    }
+    if a.FichaTecnicaID != "" {
+        ftID = a.FichaTecnicaID
+    }
+    if a.IDPuntosTecnicosModif != 0 {
+        ptID = a.IDPuntosTecnicosModif
+    }
+
+    _, err := m.App.DB.Exec(query,
+        idPartida,
+        a.IDEmpresa,
+        a.Pregunta,
+        a.Observaciones,
+        ftID,
+        ptID,
+        a.IDAclaracionLicitacion, // El ID para el WHERE
+    )
+
+    return err
+}
+
 // GETTERS
 
 // ObtenerMarcas devuelve todas las marcas para los selects
@@ -980,102 +1024,141 @@ func (m *Repository) ObtenerAclaracionesPorPartidaID(idPartida int) ([]models.Ac
 }
 
 func (m *Repository) ObtenerAclaracionesPorLicitacionID(idLicitacion int) ([]models.AclaracionesLicitacion, error) {
-	query := `
-		SELECT 
-			a.id_aclaracion_licitacion,
-			a.id_licitacion,
-			a.id_partida,
-			a.id_empresa,
-			a.pregunta,
-			a.observaciones,
-			a.ficha_tecnica_id,
-			a.id_puntos_tecnicos_modif,
-			a.pregunta_tecnica,
-			a.created_at,
-			a.updated_at,
+    query := `
+        SELECT 
+            a.id_aclaracion_licitacion, a.id_licitacion, a.id_partida, a.id_empresa,
+            a.pregunta, a.observaciones, a.ficha_tecnica_id, a.id_puntos_tecnicos_modif,
+            a.pregunta_tecnica, a.created_at, a.updated_at,
+            e.id_empresa, e.nombre, e.created_at AS empresa_created_at, e.updated_at AS empresa_updated_at,
+            p.id_partida, p.numero_partida_convocatoria, p.nombre_descripcion
+        FROM aclaraciones_licitacion a
+        JOIN empresas_externas e ON a.id_empresa = e.id_empresa
+        LEFT JOIN partidas p ON a.id_partida = p.id_partida
+        WHERE a.id_licitacion = ?
+    `
 
-			e.id_empresa,
-			e.nombre,
-			e.created_at AS empresa_created_at,
-			e.updated_at AS empresa_updated_at,
+    rows, err := m.App.DB.Query(query, idLicitacion)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
 
-			p.id_partida,
-			p.numero_partida_convocatoria,
-			p.nombre_descripcion
+    var aclaraciones []models.AclaracionesLicitacion
 
-		FROM aclaraciones_licitacion a
-		JOIN empresas_externas e ON a.id_empresa = e.id_empresa
-		LEFT JOIN partidas p ON a.id_partida = p.id_partida
-		WHERE a.id_licitacion = ?
-	`
+    for rows.Next() {
+        var a models.AclaracionesLicitacion
+        var empresa models.Empresas
 
-	rows, err := m.App.DB.Query(query, idLicitacion)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+        var (
+            idPartida, puntosTecnicosID sql.NullInt64
+            // --- CAMBIO 1: fichaTecnicaID ahora es sql.NullString ---
+            fichaTecnicaID    sql.NullString 
+            numConvocatoria   sql.NullInt64
+            nombreDescripcion sql.NullString
+        )
 
-	var aclaraciones []models.AclaracionesLicitacion
+        err := rows.Scan(
+            &a.IDAclaracionLicitacion, &a.IDLicitacion, &idPartida, &a.IDEmpresa,
+            &a.Pregunta, &a.Observaciones, &fichaTecnicaID, &puntosTecnicosID,
+            &a.PreguntaTecnica, &a.CreatedAt, &a.UpdatedAt,
+            &empresa.IDEmpresa, &empresa.Nombre, &empresa.CreatedAt, &empresa.UpdatedAt,
+            &idPartida, // nuevamente porque hicimos LEFT JOIN
+            &numConvocatoria, &nombreDescripcion,
+        )
+        if err != nil {
+            return nil, err
+        }
 
-	for rows.Next() {
-		var a models.AclaracionesLicitacion
-		var empresa models.Empresas
+        if idPartida.Valid {
+            a.IDPartida = int(idPartida.Int64)
+            a.Partida = &models.Partida{
+                IDPartida:              int(idPartida.Int64),
+                NumPartidaConvocatoria: int(numConvocatoria.Int64),
+                NombreDescripcion:      nombreDescripcion.String,
+            }
+        }
 
-		var (
-			idPartida, fichaTecnicaID, puntosTecnicosID sql.NullInt64
-			numConvocatoria                             sql.NullInt64
-			nombreDescripcion                           sql.NullString
-		)
+        // --- CAMBIO 2: Se asigna el valor como string ---
+        if fichaTecnicaID.Valid {
+            a.FichaTecnicaID = fichaTecnicaID.String
+        }
+        
+        if puntosTecnicosID.Valid {
+            a.IDPuntosTecnicosModif = int(puntosTecnicosID.Int64)
+        }
 
-		err := rows.Scan(
-			&a.IDAclaracionLicitacion,
-			&a.IDLicitacion,
-			&idPartida,
-			&a.IDEmpresa,
-			&a.Pregunta,
-			&a.Observaciones,
-			&fichaTecnicaID,
-			&puntosTecnicosID,
-			&a.PreguntaTecnica,
-			&a.CreatedAt,
-			&a.UpdatedAt,
-			&empresa.IDEmpresa,
-			&empresa.Nombre,
-			&empresa.CreatedAt,
-			&empresa.UpdatedAt,
-			&idPartida, // nuevamente porque hicimos LEFT JOIN
-			&numConvocatoria,
-			&nombreDescripcion,
-		)
-		if err != nil {
-			return nil, err
-		}
+        a.Empresa = &empresa
+        aclaraciones = append(aclaraciones, a)
+    }
 
-		if idPartida.Valid {
-			a.IDPartida = int(idPartida.Int64)
-			a.Partida = &models.Partida{
-				IDPartida:              int(idPartida.Int64),
-				NumPartidaConvocatoria: int(numConvocatoria.Int64),
-				NombreDescripcion:      nombreDescripcion.String,
-			}
-		}
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
 
-		if fichaTecnicaID.Valid {
-			a.FichaTecnicaID = int(fichaTecnicaID.Int64)
-		}
-		if puntosTecnicosID.Valid {
-			a.IDPuntosTecnicosModif = int(puntosTecnicosID.Int64)
-		}
+    return aclaraciones, nil
+}
 
-		a.Empresa = &empresa
-		aclaraciones = append(aclaraciones, a)
-	}
+func (m *Repository) ObtenerAclaracionPorID(idAclaracion int) (models.AclaracionesLicitacion, error) {
+    var a models.AclaracionesLicitacion
+    var empresa models.Empresas
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
+    query := `
+        SELECT 
+            a.id_aclaracion_licitacion, a.id_licitacion, a.id_partida, a.id_empresa,
+            a.pregunta, a.observaciones, a.ficha_tecnica_id, a.id_puntos_tecnicos_modif,
+            a.pregunta_tecnica, a.created_at, a.updated_at,
+            e.id_empresa, e.nombre,
+            p.id_partida, p.numero_partida_convocatoria, p.nombre_descripcion
+        FROM aclaraciones_licitacion a
+        LEFT JOIN empresas_externas e ON a.id_empresa = e.id_empresa
+        LEFT JOIN partidas p ON a.id_partida = p.id_partida
+        WHERE a.id_aclaracion_licitacion = ?
+    `
 
-	return aclaraciones, nil
+    // Variables para manejar campos que pueden ser NULL
+    var (
+        idPartida         sql.NullInt64
+        puntosTecnicosID  sql.NullInt64
+        fichaTecnicaID    sql.NullString
+        numConvocatoria   sql.NullInt64
+        nombreDescripcion sql.NullString
+    )
+
+    // Usamos QueryRow porque esperamos una sola fila.
+    row := m.App.DB.QueryRow(query, idAclaracion)
+    err := row.Scan(
+        &a.IDAclaracionLicitacion, &a.IDLicitacion, &idPartida, &a.IDEmpresa,
+        &a.Pregunta, &a.Observaciones, &fichaTecnicaID, &puntosTecnicosID,
+        &a.PreguntaTecnica, &a.CreatedAt, &a.UpdatedAt,
+        &empresa.IDEmpresa, &empresa.Nombre,
+        &idPartida, // Se escanea de nuevo porque es del JOIN de partidas
+        &numConvocatoria, &nombreDescripcion,
+    )
+    if err != nil {
+        return a, err
+    }
+
+    // Se asignan los valores de los campos opcionales
+    if idPartida.Valid {
+        a.IDPartida = int(idPartida.Int64)
+        a.Partida = &models.Partida{
+            IDPartida:              int(idPartida.Int64),
+            NumPartidaConvocatoria: int(numConvocatoria.Int64),
+            NombreDescripcion:      nombreDescripcion.String,
+        }
+    }
+
+    if fichaTecnicaID.Valid {
+        a.FichaTecnicaID = fichaTecnicaID.String
+    }
+
+    if puntosTecnicosID.Valid {
+        a.IDPuntosTecnicosModif = int(puntosTecnicosID.Int64)
+    }
+
+    a.Empresa = &empresa
+    
+    return a, nil
 }
 
 func (m *Repository) ObtenerTodasEmpresas() ([]models.Empresas, error) {
@@ -1765,48 +1848,45 @@ func (m *Repository) InsertarPropuestaPartida(p models.PropuestasPartida) error 
 }
 
 func (m *Repository) InsertarAclaracionGeneral(a models.AclaracionesLicitacion) error {
-	query := `
-		INSERT INTO aclaraciones_licitacion (
-			id_licitacion, 
-			id_partida, 
-			id_empresa, 
-			pregunta, 
-			observaciones, 
-			ficha_tecnica_id, 
-			id_puntos_tecnicos_modif, 
-			created_at, 
-			updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
-	`
+    query := `
+        INSERT INTO aclaraciones_licitacion (
+            id_licitacion, id_partida, id_empresa, 
+            pregunta, observaciones, ficha_tecnica_id, 
+            id_puntos_tecnicos_modif, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW());
+    `
 
-	// Campos que pueden ser NULL
-	var (
-		idPartida interface{} = nil
-		ftID      interface{} = nil
-		ptID      interface{} = nil
-	)
+    // Campos que pueden ser NULL
+    var (
+        idPartida interface{} = nil
+        ftID      interface{} = nil
+        ptID      interface{} = nil
+    )
 
-	if a.Partida != nil {
-		idPartida = a.Partida.IDPartida
-	}
-	if a.FichaTecnicaID != 0 {
-		ftID = a.FichaTecnicaID
-	}
-	if a.IDPuntosTecnicosModif != 0 {
-		ptID = a.IDPuntosTecnicosModif
-	}
+    if a.Partida != nil && a.Partida.IDPartida != 0 {
+        idPartida = a.Partida.IDPartida
+    }
 
-	_, err := m.App.DB.Exec(query,
-		a.IDLicitacion,
-		idPartida,
-		a.IDEmpresa,
-		a.Pregunta,
-		a.Observaciones,
-		ftID,
-		ptID,
-	)
+    // --- CAMBIO CLAVE: Comprobar si el string no está vacío ---
+    if a.FichaTecnicaID != "" {
+        ftID = a.FichaTecnicaID
+    }
+    
+    if a.IDPuntosTecnicosModif != 0 {
+        ptID = a.IDPuntosTecnicosModif
+    }
 
-	return err
+    _, err := m.App.DB.Exec(query,
+        a.IDLicitacion,
+        idPartida,
+        a.IDEmpresa,
+        a.Pregunta,
+        a.Observaciones,
+        ftID,
+        ptID,
+    )
+
+    return err
 }
 
 func (m *Repository) InsertarFalloPropuesta(f models.FallosPropuesta) error {
@@ -2019,3 +2099,4 @@ func atof(s string) float64 {
     f, _ := strconv.ParseFloat(s, 64)
     return f
 }
+

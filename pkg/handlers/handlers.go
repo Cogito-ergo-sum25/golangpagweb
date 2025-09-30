@@ -1227,33 +1227,26 @@ func (m *Repository) MostrarPartidasPorID(w http.ResponseWriter, r *http.Request
 }
 
 func (m *Repository) MostrarAclaracionesLicitacion(w http.ResponseWriter, r *http.Request) {
-	idParam := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID de licitación inválido", http.StatusBadRequest)
-		return
-	}
-
-    licitacion, err := m.ObtenerLicitacionPorID(id)
-	if err != nil {
-		http.Error(w, "Error al obtener licitación", http.StatusInternalServerError)
-		return
-	}
-
-    partidas, err := m.ObtenerPartidasPorLicitacionID(id)
-	if err != nil {
-		log.Printf("Error al obtener partidas para licitación %d: %v", id, err)
-		http.Error(w, "Error al obtener las partidas", http.StatusInternalServerError)
-		return
-	}
-
-    empresas, err := m.ObtenerTodasEmpresas()
+    idParam := chi.URLParam(r, "id")
+    id, err := strconv.Atoi(idParam)
     if err != nil {
-        m.App.Session.Put(r.Context(), "error", "Error obteniendo productos: "+err.Error())
-        http.Redirect(w, r, "/", http.StatusSeeOther)
+        http.Error(w, "ID de licitación inválido", http.StatusBadRequest)
         return
     }
 
+    licitacion, err := m.ObtenerLicitacionPorID(id)
+    if err != nil {
+        http.Error(w, "Error al obtener licitación", http.StatusInternalServerError)
+        return
+    }
+
+    partidas, err := m.ObtenerPartidasPorLicitacionID(id)
+    if err != nil {
+        log.Printf("Error al obtener partidas para licitación %d: %v", id, err)
+        http.Error(w, "Error al obtener las partidas", http.StatusInternalServerError)
+        return
+    }
+    
     aclaraciones, err := m.ObtenerAclaracionesPorLicitacionID(id)
     if err != nil {
         log.Printf("Error al obtener aclaraciones de la licitación %d: %v", id, err)
@@ -1261,16 +1254,38 @@ func (m *Repository) MostrarAclaracionesLicitacion(w http.ResponseWriter, r *htt
         return
     }
 
+    // Agrupar aclaraciones por ID de partida.
+    // Usamos tu tipo de modelo exacto: models.AclaracionesLicitacion
+    aclaracionesPorPartida := make(map[int][]models.AclaracionesLicitacion) // <-- CAMBIO AQUÍ
+    for _, a := range aclaraciones {
+        aclaracionesPorPartida[a.IDPartida] = append(aclaracionesPorPartida[a.IDPartida], a)
+    }
 
-	data := &models.TemplateData{
-		CSRFToken: nosurf.Token(r),
-        Partidas:  partidas,
-        Empresas:   empresas,
-        Licitacion: licitacion,
-        AclaracionesLicitacion: aclaraciones,
-	}
+    // Crear la lista de empresas únicas a partir de las aclaraciones obtenidas.
+    // Usamos tu tipo de modelo exacto: models.Empresas
+    empresasMap := make(map[int]models.Empresas) // <-- CAMBIO AQUÍ
+    for _, a := range aclaraciones {
+        // Asumo que tu struct Empresas tiene un campo IDEmpresa
+        if a.Empresa != nil {
+             empresasMap[a.Empresa.IDEmpresa] = *a.Empresa
+        }
+    }
+    var empresasUnicas []models.Empresas // <-- CAMBIO AQUÍ
+    for _, empresa := range empresasMap {
+        empresasUnicas = append(empresasUnicas, empresa)
+    }
 
-	render.RenderTemplate(w, "licitaciones/aclaraciones-licitacion.page.tmpl", data)
+    // Preparamos los datos para el template
+    data := make(map[string]interface{})
+    data["Licitacion"] = licitacion
+    data["Partidas"] = partidas
+    data["AclaracionesPorPartida"] = aclaracionesPorPartida
+    data["EmpresasUnicas"] = empresasUnicas
+
+    render.RenderTemplate(w, "licitaciones/aclaraciones-licitacion.page.tmpl", &models.TemplateData{
+        Data:      data,
+        CSRFToken: nosurf.Token(r),
+    })
 }
 
 func (m *Repository) MostrarNuevaAclaracionGeneral(w http.ResponseWriter, r *http.Request) {
@@ -1370,7 +1385,7 @@ func (m *Repository) CrearNuevaAclaracionGeneral(w http.ResponseWriter, r *http.
 	}
 
 	// Campos opcionales
-	fichaID, _ := strconv.Atoi(r.FormValue("ficha_tecnica_id"))
+	fichaID := r.FormValue("ficha_tecnica_id")
 	puntosID, _ := strconv.Atoi(r.FormValue("id_puntos_tecnicos_modif"))
 
 	// Aquí podrías agregar lógica extra si deseas distinguir preguntas técnicas o no
@@ -1392,6 +1407,95 @@ func (m *Repository) CrearNuevaAclaracionGeneral(w http.ResponseWriter, r *http.
 
 	m.App.Session.Put(r.Context(), "flash", "Aclaración registrada correctamente")
 	http.Redirect(w, r, fmt.Sprintf("/aclaraciones-licitacion/%d", idLicitacion), http.StatusSeeOther)
+}
+
+// en tu archivo de handlers
+
+func (m *Repository) MostrarFormularioEditarAclaracion(w http.ResponseWriter, r *http.Request) {
+    // 1. Obtener el ID de la aclaración desde la URL
+    idParam := chi.URLParam(r, "id")
+    idAclaracion, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID de aclaración inválido", http.StatusBadRequest)
+        return
+    }
+
+    // 2. Obtener la aclaración específica por su ID (necesitarás crear esta función)
+    aclaracion, err := m.ObtenerAclaracionPorID(idAclaracion)
+    if err != nil {
+        log.Println("Error al obtener la aclaración:", err)
+        http.Error(w, "No se pudo encontrar la aclaración", http.StatusNotFound)
+        return
+    }
+
+    // 3. Obtener datos adicionales para los dropdowns (partidas, empresas)
+    licitacion, _ := m.ObtenerLicitacionPorID(aclaracion.IDLicitacion)
+    partidas, _ := m.ObtenerPartidasPorLicitacionID(aclaracion.IDLicitacion)
+    empresas, _ := m.ObtenerTodasEmpresas()
+
+    // 4. Empaquetar todo y renderizar el nuevo template de edición
+    data := make(map[string]interface{})
+    data["Aclaracion"] = aclaracion
+    data["Licitacion"] = licitacion
+    data["Partidas"] = partidas
+    data["Empresas"] = empresas
+
+    render.RenderTemplate(w, "licitaciones/editar-aclaracion.page.tmpl", &models.TemplateData{
+        Data: data,
+        CSRFToken: nosurf.Token(r),
+    })
+}
+
+// en tu archivo de handlers
+
+func (m *Repository) ProcesarFormularioEditarAclaracion(w http.ResponseWriter, r *http.Request) {
+    // 1. Obtener el ID de la aclaración desde la URL
+    idParam := chi.URLParam(r, "id")
+    idAclaracion, err := strconv.Atoi(idParam)
+    if err != nil {
+        http.Error(w, "ID de aclaración inválido", http.StatusBadRequest)
+        return
+    }
+
+    // 2. Procesar el formulario
+    if err := r.ParseForm(); err != nil {
+        http.Error(w, "No se pudo procesar el formulario", http.StatusBadRequest)
+        return
+    }
+
+    // 3. Crear un objeto AclaracionesLicitacion con los datos actualizados
+    // Nota: El id_licitacion lo tomamos de un campo oculto para la redirección
+    idLicitacion, _ := strconv.Atoi(r.FormValue("id_licitacion"))
+    idPartida, _ := strconv.Atoi(r.FormValue("id_partida"))
+
+    aclaracionActualizada := models.AclaracionesLicitacion{
+        IDAclaracionLicitacion: idAclaracion, // El ID de la aclaración a actualizar
+        IDLicitacion:           idLicitacion,
+        IDPartida:              idPartida,
+        IDEmpresa:              toInt(r.FormValue("id_empresa")),
+        Pregunta:               r.FormValue("pregunta"),
+        Observaciones:          r.FormValue("observaciones"),
+        FichaTecnicaID:         r.FormValue("ficha_tecnica_id"),
+        IDPuntosTecnicosModif:  toInt(r.FormValue("id_puntos_tecnicos_modif")),
+    }
+
+    // 4. Llamar a la función de la base de datos para actualizar (necesitarás crearla)
+    err = m.ActualizarAclaracion(aclaracionActualizada)
+    if err != nil {
+        log.Println("Error al actualizar la aclaración:", err)
+        http.Error(w, "Error al guardar los cambios", http.StatusInternalServerError)
+        return
+    }
+
+    // 5. Redirigir de vuelta a la página de listado
+    m.App.Session.Put(r.Context(), "flash", "Aclaración actualizada correctamente")
+    http.Redirect(w, r, fmt.Sprintf("/aclaraciones-licitacion/%d", idLicitacion), http.StatusSeeOther)
+}
+
+// Pequeña función helper para convertir strings a int, por si acaso
+func toInt(s string) int {
+    i, _ := strconv.Atoi(s)
+    return i
 }
 
 func (m *Repository) MostrarNuevaPartida(w http.ResponseWriter, r *http.Request) {
