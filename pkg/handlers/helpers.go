@@ -872,94 +872,156 @@ func (m *Repository) ObtenerOCrearRequerimientos(idPartida int) (models.Requerim
 	var r models.RequerimientosPartida
 
 	query := `
-	SELECT 
-	id_requerimientos,
-	requiere_mantenimiento,
-	requiere_instalacion,
-	requiere_puesta_marcha,
-	requiere_capacitacion,
-	requiere_visita_previa,
-	fecha_visita,
-	comentarios_visita,
-	requiere_muestra,
-	fecha_muestra,
-	comentarios_muestra,
-	fecha_entrega,
-	comentarios_entrega
-	FROM requerimientos_partida
-	WHERE id_partida = ?
-	LIMIT 1`
+		SELECT 
+			id_requerimientos, requiere_mantenimiento, requiere_instalacion, requiere_puesta_marcha, 
+			requiere_capacitacion, requiere_visita_previa, fecha_visita, comentarios_visita, 
+			requiere_muestra, fecha_muestra, comentarios_muestra, fecha_entrega, comentarios_entrega
+		FROM requerimientos_partida
+		WHERE id_partida = ?
+		LIMIT 1`
 
-	row := m.App.DB.QueryRow(query, idPartida)
-	err := row.Scan(
-	&r.IDRequerimientos,
-	&r.RequiereMantenimiento,
-	&r.RequiereInstalacion,
-	&r.RequierePuestaEnMarcha,
-	&r.RequiereCapacitacion,
-	&r.RequiereVisitaPrevia,
-	&r.FechaVisita,
-	&r.ComentariosVisita,
-	&r.RequiereMuestra,
-	&r.FechaMuestra,
-	&r.ComentariosMuestra,
-	&r.FechaEntrega,
-	&r.ComentariosEntrega,
+	// 1. Declaramos variables que SÍ aceptan NULLs
+	var (
+		fechaVisita        sql.NullTime
+		comentariosVisita  sql.NullString
+		fechaMuestra       sql.NullTime
+		comentariosMuestra sql.NullString
+		fechaEntrega       sql.NullTime
+		comentariosEntrega sql.NullString
 	)
 
+	row := m.App.DB.QueryRow(query, idPartida)
+	// 2. Escaneamos en las variables "nullable"
+	err := row.Scan(
+		&r.IDRequerimientos,
+		&r.RequiereMantenimiento,
+		&r.RequiereInstalacion,
+		&r.RequierePuestaEnMarcha,
+		&r.RequiereCapacitacion,
+		&r.RequiereVisitaPrevia,
+		&fechaVisita, // Escaneamos en la variable que acepta NULL
+		&comentariosVisita,
+		&r.RequiereMuestra,
+		&fechaMuestra,
+		&comentariosMuestra,
+		&fechaEntrega,
+		&comentariosEntrega,
+	)
 
-	if err == sql.ErrNoRows {
-	insert := `
-		INSERT INTO requerimientos_partida (
-			id_partida,
-			requiere_mantenimiento,
-			requiere_instalacion,
-			requiere_puesta_marcha,
-			requiere_capacitacion,
-			requiere_visita_previa,
-			fecha_visita,
-			comentarios_visita,
-			requiere_muestra,
-			fecha_muestra,
-			comentarios_muestra,
-			fecha_entrega,
-			comentarios_entrega
-		) VALUES (?, false, false, false, false, false, NULL, '', false, NULL, '', NULL, '')`
-
-	res, err := m.App.DB.Exec(insert, idPartida)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// La lógica para crear un registro si no existe es correcta.
+			// (Aunque es mejor usar UPSERT en el guardado y que esta función solo lea).
+			insert := `INSERT INTO requerimientos_partida (id_partida) VALUES (?)`
+			res, err := m.App.DB.Exec(insert, idPartida)
+			if err != nil {
+				return r, err
+			}
+			lastID, _ := res.LastInsertId()
+			r.IDRequerimientos = int(lastID)
+			// Devolvemos el struct 'r' vacío, lo cual es correcto.
+			return r, nil
+		}
+		// Si es cualquier otro error (como un error de conexión), lo retornamos.
 		return r, err
 	}
-
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return r, err
+	
+	// 3. Si el escaneo fue exitoso, transferimos los valores válidos al struct final.
+	if fechaVisita.Valid {
+		r.FechaVisita = fechaVisita.Time
 	}
-
-	// Devolver el registro recién creado
-	r.IDRequerimientos = int(lastID)
-	r.RequiereMantenimiento = false
-	r.RequiereInstalacion = false
-	r.RequierePuestaEnMarcha = false
-	r.RequiereCapacitacion = false
-	r.RequiereVisitaPrevia = false
-	r.FechaVisita = time.Time{}
-	r.ComentariosVisita = ""
-	r.RequiereMuestra = false
-	r.FechaMuestra = time.Time{}
-	r.ComentariosMuestra = ""
-	r.FechaEntrega = time.Time{}
-	r.ComentariosEntrega = ""
+	if comentariosVisita.Valid {
+		r.ComentariosVisita = comentariosVisita.String
+	}
+	if fechaMuestra.Valid {
+		r.FechaMuestra = fechaMuestra.Time
+	}
+	if comentariosMuestra.Valid {
+		r.ComentariosMuestra = comentariosMuestra.String
+	}
+	if fechaEntrega.Valid {
+		r.FechaEntrega = fechaEntrega.Time
+	}
+	if comentariosEntrega.Valid {
+		r.ComentariosEntrega = comentariosEntrega.String
+	}
 
 	return r, nil
-	}
+}
 
+func (m *Repository) ObtenerRequerimientosPorPartidaID(idPartida int) (models.RequerimientosPartida, error) {
+	var req models.RequerimientosPartida
+
+	// Variables especiales para poder escanear valores que pueden ser NULL en la BD
+	var (
+		comentariosVisita  sql.NullString
+		comentariosMuestra sql.NullString
+		comentariosEntrega sql.NullString
+		fechaVisita        sql.NullTime
+		fechaMuestra       sql.NullTime
+		fechaEntrega       sql.NullTime
+	)
+
+	query := `
+		SELECT 
+			id_requerimientos, requiere_mantenimiento, requiere_instalacion, 
+			requiere_puesta_marcha, requiere_capacitacion, requiere_visita_previa,
+			fecha_visita, comentarios_visita, requiere_muestra, fecha_muestra,
+			comentarios_muestra, fecha_entrega, comentarios_entrega
+		FROM requerimientos_partida
+		WHERE id_partida = ?
+	`
+	
+	row := m.App.DB.QueryRow(query, idPartida)
+	err := row.Scan(
+		&req.IDRequerimientos,
+		&req.RequiereMantenimiento,
+		&req.RequiereInstalacion,
+		&req.RequierePuestaEnMarcha,
+		&req.RequiereCapacitacion,
+		&req.RequiereVisitaPrevia,
+		&fechaVisita, // Escanea en la variable que acepta NULL
+		&comentariosVisita,
+		&req.RequiereMuestra,
+		&fechaMuestra,
+		&comentariosMuestra,
+		&fechaEntrega,
+		&comentariosEntrega,
+	)
 
 	if err != nil {
-		return r, err
+		// Si el error es 'sql.ErrNoRows', no hay requerimientos. 
+		// Devolvemos el struct vacío (req) y un error nulo. ¡Esto es correcto!
+		if err == sql.ErrNoRows {
+			return req, nil
+		}
+		// Si es cualquier otro error, sí es un problema real.
+		log.Println("Error al escanear requerimientos:", err)
+		return req, err
 	}
 
-	return r, nil
+	// Si el escaneo fue exitoso, transferimos los valores al struct final
+	// solo si la base de datos no contenía NULL.
+	if fechaVisita.Valid {
+		req.FechaVisita = fechaVisita.Time
+	}
+	if comentariosVisita.Valid {
+		req.ComentariosVisita = comentariosVisita.String
+	}
+	if fechaMuestra.Valid {
+		req.FechaMuestra = fechaMuestra.Time
+	}
+	if comentariosMuestra.Valid {
+		req.ComentariosMuestra = comentariosMuestra.String
+	}
+	if fechaEntrega.Valid {
+		req.FechaEntrega = fechaEntrega.Time
+	}
+	if comentariosEntrega.Valid {
+		req.ComentariosEntrega = comentariosEntrega.String
+	}
+	
+	return req, nil
 }
 
 func (m *Repository) ObtenerAclaracionesPorPartidaID(idPartida int) ([]models.AclaracionesPartida, error) {

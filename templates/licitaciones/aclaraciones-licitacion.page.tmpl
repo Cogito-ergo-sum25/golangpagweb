@@ -44,6 +44,44 @@
         </div>
     </div>
 
+    {{$aclaracionesGenerales := index .Data.AclaracionesPorPartida 0}}
+    {{if $aclaracionesGenerales}}
+        <div class="partida-container mb-4">
+            <h4 class="mb-3">Aclaraciones Legal / Administrativas</h4>
+            <div class="accordion" id="accordion-partida-generales">
+                {{range $aclaracionesGenerales}}
+                <div class="accordion-item" 
+                     data-empresa="{{.Empresa.Nombre}}" 
+                     data-texto="{{.Pregunta}} {{.Observaciones}}" 
+                     data-ficha="{{.FichaTecnicaID}}"
+                     data-tecnica="{{.PreguntaTecnica}}">
+                    <h2 class="accordion-header" id="heading-{{.IDAclaracionLicitacion}}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{.IDAclaracionLicitacion}}" aria-expanded="false">
+                            <span class="fw-bold">{{.Pregunta}}</span>
+                        </button>
+                    </h2>
+                    <div id="collapse-{{.IDAclaracionLicitacion}}" class="accordion-collapse collapse" data-bs-parent="#accordion-partida-generales">
+                        <div class="accordion-body">
+                             <ul class="list-group list-group-flush">
+                                <li class="list-group-item"><strong>Empresa:</strong> {{.Empresa.Nombre}}</li>
+                                <li class="list-group-item"><strong>Observaciones:</strong> {{.Observaciones}}</li>
+                                <li class="list-group-item"><strong>Ficha Técnica ID:</strong> {{if .FichaTecnicaID}}{{.FichaTecnicaID}}{{else}}N/A{{end}}</li>
+                                <li class="list-group-item"><strong>Puntos Técnicos Modif. ID:</strong> {{if ne .IDPuntosTecnicosModif 0}}{{.IDPuntosTecnicosModif}}{{else}}N/A{{end}}</li>
+                                <li class="list-group-item"><strong>Tipo:</strong> {{if .PreguntaTecnica}}Técnica{{else}}Legal / Administrativa{{end}}</li>
+                             </ul>
+                             <div class="mt-3 text-end border-top pt-3">
+                                  <a href="/editar-aclaracion/{{.IDAclaracionLicitacion}}" class="btn btn-sm btn-outline-primary azul">
+                                      <i class="fas fa-edit me-1"></i> Editar
+                                  </a>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+    {{end}}
+
     {{range .Data.Partidas}}
         <div class="partida-container mb-4">
             <h4 class="mb-3">Partida #{{.NumPartidaConvocatoria}}: {{.NombreDescripcion}}</h4>
@@ -72,10 +110,10 @@
                                 <li class="list-group-item"><strong>Tipo:</strong> {{if .PreguntaTecnica}}Técnica{{else}}Legal / Administrativa{{end}}</li>
                              </ul>
                              <div class="mt-3 text-end border-top pt-3">
-                                     <a href="/editar-aclaracion/{{.IDAclaracionLicitacion}}" class="btn btn-sm btn-outline-primary azul">
-                                         <i class="fas fa-edit me-1"></i> Editar
-                                     </a>
-                            </div>
+                                  <a href="/editar-aclaracion/{{.IDAclaracionLicitacion}}" class="btn btn-sm btn-outline-primary azul">
+                                      <i class="fas fa-edit me-1"></i> Editar
+                                  </a>
+                             </div>
                         </div>
                     </div>
                 </div>
@@ -88,38 +126,34 @@
 </div>
 {{end}}
 
+
 {{define "js"}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. Obtener referencias a TODOS los filtros
     const keywordInput = document.getElementById('keyword-search');
     const companySelect = document.getElementById('company-filter');
-    const fichaInput = document.getElementById('ficha-search'); // <-- NUEVO
-    const tipoPreguntaSelect = document.getElementById('tipo-pregunta-filter'); // <-- NUEVO
+    const fichaInput = document.getElementById('ficha-search');
+    const tipoPreguntaSelect = document.getElementById('tipo-pregunta-filter');
     
     const accordionItems = document.querySelectorAll('.accordion-item');
 
     function filterAclaraciones() {
-        // 2. Leer los valores de los nuevos filtros
         const keyword = keywordInput.value.toLowerCase().trim();
         const company = companySelect.value;
-        const fichaId = fichaInput.value.trim(); // <-- NUEVO
-        const tipoPregunta = tipoPreguntaSelect.value; // <-- NUEVO
+        const fichaId = fichaInput.value.trim();
+        const tipoPregunta = tipoPreguntaSelect.value;
 
         accordionItems.forEach(item => {
-            // 3. Obtener los nuevos data-attributes del item
             const itemCompany = item.getAttribute('data-empresa');
             const itemText = item.getAttribute('data-texto').toLowerCase();
-            const itemFicha = item.getAttribute('data-ficha'); // <-- NUEVO
-            const itemEsTecnica = item.getAttribute('data-tecnica'); // <-- NUEVO
+            const itemFicha = item.getAttribute('data-ficha');
+            const itemEsTecnica = item.getAttribute('data-tecnica');
 
-            // 4. Crear las condiciones de match para cada filtro
             const companyMatch = (company === 'all' || itemCompany === company);
             const keywordMatch = (keyword === '' || itemText.includes(keyword));
-            const fichaMatch = (fichaId === '' || itemFicha.includes(fichaId)); // <-- NUEVO
-            const tecnicaMatch = (tipoPregunta === 'all' || itemEsTecnica === tipoPregunta); // <-- NUEVO
+            const fichaMatch = (fichaId === '' || itemFicha.includes(fichaId));
+            const tecnicaMatch = (tipoPregunta === 'all' || itemEsTecnica === tipoPregunta);
 
-            // 5. El item se muestra SOLO SI todas las condiciones son verdaderas
             if (companyMatch && keywordMatch && fichaMatch && tecnicaMatch) {
                 item.style.display = 'block';
             } else {
@@ -128,11 +162,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
     
-    // 6. Asignar el evento a los nuevos filtros
     keywordInput.addEventListener('keyup', filterAclaraciones);
     companySelect.addEventListener('change', filterAclaraciones);
-    fichaInput.addEventListener('keyup', filterAclaraciones); // <-- NUEVO
-    tipoPreguntaSelect.addEventListener('change', filterAclaraciones); // <-- NUEVO
+    fichaInput.addEventListener('keyup', filterAclaraciones);
+    tipoPreguntaSelect.addEventListener('change', filterAclaraciones);
 });
 </script>
-{{end}}
+{{end}} 

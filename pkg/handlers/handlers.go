@@ -1409,8 +1409,6 @@ func (m *Repository) CrearNuevaAclaracionGeneral(w http.ResponseWriter, r *http.
 	http.Redirect(w, r, fmt.Sprintf("/aclaraciones-licitacion/%d", idLicitacion), http.StatusSeeOther)
 }
 
-// en tu archivo de handlers
-
 func (m *Repository) MostrarFormularioEditarAclaracion(w http.ResponseWriter, r *http.Request) {
     // 1. Obtener el ID de la aclaración desde la URL
     idParam := chi.URLParam(r, "id")
@@ -1445,8 +1443,6 @@ func (m *Repository) MostrarFormularioEditarAclaracion(w http.ResponseWriter, r 
         CSRFToken: nosurf.Token(r),
     })
 }
-
-// en tu archivo de handlers
 
 func (m *Repository) ProcesarFormularioEditarAclaracion(w http.ResponseWriter, r *http.Request) {
     // 1. Obtener el ID de la aclaración desde la URL
@@ -1746,119 +1742,145 @@ func (m *Repository) ObtenerRequerimientosJSON(w http.ResponseWriter, r *http.Re
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "ID inválido", http.StatusBadRequest)
+		http.Error(w, "ID de partida inválido", http.StatusBadRequest)
 		return
 	}
 
-	req, err := m.ObtenerOCrearRequerimientos(id)
+	// Usamos la función de la capa de DB que solo lee y maneja NULLs
+	req, err := m.ObtenerRequerimientosPorPartidaID(id)
 	if err != nil {
-		log.Println("Error al obtener o crear requerimientos:", err)
-		http.Error(w, "Error al obtener requerimientos", http.StatusInternalServerError)
+		log.Println("Error al obtener requerimientos desde la BD:", err)
+		http.Error(w, "Error interno al obtener requerimientos", http.StatusInternalServerError)
 		return
 	}
 
-	// Devolver como JSON
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-	"requiere_mantenimiento": req.RequiereMantenimiento,
-	"requiere_instalacion": req.RequiereInstalacion,
-	"requiere_puesta_marcha": req.RequierePuestaEnMarcha,
-	"requiere_capacitacion": req.RequiereCapacitacion,
-	"requiere_visita_previa": req.RequiereVisitaPrevia,
-	"fecha_visita": req.FechaVisita.Format("2006-01-02"),
-	"comentarios_visita": req.ComentariosVisita,
-	"requiere_muestra": req.RequiereMuestra,
-	"fecha_muestra": req.FechaMuestra.Format("2006-01-02"),
-	"comentarios_muestra": req.ComentariosMuestra,
-    "fecha_entrega": req.FechaEntrega.Format("2006-01-02"),
-    "comentarios_entrega": req.ComentariosEntrega,
-    })
+	// Función auxiliar para formatear fechas o devolver un string vacío si la fecha es "cero"
+	formatDate := func(t time.Time) string {
+		if t.IsZero() {
+			return ""
+		}
+		return t.Format("2006-01-02")
+	}
 
+	// Construimos el mapa que se convertirá en JSON
+	responseMap := map[string]interface{}{
+		"requiere_mantenimiento": req.RequiereMantenimiento,
+		"requiere_instalacion":   req.RequiereInstalacion,
+		"requiere_puesta_marcha": req.RequierePuestaEnMarcha,
+		"requiere_capacitacion":  req.RequiereCapacitacion,
+		"requiere_visita_previa": req.RequiereVisitaPrevia,
+		"fecha_visita":           formatDate(req.FechaVisita),
+		"comentarios_visita":     req.ComentariosVisita,
+		"requiere_muestra":       req.RequiereMuestra,
+		"fecha_muestra":          formatDate(req.FechaMuestra),
+		"comentarios_muestra":    req.ComentariosMuestra,
+		"fecha_entrega":          formatDate(req.FechaEntrega),
+		"comentarios_entrega":    req.ComentariosEntrega,
+	}
+
+	// Enviamos la respuesta JSON
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(responseMap); err != nil {
+		log.Println("Error al codificar respuesta JSON:", err)
+	}
 }
 
 func (m *Repository) GuardarRequerimientos(w http.ResponseWriter, r *http.Request) {
-    err := r.ParseForm()
-    if err != nil {
-        log.Println("Error al parsear el formulario:", err)
-        http.Error(w, "Error al procesar el formulario", http.StatusBadRequest)
-        return
-    }
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("Error al parsear el formulario:", err)
+		http.Error(w, "Error al procesar el formulario", http.StatusBadRequest)
+		return
+	}
 
-    idPartidaStr := r.FormValue("id_partida")
-    idPartida, err := strconv.Atoi(idPartidaStr)
-    if err != nil {
-        log.Println("ID de partida inválido:", err)
-        http.Error(w, "ID de partida inválido", http.StatusBadRequest)
-        return
-    }
+	idPartida, err := strconv.Atoi(r.FormValue("id_partida"))
+	if err != nil {
+		log.Println("ID de partida inválido:", err)
+		http.Error(w, "ID de partida inválido", http.StatusBadRequest)
+		return
+	}
 
-    // Parsear checkboxes (están presentes solo si están marcados)
-    mantenimiento := r.FormValue("requiere_mantenimiento") == "on"
-    instalacion := r.FormValue("requiere_instalacion") == "on"
-    puestaMarcha := r.FormValue("requiere_puesta_marcha") == "on"
-    capacitacion := r.FormValue("requiere_capacitacion") == "on"
-    visitaPrevia := r.FormValue("requiere_visita_previa") == "on"
-    fechaVisita := r.FormValue("fecha_visita")
-    comentariosVisita := r.FormValue("comentarios_visita")
-    requiereMuestra := r.FormValue("requiere_muestra") == "on"
-    fechaMuestra := r.FormValue("fecha_muestra")
-    comentariosMuestra := r.FormValue("comentarios_muestra")
-    fechaEntrega := r.FormValue("fecha_entrega")
-    comentariosEntrega := r.FormValue("comentarios_entrega")
+	// Parsear checkboxes (si no están marcados, no vienen en el form, por eso `== "on"`)
+	mantenimiento := r.FormValue("requiere_mantenimiento") == "on"
+	instalacion := r.FormValue("requiere_instalacion") == "on"
+	puestaMarcha := r.FormValue("requiere_puesta_marcha") == "on"
+	capacitacion := r.FormValue("requiere_capacitacion") == "on"
+	visitaPrevia := r.FormValue("requiere_visita_previa") == "on"
+	requiereMuestra := r.FormValue("requiere_muestra") == "on"
 
+	// Parsear campos de texto
+	comentariosVisita := r.FormValue("comentarios_visita")
+	comentariosMuestra := r.FormValue("comentarios_muestra")
+	comentariosEntrega := r.FormValue("comentarios_entrega")
 
-    // Asegurar que el registro existe (lo crea si no)
-    _, err = m.ObtenerOCrearRequerimientos(idPartida)
-    if err != nil {
-        log.Println("Error al obtener o crear requerimientos:", err)
-        http.Error(w, "Error interno al preparar requerimientos", http.StatusInternalServerError)
-        return
-    }
+	// Manejo especial para fechas: si el string está vacío, usamos 'nil' para que se guarde como NULL
+	var fechaVisita, fechaMuestra, fechaEntrega interface{}
+	if val := r.FormValue("fecha_visita"); val != "" {
+		fechaVisita = val
+	} else {
+		fechaVisita = nil
+	}
+	if val := r.FormValue("fecha_muestra"); val != "" {
+		fechaMuestra = val
+	} else {
+		fechaMuestra = nil
+	}
+	if val := r.FormValue("fecha_entrega"); val != "" {
+		fechaEntrega = val
+	} else {
+		fechaEntrega = nil
+	}
 
-    // Actualizar requerimientos
-    update := `
-	UPDATE requerimientos_partida
-	SET 
-		requiere_mantenimiento = ?,
-		requiere_instalacion = ?,
-		requiere_puesta_marcha = ?,
-		requiere_capacitacion = ?,
-		requiere_visita_previa = ?,
-		fecha_visita = ?,
-		comentarios_visita = ?,
-		requiere_muestra = ?,
-		fecha_muestra = ?,
-		comentarios_muestra = ?,
-        fecha_entrega = ?,
-        comentarios_entrega = ?,
-		updated_at = NOW()
-	WHERE id_partida = ?;
-    `
+	// Query de UPSERT: Inserta una nueva fila o actualiza la existente si la 'id_partida' ya existe
+	// (Esto funciona gracias a la restricción UNIQUE en la columna 'id_partida')
+	query := `
+		INSERT INTO requerimientos_partida (
+			id_partida, requiere_mantenimiento, requiere_instalacion, requiere_puesta_marcha, 
+			requiere_capacitacion, requiere_visita_previa, fecha_visita, comentarios_visita, 
+			requiere_muestra, fecha_muestra, comentarios_muestra, fecha_entrega, comentarios_entrega,
+			created_at, updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+		ON DUPLICATE KEY UPDATE
+			requiere_mantenimiento = VALUES(requiere_mantenimiento),
+			requiere_instalacion = VALUES(requiere_instalacion),
+			requiere_puesta_marcha = VALUES(requiere_puesta_marcha),
+			requiere_capacitacion = VALUES(requiere_capacitacion),
+			requiere_visita_previa = VALUES(requiere_visita_previa),
+			fecha_visita = VALUES(fecha_visita),
+			comentarios_visita = VALUES(comentarios_visita),
+			requiere_muestra = VALUES(requiere_muestra),
+			fecha_muestra = VALUES(fecha_muestra),
+			comentarios_muestra = VALUES(comentarios_muestra),
+			fecha_entrega = VALUES(fecha_entrega),
+			comentarios_entrega = VALUES(comentarios_entrega),
+			updated_at = NOW();
+	`
 
-    _, err = m.App.DB.Exec(update,
-        mantenimiento,
-        instalacion,
-        puestaMarcha,
-        capacitacion,
-        visitaPrevia,
-        fechaVisita,
-        comentariosVisita,
-        requiereMuestra,
-        fechaMuestra,
-        comentariosMuestra,
-        fechaEntrega,
-        comentariosEntrega,
-        idPartida,
-    )
+	_, err = m.App.DB.Exec(query,
+		idPartida,
+		mantenimiento,
+		instalacion,
+		puestaMarcha,
+		capacitacion,
+		visitaPrevia,
+		fechaVisita,
+		comentariosVisita,
+		requiereMuestra,
+		fechaMuestra,
+		comentariosMuestra,
+		fechaEntrega,
+		comentariosEntrega,
+	)
 
-    if err != nil {
-        log.Println("Error al actualizar requerimientos:", err)
-        http.Error(w, "Error al guardar los requerimientos", http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		log.Println("Error al guardar (UPSERT) requerimientos:", err)
+		http.Error(w, "Error al guardar los requerimientos", http.StatusInternalServerError)
+		return
+	}
 
-    // Puedes redirigir o devolver 200 según cómo llames este handler (fetch o formulario clásico)
-    http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+	// Agregamos un mensaje flash para notificar al usuario y lo redirigimos a la página anterior
+	m.App.Session.Put(r.Context(), "flash", "Requerimientos guardados con éxito.")
+	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 }
 
 func (m *Repository) MostrarAclaraciones(w http.ResponseWriter, r *http.Request) {
@@ -2681,7 +2703,6 @@ func (m *Repository) GuardarFalloPropuesta(w http.ResponseWriter, r *http.Reques
 
 	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 }
-
 
 
 
