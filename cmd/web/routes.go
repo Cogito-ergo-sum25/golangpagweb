@@ -97,10 +97,14 @@ func routes(app *config.AppConfig) http.Handler {
 		// PROPUESTAS
 		r.Get("/propuestas/{id}", handlers.Repo.MostrarPropuestas)
 		r.Get("/nueva-propuesta/{id}", handlers.Repo.MostrarNuevaPropuesta)
+		r.Get("/api/productos-externos/buscar", handlers.Repo.BuscarProductosExternosJSON)
+		r.Post("/api/marcas", handlers.Repo.CrearMarcaJSON)
+		r.Post("/api/empresas-externas", handlers.Repo.CrearEmpresaExternaJSON)
 		r.Post("/nueva-propuesta/{id}", handlers.Repo.CrearNuevaPropuesta)
 		r.Post("/nuevo-producto-externo-contexto", handlers.Repo.NuevoProductoExternoContexto)
 		r.Get("/editar-propuesta/{id}", handlers.Repo.MostrarEditarPropuesta)
 		r.Post("/editar-propuesta/{id}", handlers.Repo.EditarPropuesta)
+
 
 		// FALLOS
 		r.Get("/fallo/{id}", handlers.Repo.ObtenerFalloPropuesta)

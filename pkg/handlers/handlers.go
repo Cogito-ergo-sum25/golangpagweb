@@ -2360,6 +2360,93 @@ func (m *Repository) MostrarNuevaPropuesta(w http.ResponseWriter, r *http.Reques
     render.RenderTemplate(w, "licitaciones/nueva-propuesta.page.tmpl", data)
 }
 
+func (m *Repository) BuscarProductosExternosJSON(w http.ResponseWriter, r *http.Request) {
+    // Obtenemos el término de búsqueda de la URL (?q=...)
+    query := r.URL.Query().Get("q")
+
+    // Si la búsqueda es muy corta, no devolvemos nada
+    if len(query) < 2 {
+        w.Header().Set("Content-Type", "application/json")
+        w.Write([]byte("[]")) // Devolvemos un array JSON vacío
+        return
+    }
+
+    // Llamamos a la nueva función de la base de datos
+    productos, err := m.BuscarProductosExternosPorNombre(query)
+    if err != nil {
+        log.Println("Error buscando productos:", err)
+        http.Error(w, "Error interno", http.StatusInternalServerError)
+        return
+    }
+
+    // Devolvemos los resultados como JSON
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(productos); err != nil {
+        log.Println("Error codificando JSON de productos:", err)
+    }
+}
+
+func (m *Repository) CrearMarcaJSON(w http.ResponseWriter, r *http.Request) {
+	// 1. Parsear el formulario enviado por fetch
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Error al parsear formulario", http.StatusBadRequest)
+		return
+	}
+
+	// 2. Obtener y validar el nombre
+	nombre := r.FormValue("nombre")
+	if nombre == "" {
+		http.Error(w, "El nombre no puede estar vacío", http.StatusBadRequest)
+		return
+	}
+
+	// 3. Llamar a la función de DB que inserta y devuelve el objeto completo
+	nuevaMarca, err := m.InsertarMarcaYDevolver(nombre)
+	if err != nil {
+		log.Println("Error al insertar marca:", err)
+		http.Error(w, "Error al guardar la marca", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. Devolver el nuevo objeto como JSON con un status 201 (Created)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(nuevaMarca); err != nil {
+		log.Println("Error al codificar JSON de nueva marca:", err)
+	}
+}
+
+// CrearEmpresaExternaJSON maneja la creación de una nueva empresa externa vía API.
+func (m *Repository) CrearEmpresaExternaJSON(w http.ResponseWriter, r *http.Request) {
+	// 1. Parsear el formulario enviado por fetch
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Error al parsear formulario", http.StatusBadRequest)
+		return
+	}
+
+	// 2. Obtener y validar el nombre
+	nombre := r.FormValue("nombre")
+	if nombre == "" {
+		http.Error(w, "El nombre no puede estar vacío", http.StatusBadRequest)
+		return
+	}
+
+	// 3. Llamar a la función de DB que inserta y devuelve el objeto completo
+	nuevaEmpresa, err := m.InsertarEmpresaExternaYDevolver(nombre)
+	if err != nil {
+		log.Println("Error al insertar empresa externa:", err)
+		http.Error(w, "Error al guardar la empresa", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. Devolver el nuevo objeto como JSON con un status 201 (Created)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	if err := json.NewEncoder(w).Encode(nuevaEmpresa); err != nil {
+		log.Println("Error al codificar JSON de nueva empresa:", err)
+	}
+}
+
 func (m *Repository) CrearNuevaPropuesta(w http.ResponseWriter, r *http.Request) {
     idParam := chi.URLParam(r, "id")
     idPartida, err := strconv.Atoi(idParam)

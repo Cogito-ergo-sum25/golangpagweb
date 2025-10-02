@@ -798,54 +798,65 @@ func (m *Repository) ObtenerPartidasPorLicitacionID(idLicitacion int) ([]models.
 }
 
 func (m *Repository) ObtenerPartidaPorID(idPartida int) (models.Partida, error) {
-	query := `
+    var p models.Partida
+    
+    // Variables para campos que pueden ser NULL
+    var (
+        noFichaTecnica  sql.NullString
+        claveCompendio  sql.NullString
+        claveCucop      sql.NullString
+        fechaDeEntrega  sql.NullTime
+    )
+
+    // ESTA ES LA CONSULTA CORREGIDA CON JOIN
+    // 1. Seleccionamos campos de la tabla 'p' (partidas) y el id_licitacion de la tabla 'lp' (licitacion_partidas)
+    // 2. Unimos 'partidas' (p) con 'licitacion_partidas' (lp) donde los id_partida coincidan
+    // 3. Filtramos por el id_partida que nos interesa
+    query := `
         SELECT 
-            id_partida,
-            
-            numero_partida_convocatoria,
-            nombre_descripcion,
-            cantidad,
-            cantidad_minima,
-            cantidad_maxima,
-            no_ficha_tecnica,
-            tipo_de_bien,
-            clave_compendio,
-            clave_cucop,
-            unidad_medida,
-            dias_de_entrega,
-            fecha_de_entrega,
-            garantia,
-            created_at,
-            updated_at
-        FROM partidas
-        WHERE id_partida = ?
+            p.id_partida, 
+            lp.id_licitacion, -- ¡Obtenido de la tabla intermedia!
+            p.numero_partida_convocatoria, 
+            p.nombre_descripcion,
+            p.cantidad, p.cantidad_minima, p.cantidad_maxima, p.no_ficha_tecnica,
+            p.tipo_de_bien, p.clave_compendio, p.clave_cucop, p.unidad_medida,
+            p.dias_de_entrega, p.fecha_de_entrega, p.garantia, p.created_at, p.updated_at
+        FROM partidas p
+        JOIN licitacion_partidas lp ON p.id_partida = lp.id_partida
+        WHERE p.id_partida = ?
+        LIMIT 1; -- Agregamos LIMIT 1 por si una partida estuviera en múltiples licitaciones
     `
 
-	var p models.Partida
+    err := m.App.DB.QueryRow(query, idPartida).Scan(
+        &p.IDPartida,
+        &p.IDLicitacion, // Ahora esto funcionará
+        &p.NumPartidaConvocatoria,
+        &p.NombreDescripcion,
+        &p.Cantidad,
+        &p.CantidadMinima,
+        &p.CantidadMaxima,
+        &noFichaTecnica,
+        &p.TipoDeBien,
+        &claveCompendio,
+        &claveCucop,
+        &p.UnidadMedida,
+        &p.DiasDeEntrega,
+        &fechaDeEntrega,
+        &p.Garantia,
+        &p.CreatedAt,
+        &p.UpdatedAt,
+    )
+    if err != nil {
+        return models.Partida{}, err
+    }
 
-	err := m.App.DB.QueryRow(query, idPartida).Scan(
-		&p.IDPartida,
-		&p.NumPartidaConvocatoria,
-		&p.NombreDescripcion,
-		&p.Cantidad,
-		&p.CantidadMinima,
-		&p.CantidadMaxima,
-		&p.NoFichaTecnica,
-		&p.TipoDeBien,
-		&p.ClaveCompendio,
-		&p.ClaveCucop,
-		&p.UnidadMedida,
-		&p.DiasDeEntrega,
-		&p.FechaDeEntrega,
-		&p.Garantia,
-		&p.CreatedAt,
-		&p.UpdatedAt,
-	)
-	if err != nil {
-		return models.Partida{}, err
-	}
+    // Transferir valores solo si no son NULL
+    if noFichaTecnica.Valid { p.NoFichaTecnica = noFichaTecnica.String }
+    if claveCompendio.Valid { p.ClaveCompendio = claveCompendio.String }
+    if claveCucop.Valid { p.ClaveCucop = claveCucop.String }
+    if fechaDeEntrega.Valid { p.FechaDeEntrega = fechaDeEntrega.Time }
 
-	return p, nil
+    return p, nil
 }
 
 func (m *Repository) ObtenerIDLicitacionPorPartida(idPartida int) (int, error) {
@@ -1713,6 +1724,73 @@ func (m *Repository) ObtenerUsuarioPorID(id int) (*models.Usuario, error) {
 	return &u, nil
 }
 
+func (m *Repository) BuscarProductosExternosPorNombre(nombre string) ([]models.ProductosExternos, error) {
+    var productos []models.ProductosExternos
+    
+    searchTerm := "%" + nombre + "%" 
+
+    query := `
+        SELECT 
+            pe.id_producto, pe.nombre, pe.modelo, pe.id_empresa_externa,
+            m.nombre as marca_nombre, 
+            pa.nombre as pais_nombre, 
+            e.nombre as empresa_nombre
+        FROM productos_externos pe
+        LEFT JOIN marcas m ON pe.id_marca = m.id_marca
+        LEFT JOIN paises pa ON pe.id_pais_origen = pa.id_pais
+        LEFT JOIN empresas_externas e ON pe.id_empresa_externa = e.id_empresa
+        WHERE pe.nombre LIKE ? OR pe.modelo LIKE ?
+        LIMIT 10`
+
+    rows, err := m.App.DB.Query(query, searchTerm, searchTerm)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var p models.ProductosExternos
+        
+        // 1. Variables para recibir los nombres de las tablas unidas.
+        //    Usamos sql.NullString para manejar el caso de que un LEFT JOIN no encuentre coincidencia.
+        var marcaNombre, paisNombre, empresaNombre sql.NullString
+
+        // 2. Escaneamos en los campos directos de 'p' y en las variables locales.
+        err := rows.Scan(
+            &p.IDProducto,
+            &p.Nombre,
+            &p.Modelo,
+            &p.IDEmpresaExterna,
+            &marcaNombre,
+            &paisNombre,
+            &empresaNombre,
+        )
+        if err != nil {
+            return nil, err
+        }
+
+        // 3. Construimos los structs anidados manualmente.
+        //    Primero inicializamos los punteros...
+        p.Marca = &models.Marca{}
+        p.PaisOrigen = &models.Pais{}
+        p.EmpresaExterna = &models.Empresas{}
+
+        //    ...luego asignamos los valores si no son NULL.
+        if marcaNombre.Valid {
+            p.Marca.Nombre = marcaNombre.String
+        }
+        if paisNombre.Valid {
+            p.PaisOrigen.Nombre = paisNombre.String
+        }
+        if empresaNombre.Valid {
+            p.EmpresaExterna.Nombre = empresaNombre.String
+        }
+        
+        productos = append(productos, p)
+    }
+
+    return productos, nil
+}
 
 
 
@@ -1733,6 +1811,19 @@ func (m *Repository) ObtenerUsuarioPorID(id int) (*models.Usuario, error) {
 func (m *Repository) AgregarMarca(nombre string) error {
 	_, err := m.App.DB.Exec("INSERT INTO marcas (nombre) VALUES (?)", nombre)
 	return err
+}
+
+func (m *Repository) InsertarMarcaYDevolver(nombre string) (models.Marca, error) {
+    query := "INSERT INTO marcas (nombre, created_at, updated_at) VALUES (?, NOW(), NOW())"
+    res, err := m.App.DB.Exec(query, nombre)
+    if err != nil {
+        return models.Marca{}, err
+    }
+    id, err := res.LastInsertId()
+    if err != nil {
+        return models.Marca{}, err
+    }
+    return models.Marca{IDMarca: int(id), Nombre: nombre}, nil
 }
 
 // AgregarTipoProducto inserta un nuevo tipo de producto en la base de datos
@@ -1885,6 +1976,19 @@ func (m *Repository) AgregarEmpresaNueva(nombre string) error {
 	query := `INSERT INTO empresas_externas (nombre, created_at, updated_at) VALUES (?, NOW(), NOW())`
 	_, err := m.App.DB.Exec(query, nombre)
 	return err
+}
+
+func (m *Repository) InsertarEmpresaExternaYDevolver(nombre string) (models.Empresas, error) {
+    query := `INSERT INTO empresas_externas (nombre, created_at, updated_at) VALUES (?, NOW(), NOW())`
+    res, err := m.App.DB.Exec(query, nombre)
+    if err != nil {
+        return models.Empresas{}, err
+    }
+    id, err := res.LastInsertId()
+    if err != nil {
+        return models.Empresas{}, err
+    }
+    return models.Empresas{IDEmpresa: int(id), Nombre: nombre}, nil
 }
 
 func (m *Repository) InsertarPropuestaPartida(p models.PropuestasPartida) error {
