@@ -2264,48 +2264,53 @@ func (m *Repository) EliminarProductoPartida(w http.ResponseWriter, r *http.Requ
 }
 
 func (m *Repository) MostrarPropuestas(w http.ResponseWriter, r *http.Request) {
+	// 1. Obtener el ID de la partida desde la URL
 	idParam := chi.URLParam(r, "id")
 	idPartida, err := strconv.Atoi(idParam)
 	if err != nil {
-		http.Error(w, "ID inválido", http.StatusBadRequest)
+		http.Error(w, "ID de partida inválido", http.StatusBadRequest)
 		return
 	}
 
-	// Obtener propuestas
+	// 2. Obtener todas las propuestas para esa partida
 	propuestas, err := m.ObtenerPropuestasPorPartidaID(idPartida)
 	if err != nil {
+		log.Println("Error al obtener propuestas:", err)
 		http.Error(w, "No se pudo obtener las propuestas", http.StatusInternalServerError)
 		return
 	}
 
-	// Cargar el fallo en cada propuesta
+	// 3. Cargar el fallo para cada propuesta, SÓLO SI EXISTE
 	for i := range propuestas {
-		fallo, err := m.ObtenerOCrearFalloPorPropuestaID(propuestas[i].IDPropuesta)
+		// Usamos la nueva función que solo lee y no crea
+		fallo, err := m.ObtenerFalloPorPropuestaID(propuestas[i].IDPropuesta)
 		if err != nil {
-			// Puedes decidir asignar nil o un fallo vacío
-			propuestas[i].Fallo = nil
-			// o loguear el error
-			log.Println("Error cargando fallo para propuesta", propuestas[i].IDPropuesta, ":", err)
+			// Este error solo debe ocurrir si hay un problema con la base de datos
+			log.Printf("Error al cargar fallo para propuesta %d: %v", propuestas[i].IDPropuesta, err)
+			propuestas[i].Fallo = nil // Aseguramos que el fallo sea nil en caso de error
 		} else {
+			// Asignamos el resultado. Será 'nil' si no se encontró, o el puntero al fallo si se encontró.
 			propuestas[i].Fallo = fallo
 		}
 	}
 
-	// Obtener partida
+	// 4. Obtener la información de la partida para el título y el botón "Volver"
 	partida, err := m.ObtenerPartidaPorID(idPartida)
 	if err != nil {
+		log.Println("Error al obtener la partida:", err)
 		http.Error(w, "No se pudo obtener la partida", http.StatusInternalServerError)
 		return
 	}
 
-	// Render
-	data := &models.TemplateData{
-		PropuestasPartida: propuestas,
-		Partida:           partida,
-		CSRFToken:         nosurf.Token(r),
-	}
+	// 5. Preparar los datos y renderizar la plantilla
+	templateData := &models.TemplateData{
+        PropuestasPartida: propuestas, // Directamente aquí
+        Partida:           partida,      // Directamente aquí
+        CSRFToken:         nosurf.Token(r),
+    }
 
-	render.RenderTemplate(w, "licitaciones/propuestas.page.tmpl", data)
+
+    render.RenderTemplate(w, "licitaciones/propuestas.page.tmpl", templateData)
 }
 
 func (m *Repository) MostrarNuevaPropuesta(w http.ResponseWriter, r *http.Request) {
@@ -2416,7 +2421,6 @@ func (m *Repository) CrearMarcaJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// CrearEmpresaExternaJSON maneja la creación de una nueva empresa externa vía API.
 func (m *Repository) CrearEmpresaExternaJSON(w http.ResponseWriter, r *http.Request) {
 	// 1. Parsear el formulario enviado por fetch
 	if err := r.ParseForm(); err != nil {
@@ -2668,127 +2672,123 @@ func (m *Repository) EditarPropuesta(w http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Repository) ObtenerFalloPropuesta(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "ID inválido", http.StatusBadRequest)
-		return
-	}
-
-	fallo, err := m.ObtenerOCrearFalloPorPropuestaID(id)
-	if err != nil {
-		log.Println("Error al obtener o crear fallo:", err)
-		http.Error(w, "Error al obtener fallo", http.StatusInternalServerError)
-		return
-	}
-
-	data := &models.TemplateData{
-		Fallo:     fallo,
-		CSRFToken: nosurf.Token(r),
-	}
-
-	render.RenderTemplate(w, "licitaciones/fallo-propuesta.page.tmpl", data)
-}
-
-func (m *Repository) ObtenerFalloPropuestaJSON(w http.ResponseWriter, r *http.Request) {
-	idStr := chi.URLParam(r, "id")
-	idPropuesta, err := strconv.Atoi(idStr)
-	if err != nil {
-		http.Error(w, "ID inválido", http.StatusBadRequest)
-		return
-	}
-
-	fallo, err := m.ObtenerOCrearFallo(idPropuesta)
-	if err != nil {
-		log.Println("Error al obtener o crear fallo:", err)
-		http.Error(w, "Error al obtener el fallo", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"cumple_legal": fallo.CumpleLegal,
-		"cumple_administrativo": fallo.CumpleAdministrativo,
-		"cumple_tecnico": fallo.CumpleTecnico,
-		"puntos_obtenidos": fallo.PuntosObtenidos,
-		"ganador": fallo.Ganador,
-		"observaciones": fallo.Observaciones,
-	})
-}
-
-func (m *Repository) GuardarFalloPropuesta(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		log.Println("Error al parsear el formulario:", err)
-		http.Error(w, "Error al procesar el formulario", http.StatusBadRequest)
-		return
-	}
-
-	idPropuestaStr := r.FormValue("id_propuesta")
-	idPropuesta, err := strconv.Atoi(idPropuestaStr)
-	if err != nil {
-		log.Println("ID de propuesta inválido:", err)
-		http.Error(w, "ID inválido", http.StatusBadRequest)
-		return
-	}
-
-	// Checkboxes y otros valores
-	cumpleLegal := r.FormValue("cumple_legal") == "on"
-	cumpleAdmin := r.FormValue("cumple_administrativo") == "on"
-	cumpleTecnico := r.FormValue("cumple_tecnico") == "on"
-	puntosStr := r.FormValue("puntos_obtenidos")
-    if puntosStr == "" {
-        puntosStr = "0"
-    }
-    puntos, err := strconv.Atoi(puntosStr)
+    idStr := chi.URLParam(r, "id")
+    id, err := strconv.Atoi(idStr)
     if err != nil {
-        log.Println("Puntos inválidos:", err)
-        http.Error(w, "Puntos inválidos", http.StatusBadRequest)
+        http.Error(w, "ID inválido", http.StatusBadRequest)
         return
     }
 
+    // Usamos la nueva función que SOLO lee
+    fallo, err := m.ObtenerFalloPorPropuestaID(id)
+    if err != nil {
+        log.Println("Error al obtener fallo:", err)
+        http.Error(w, "Error al obtener fallo", http.StatusInternalServerError)
+        return
+    }
 
-	ganador := r.FormValue("ganador") == "on"
-	observaciones := r.FormValue("observaciones")
+    // Si no existe, creamos uno vacío en memoria para pasarlo a la plantilla
+    if fallo == nil {
+        fallo = &models.FallosPropuesta{
+            IDPropuesta: id, // Es útil pasar el ID para el formulario
+        }
+    }
 
-	// Asegurar que el fallo exista (lo crea si no)
-	_, err = m.ObtenerOCrearFallo(idPropuesta)
-	if err != nil {
-		log.Println("Error al obtener o crear fallo:", err)
-		http.Error(w, "Error al preparar fallo", http.StatusInternalServerError)
-		return
-	}
+    data := make(map[string]interface{})
+    data["Fallo"] = fallo
+    
+    render.RenderTemplate(w, "licitaciones/fallo-propuesta.page.tmpl", &models.TemplateData{
+        Data:      data,
+        CSRFToken: nosurf.Token(r),
+    })
+}
 
-	update := `
-	UPDATE fallos_propuesta
-	SET 
-		cumple_legal = ?,
-		cumple_administrativo = ?,
-		cumple_tecnico = ?,
-		puntos_obtenidos = ?,
-		ganador = ?,
-		observaciones = ?,
-		updated_at = NOW()
-	WHERE id_propuesta = ?;
-	`
+func (m *Repository) ObtenerFalloPropuestaJSON(w http.ResponseWriter, r *http.Request) {
+    idStr := chi.URLParam(r, "id")
+    idPropuesta, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "ID inválido", http.StatusBadRequest)
+        return
+    }
 
-	_, err = m.App.DB.Exec(update,
-		cumpleLegal,
-		cumpleAdmin,
-		cumpleTecnico,
-		puntos,
-		ganador,
-		observaciones,
-		idPropuesta,
-	)
+    // Usamos la nueva función que SOLO lee y puede devolver nil
+    fallo, err := m.ObtenerFalloPorPropuestaID(idPropuesta)
+    if err != nil {
+        log.Println("Error al obtener el fallo:", err)
+        http.Error(w, "Error al obtener el fallo", http.StatusInternalServerError)
+        return
+    }
 
-	if err != nil {
-		log.Println("Error al guardar fallo:", err)
-		http.Error(w, "Error al guardar fallo", http.StatusInternalServerError)
-		return
-	}
+    // SI LA FUNCIÓN DEVUELVE nil, creamos un objeto vacío para enviar al frontend
+    if fallo == nil {
+        fallo = &models.FallosPropuesta{} 
+    }
 
-	http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]interface{}{
+        "cumple_legal":          fallo.CumpleLegal,
+        "cumple_administrativo": fallo.CumpleAdministrativo,
+        "cumple_tecnico":        fallo.CumpleTecnico,
+        "puntos_obtenidos":      fallo.PuntosObtenidos,
+        "ganador":               fallo.Ganador,
+        "observaciones":         fallo.Observaciones,
+    })
+}
+func (m *Repository) GuardarFalloPropuesta(w http.ResponseWriter, r *http.Request) {
+    err := r.ParseForm()
+    if err != nil {
+        http.Error(w, "Error al procesar el formulario", http.StatusBadRequest)
+        return
+    }
+
+    idPropuesta, _ := strconv.Atoi(r.FormValue("id_propuesta"))
+    if idPropuesta == 0 {
+        http.Error(w, "ID de propuesta inválido", http.StatusBadRequest)
+        return
+    }
+    
+    // Parseo de valores (tu código actual es correcto)
+    cumpleLegal := r.FormValue("cumple_legal") == "on"
+    cumpleAdmin := r.FormValue("cumple_administrativo") == "on"
+    cumpleTecnico := r.FormValue("cumple_tecnico") == "on"
+    puntos, _ := strconv.Atoi(r.FormValue("puntos_obtenidos"))
+    ganador := r.FormValue("ganador") == "on"
+    observaciones := r.FormValue("observaciones")
+
+    // Query de UPSERT: Crea el fallo si no existe, o lo actualiza si ya existe.
+    query := `
+        INSERT INTO fallos_propuesta (
+            id_propuesta, cumple_legal, cumple_administrativo, cumple_tecnico,
+            puntos_obtenidos, ganador, observaciones, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE
+            cumple_legal = VALUES(cumple_legal),
+            cumple_administrativo = VALUES(cumple_administrativo),
+            cumple_tecnico = VALUES(cumple_tecnico),
+            puntos_obtenidos = VALUES(puntos_obtenidos),
+            ganador = VALUES(ganador),
+            observaciones = VALUES(observaciones),
+            updated_at = NOW();
+    `
+
+    _, err = m.App.DB.Exec(query,
+        idPropuesta,
+        cumpleLegal,
+        cumpleAdmin,
+        cumpleTecnico,
+        puntos,
+        ganador,
+        observaciones,
+    )
+
+    if err != nil {
+        log.Println("Error al guardar fallo (UPSERT):", err)
+        http.Error(w, "Error al guardar fallo", http.StatusInternalServerError)
+        return
+    }
+    
+    // Redirigimos a la página anterior (la lista de propuestas)
+    http.Redirect(w, r, r.Referer(), http.StatusSeeOther)
 }
 
 

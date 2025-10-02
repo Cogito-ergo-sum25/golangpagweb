@@ -41,7 +41,7 @@
             </thead>
             <tbody>
                 {{range .PropuestasPartida}}
-                <tr data-ganador="{{.Fallo.Ganador}}" data-fallo="{{if .Fallo}}true{{else}}false{{end}}">
+                <tr data-ganador="{{with .Fallo}}{{.Ganador}}{{else}}false{{end}}" data-fallo="{{if .Fallo}}true{{else}}false{{end}}">
                     <td>{{.Empresa.Nombre}}</td>
                     <td>{{.ProductoExterno.Nombre}}</td>
                     <td>{{.ProductoExterno.Modelo}}</td>

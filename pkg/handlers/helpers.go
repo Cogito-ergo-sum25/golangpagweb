@@ -1575,51 +1575,38 @@ func (m *Repository) ObtenerPropuestaPorID(idPropuesta int) (models.PropuestasPa
 	return propuesta, nil
 }
 
-func (m *Repository) ObtenerOCrearFalloPorPropuestaID(idPropuesta int) (*models.FallosPropuesta, error) {
-	var fallo models.FallosPropuesta
+func (m *Repository) ObtenerFalloPorPropuestaID(idPropuesta int) (*models.FallosPropuesta, error) {
+    var f models.FallosPropuesta
 
-	query := `
-		SELECT id_fallo, id_propuesta, cumple_legal, cumple_administrativo, cumple_tecnico,
-		       puntos_obtenidos, ganador, observaciones, created_at, updated_at
-		FROM fallos_propuesta
-		WHERE id_propuesta = ?
-		LIMIT 1;
-	`
-	row := m.App.DB.QueryRow(query, idPropuesta)
+    query := `SELECT id_fallo, id_propuesta, cumple_legal, cumple_administrativo, cumple_tecnico, 
+                     puntos_obtenidos, ganador, observaciones 
+              FROM fallos_propuesta 
+              WHERE id_propuesta = ?`
 
-	err := row.Scan(
-		&fallo.IDFallo,
-		&fallo.IDPropuesta,
-		&fallo.CumpleLegal,
-		&fallo.CumpleAdministrativo,
-		&fallo.CumpleTecnico,
-		&fallo.PuntosObtenidos,
-		&fallo.Ganador,
-		&fallo.Observaciones,
-		&fallo.CreatedAt,
-		&fallo.UpdatedAt,
-	)
+    row := m.App.DB.QueryRow(query, idPropuesta)
+    err := row.Scan(
+        &f.IDFallo,
+        &f.IDPropuesta,
+        &f.CumpleLegal,
+        &f.CumpleAdministrativo,
+        &f.CumpleTecnico,
+        &f.PuntosObtenidos,
+        &f.Ganador,
+        &f.Observaciones,
+    )
 
-	if err == sql.ErrNoRows {
-		// Si no existe, lo insertamos en blanco
-		insert := `
-			INSERT INTO fallos_propuesta (
-				id_propuesta, cumple_legal, cumple_administrativo, cumple_tecnico,
-				puntos_obtenidos, ganador, observaciones, created_at, updated_at
-			) VALUES (?, false, false, false, 0, false, '', NOW(), NOW())
-		`
-		_, err = m.App.DB.Exec(insert, idPropuesta)
-		if err != nil {
-			return nil, err
-		}
+    if err != nil {
+        // Si el error es 'sql.ErrNoRows', significa que no hay fallo.
+        // Esto NO es un error del sistema. Devolvemos (nil, nil).
+        if err == sql.ErrNoRows {
+            return nil, nil
+        }
+        // Si es cualquier otro error, sí es un problema.
+        return nil, err
+    }
 
-		// Reconsultamos el fallo ya insertado
-		return m.ObtenerOCrearFalloPorPropuestaID(idPropuesta)
-	} else if err != nil {
-		return nil, err
-	}
-
-	return &fallo, nil
+    // Si encontramos un fallo, devolvemos un puntero a él.
+    return &f, nil
 }
 
 func (m *Repository) ObtenerOCrearFallo(idPropuesta int) (*models.FallosPropuesta, error) {
