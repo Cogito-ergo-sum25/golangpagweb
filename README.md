@@ -4,7 +4,7 @@
 ![MySQL Version](https://img.shields.io/badge/MySQL-8.0.41-orange?logo=mysql)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.1.3-purple?logo=bootstrap)
 ![FontAwesome](https://img.shields.io/badge/FontAwesome-6.5.1-black?logo=fontawesome)
-![Badge en Desarollo](https://img.shields.io/badge/STATUS-EN%20DESAROLLO-green)
+![Badge en Desarrollo](https://img.shields.io/badge/STATUS-PRIMERA%20VERSI%C3%93N-green)
 <img src="https://badges.ws/badge/Licencia-Personal-red" />
 
 
@@ -14,7 +14,7 @@ Este proyecto es un sistema integral para administrar **licitaciones públicas**
 
 ## 📌 ¿Qué es una licitación?
 
-Una **licitación** es un proceso mediante el cual una entidad pública o privada solicita formalmente la adquisición de bienes o servicios, seleccionando al proveedor mediante una convocatoria competitiva. Este sistema permite controlar y documentar cada etapa de ese proceso.
+Una **licitación** es un proceso mediante el cual una entidad pública o privada solicita formalmente la adquisición de bienes o servicios, seleccionando al proveedor mediante una convocatoria competitiva. En México, estos procesos a menudo se consultan a través de plataformas como ComprasMX o se rigen por normativas específicas para asegurar transparencia y eficiencia. Este sistema permite controlar y documentar cada etapa de ese proceso.
 
 ---
 
@@ -31,35 +31,46 @@ CRUD completo de productos con la siguiente estructura:
 
 ### 🏗 Proyectos
 
-Vínculo entre productos e instancias de licitaciones. Cada proyecto agrupa productos específicos con sus cantidades, precios unitarios y especificaciones técnicas para una licitación concreta.
+Este módulo agrupa las licitaciones ganadas o proyectos privados en los que se está trabajando actualmente. Cada proyecto vincula productos específicos con sus cantidades, precios unitarios y especificaciones técnicas para una licitación o proyecto concreto.
 
 ### 📑 Licitaciones
 
 Cada licitación contiene:
 
 - Datos generales: nombre, tipo, estatus, fechas clave.
-- **Partidas**: núcleo del proceso, cada una representa una solicitud de bien o servicio.
-  - Productos relacionados
+- **Partidas**: núcleo del proceso, cada una representa una solicitud de equipo médico.
+  - Productos relacionados de INTEVI
   - Requerimientos técnicos (instalación, capacitación, etc.)
-  - Aclaraciones por empresa
-  - Propuestas de productos por empresa
+  - Propuestas de productos por empresa externa
   - Fallos con evaluación técnica, administrativa y legal
 
-### 🛠 Datos de referencia
+### 🔐 Autenticación
 
-Catálogo administrable desde el sistema para mantener los datos auxiliares como:
+Permite la creación y gestión de usuarios con nombre, correo y contraseña. Las contraseñas se encriptan utilizando bcrypt. El acceso al sistema requiere una cuenta. Se contempla la implementación de niveles de usuario con restricciones futuras.
 
-- Marcas
-- Tipos de producto
-- Clasificaciones
-- Países
-- Certificaciones
+### 🗓 Calendario
 
-### 🧾 Entidades y Compañías
+Integrado con FullCalendar JS, este módulo muestra las fechas clave de las licitaciones. Ofrece vistas anual, mensual y semanal, alertando sobre la proximidad de eventos y el tiempo transcurrido desde ellos, con la posibiliad de editar las licitaciones y acceder a las mismas, tiene la intención de ser la vista principal de administración.
 
-Administración de las instituciones que emiten las licitaciones (entidades) y compañías externas que participan.
+### 📦 Catálogo de Productos
 
----
+Un módulo dedicado a la visualización de los productos de INTEVI, permitiendo un acceso rápido a sus datos, incluyendo fichas técnicas y otra documentación relevante. Cuenta con filtros para una búsqueda eficiente de productos.
+
+### ⚙️ Menu de Opciones
+
+Este es el centro de administración de catálogos y entidades del sistema. Desde aquí se gestionan todos los datos maestros necesarios para el funcionamiento de la aplicación:
+- Datos de Referencia: Permite la gestión de catálogos auxiliares como:
+  - Marcas
+  - Tipos de producto
+  - Clasificaciones
+  - Países
+  - Certificaciones
+  - Compañías
+- Empresas y Productos Externos: Administración de las empresas de la competencia y el catálogo de productos que estas ofertan.
+- Entidades: Administración de las instituciones (hospitales, clínicas, etc.) a las que se les da servicio.
+- Usuarios: Gestión de los perfiles y credenciales de los usuarios que pueden acceder al sistema.
+
+Nota: Las opciones para administrar "Productos" (el inventario interno) y "Proyectos" desde este menú están planificadas y visibles, pero su funcionalidad aún no ha sido implementada.
 
 ## 🛠 Tecnologías utilizadas
 
@@ -71,6 +82,7 @@ Administración de las instituciones que emiten las licitaciones (entidades) y c
   - `github.com/alexedwards/scs/v2` – Manejo de sesiones
   - `github.com/justinas/nosurf` – Protección CSRF
   - `github.com/go-sql-driver/mysql` – Driver MySQL
+  - `golang.org/x/crypto/bcrypt` – Para encriptación de contraseñas
 
 ### Base de Datos
 
@@ -81,6 +93,7 @@ Administración de las instituciones que emiten las licitaciones (entidades) y c
 
 - **Bootstrap 5.1.3** – Framework CSS
 - **FontAwesome 6** – Íconos
+- **FullCalendar@6.1.7** – Librería JavaScript para calendario
 - HTML renderizado mediante plantillas Go (`html/template`)
 
 ---
@@ -117,23 +130,7 @@ Estas tablas documentan la interacción de las empresas con cada partida:
 - `aclaraciones_partida`: preguntas o solicitudes de aclaración hechas por empresas durante la etapa de junta de aclaraciones.
 - `propuestas_partida`: productos propuestos por cada empresa para una partida.
 - `fallos_partida`: resultado de evaluación de propuestas, incluye cumplimiento de criterios técnicos, administrativos y legales, así como puntos obtenidos y si resultó ganador.
-## 🚧 Estado del proyecto
 
-Actualmente en desarrollo activo. Se han completado:
-
-- CRUD de productos
-- Alta de licitaciones y partidas 
-- Edición de licitaciones y partidas 
-- Alta de proyectos con productos vinculados
-- Administración básica de licitaciones y partidas
-- Registro de aclaraciones y requerimientos
-
-En desarrollo:
-
-- Registro completo de propuestas y fallos
-- Reportes y búsquedas avanzadas
-- Autenticación de usuarios
-- Calendario con fechas importantes
 ---
 
 ## 📷 Documentación
@@ -154,9 +151,7 @@ Proyecto privado de uso interno para fines administrativos. No distribuible sin 
 
 ## ✍️ Autor
 
-| [<img src="https://scontent.fmex3-2.fna.fbcdn.net/v/t1.6435-9/123342783_1622730034575416_3218249410147359747_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeFF9stKC6W5PC1_mo27zeV5c_dbhoV4A1dz91uGhXgDV4Pg734Ea22qZ_fZPZ8SyGai_i6kNCOUv_UtL9IbwUIp&_nc_ohc=RNvPEJHqE_YQ7kNvwG19I6x&_nc_oc=AdlEvOFz1DifdtZ1JR6Of8SXLrajWBnUjr6Omb9YxGFFbIZH_no7WNvwEywn81jAqoArfu-mGSZhMHsBJSf4VCLs&_nc_zt=23&_nc_ht=scontent.fmex3-2.fna&_nc_gid=kkgfZjbji4vmMIQ3JYiheA&oh=00_AfKWrh5zW2oVcn5kxI17O1EyYPqDG6vLSfo_MavqVIB02A&oe=6866F1C2" width=115><br><sub>**Jose Luis Valencia** Ingeniero Biomedico</sub>](https://github.com/Cogito-ergo-sum25) |
+| [<img src="https://scontent.fmex3-2.fna.fbcdn.net/v/t1.6435-9/123342783_1622730034575416_3218249410147359747_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeFF9stKC6W5PC1_mo27zeV5c_dbhoV4A1dz91uGhXgDV4Pg734Ea22qZ_fZPZ8SyGai_i6kNCOUv_UtL9IbwUIp&_nc_ohc=EN8ZyLP8YIoQ7kNvwGCTT7C&_nc_oc=AdmQhLcLbUEv5GXib4q4xMyiYtJaJgLhhj_yrMUReo9KSmsk9gaCGNeJsVDxMFjKb67WxMcApST9-IrZqbfRNHui&_nc_zt=23&_nc_ht=scontent.fmex3-2.fna&_nc_gid=7o4d5kgeQ-Vt4kuFkHcHzg&oh=00_AffbZ5iwyuXzVxJcjURCy4h8DzMFvxVUqRsFqt9p9giSRw&oe=6906AF82" width=115><br><sub>**Jose Luis Valencia** Ingeniero Biomedico</sub>](https://github.com/Cogito-ergo-sum25) |
 | :---: |
-
- 
 
 Contacto: valencia.rivera.jose.luis@gmail.com
