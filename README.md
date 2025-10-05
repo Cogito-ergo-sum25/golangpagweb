@@ -137,6 +137,8 @@ Estas tablas documentan la interacción de las empresas con cada partida:
 
 Video explicativo 20 mayo 2025:
 https://www.youtube.com/watch?v=8oavojJYFSY&t=1s
+Video Teaser App Primera versión 4 de Octubre de 2025:
+https://youtu.be/PfJXXYc0cos
 
 Estructura base de datos:
 <img src="static\images\BD.png" alt="">
