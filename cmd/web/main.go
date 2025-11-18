@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"os"
 
 	"github.com/alexedwards/scs/v2"
 	_ "github.com/go-sql-driver/mysql"
@@ -23,12 +24,17 @@ var session *scs.SessionManager
 // main is the main function
 func main() {
 
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbHost := os.Getenv("DB_HOST")
+	dbName := os.Getenv("DB_NAME")
+
 	dbCfg := database.Config{
-		Username: "root",
-		Password: "12345",
-		Host:     "127.0.0.1",
-		Port:     "3306",
-		DBName:   "mydb",
+		Username: dbUser,
+		Password: dbPassword,
+		Host:     dbHost,
+		Port:     "3306", // El puerto dentro de Docker es el estándar
+		DBName:   dbName,
 	}
 
 	db, err := database.NewConnection(dbCfg)

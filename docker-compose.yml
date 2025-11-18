@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. El servicio de tu aplicación Go
+  app:
+    container_name: licitaciones-app
+    build: .  # Le dice que construya usando el Dockerfile en esta carpeta
+    restart: always
+    ports:
+      - "80:8080"  # Mapea el puerto 80 del Droplet al 8080 de tu app
+    environment:
+      # Estas son las variables que tu main.go modificado leerá
+      - DB_USER=root
+      - DB_PASSWORD=hisliTa2024! # <-- ¡CAMBIA ESTO!
+      - DB_HOST=db  # <-- 'db' es el nombre del servicio de abajo. Así se comunican.
+      - DB_NAME=mydb
+    depends_on:
+      - db  # Le dice a Docker que inicie la BD antes que la app
+
+  # 2. El servicio de la Base de Datos
+  db:
+    image: mysql:8.0
+    container_name: licitaciones-db
+    restart: always
+    environment:
+      # Aquí creas la BD y la contraseña para el contenedor MySQL
+      - MYSQL_ROOT_PASSWORD=hisliTa2024! # <-- ¡CAMBIA ESTO! (debe ser igual al de arriba)
+      - MYSQL_DATABASE=mydb
+    volumes:
+      - mysql-data:/var/lib/mysql # Guarda los datos de la BD permanentemente
+
+volumes:
+  mysql-data: # Define el volumen para persistir los datos
