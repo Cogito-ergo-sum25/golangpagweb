@@ -449,3 +449,52 @@ dark-mode footer {
 .dark-mode .border-top {
     border-top-color: #495057 !important; /* Mismo color que los otros bordes */
 }
+
+/* Ajuste para el botón de modo oscuro en móviles */
+@media (max-width: 991px) {
+    #darkModeToggle {
+        margin-top: 10px;
+        width: 100%; /* Que ocupe todo el ancho en el menú desplegable */
+        margin-left: 0 !important;
+    }
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.8rem; /* Título principal más pequeño en móvil */
+    }
+    .card-title {
+        font-size: 1.25rem;
+    }
+    .hero-section-bg {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+}
+
+/* Color del icono de hamburguesa (Font Awesome) */
+.toggle-icon-custom {
+    font-size: 1.5rem;
+    color: #000; /* Negro por defecto en modo claro */
+    transition: color 0.3s ease;
+}
+
+/* Cambio a blanco cuando el body tiene la clase dark-mode */
+body.dark-mode .toggle-icon-custom {
+    color: #ffffff !important;
+}
+
+/* Quitar el borde azul/gris que Bootstrap pone al botón de la navbar */
+.navbar-toggler {
+    border: none !important;
+    padding: 0 !important;
+}
+.navbar-toggler:focus {
+    box-shadow: none !important;
+}
+
+/* Asegurar que el botón se vea bien en modo oscuro */
+body.dark-mode #darkModeToggle {
+    background-color: #f8f9fa !important;
+    color: #000 !important;
+}

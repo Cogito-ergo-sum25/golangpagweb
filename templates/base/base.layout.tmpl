@@ -28,42 +28,46 @@
   <!-- NAVBAR  -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
-        <a class="navbar-brand verde" href="/" ><i class="fa-solid fa-house-user"></i></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-      </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="/inventario"><i class="fa-regular fa-bookmark"></i> Inventario</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="/proyectos-vista"><i class="fa-regular fa-folder-open"></i> Proyectos</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="/licitaciones"><i class="fa-regular fa-file-lines"></i> Licitaciones</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="/calendario"><i class="fa-regular fa-calendar"></i> Calendario</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" href="/catalogo"><i class="fa-regular fa-chart-bar"></i> Catalogo</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="/opciones"><i class="fa-regular fa-pen-to-square"></i> Opciones</a>
-            </li>
-          </ul>
-          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li class="nav-item">
-                <a class="nav-link btn btn-outline-danger btn-sm text-danger px-3" href="/logout">Cerrar Sesión</a>
-            </li>
-          </ul>
-          <form class="d-flex">
-            <button id="darkModeToggle" class="btn btn-dark ms-2">🌙</button>
-          </form>
-        </div>
+          <a class="navbar-brand verde" href="/"><i class="fa-solid fa-house-user"></i></a>
+
+          <button class="navbar-toggler border-0 p-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent">
+              <i class="fa-solid fa-bars toggle-icon-custom"></i>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+              <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                  <li class="nav-item">
+                      <a class="nav-link active" href="/inventario"><i class="fa-regular fa-bookmark"></i> Inventario</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link active" href="/proyectos-vista"><i class="fa-regular fa-folder-open"></i> Proyectos</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link active" href="/licitaciones"><i class="fa-regular fa-file-lines"></i> Licitaciones</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link active" href="/calendario"><i class="fa-regular fa-calendar"></i> Calendario</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link active" href="/catalogo"><i class="fa-regular fa-chart-bar"></i> Catalogo</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link active" href="/opciones"><i class="fa-regular fa-pen-to-square"></i> Opciones</a>
+                  </li>
+              </ul>
+
+              <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+                  <li class="nav-item mb-2 mb-lg-0 me-lg-3">
+                      <button id="darkModeToggle" class="btn btn-dark">🌙</button>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link btn btn-outline-danger btn-sm text-danger px-3" href="/logout">Cerrar Sesión</a>
+                  </li>
+              </ul>
+          </div>
       </div>
   </nav>
+
   {{block "content" .}}
 
   {{end}}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/joho/godotenv"
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/config"
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/database"
 	"github.com/Cogito-ergo-sum25/golangpagweb/pkg/handlers"
@@ -24,6 +25,11 @@ var session *scs.SessionManager
 // main is the main function
 func main() {
 
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No se encontró un archivo .env, usando variables de entorno del sistema")
+	}
+
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbHost := os.Getenv("DB_HOST")
@@ -38,16 +44,17 @@ func main() {
 	}
 
 	db, err := database.NewConnection(dbCfg)
-	fmt.Println("¡Conexión exitosa a MySQL!")
+
 	if err != nil {
 		log.Fatal("Error conectando a DB:", err)
 	}
+	fmt.Println("¡Conexión exitosa a MySQL!")
 	defer db.Close()
 
 	// 2. Configuración general de la app
 	app := config.AppConfig{ // Cambiado a valor (no puntero)
 		DB:           db,
-		InProduction: false,
+		InProduction: true,
 	}
 
 		// set up the session
