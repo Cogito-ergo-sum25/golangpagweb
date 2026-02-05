@@ -1,40 +1,100 @@
 {{template "base" .}}
 {{define "content"}}
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fa-regular fa-bookmark"></i> Inventario de Productos</h2>
-        <a name="" id="" class="btn btn-primary mt-3 btn-outline-success verde" href="/crear-producto" role="button">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+        <h2 class="mb-0"><i class="fa-regular fa-bookmark me-2"></i> Inventario de Productos</h2>
+        <a name="" id="" class="btn btn-primary mt-3 w-50 btn-outline-success verde" href="/crear-producto" role="button">
             <i class="fas fa-plus me-2"></i>Agregar Producto</a>
     </div>
-    <table class="table table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>SKU</th>
-                <th>Marca</th>
-                <th>Modelo</th>
-                <th>Version</th>
-                <th>Nombre</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{range .Productos}}
-            <tr>
-                <td>{{.SKU}}</td>
-                <td>{{.Marca}}</td>
-                <td>{{.Modelo}}</td>
-                <td>{{.Version}}</td>
-                <td>{{.Nombre}}</td>
-                <td>
-                    <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm amarillo py-1 px-2"><i class="fas fa-pencil-alt"></i> Editar</a>
-                    <form action="/eliminar/{{.IDProducto}}" method="POST" class="d-inline">
-                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-                        <button type="submit" class="btn btn-sm rojo py-1 px-2"><i class="fa-regular fa-circle-xmark"></i> Eliminar</button>
-                    </form>
-                </td>
-            </tr>
-            {{end}}
-        </tbody>
-    </table>
+
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body bg-light rounded">
+            <form method="GET" action="/inventario" class="row g-2">
+                <div class="col-12 col-md-4">
+                    <input type="text" name="busqueda" class="form-control" placeholder="Buscar por SKU o Nombre..." value="{{index .Data.Filtros "Busqueda"}}">
+                </div>
+                <div class="col-6 col-md-3">
+                    <select name="marca" class="form-select">
+                        <option value="">Todas las Marcas</option>
+                        {{$currentMarca := index .Data.Filtros "Marca"}}
+                        {{range index .Data "Marcas"}}
+                            <option value="{{.}}" {{if eq . $currentMarca}}selected{{end}}>{{.}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-6 col-md-3">
+                    <select name="clasificacion" class="form-select">
+                        <option value="">Todas las Clasificaciones</option>
+                        {{$currentClas := index .Data.Filtros "Clasificacion"}}
+                        {{range index .Data "Clasificaciones"}}
+                            <option value="{{.}}" {{if eq . $currentClas}}selected{{end}}>{{.}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-primary verde w-100">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>SKU / Nombre</th>
+                    <th class="d-none d-md-table-cell">Modelo / Versión</th>
+                    <th class="d-none d-md-table-cell">Marca</th>
+                    <th class="d-none d-md-table-cell">Tipo</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Productos}}
+                <tr>
+                    <td>
+                        <div class="fw-bold">{{.SKU}}</div>
+                        <div class="text-muted" style="font-size: 0.9rem;">{{.Nombre}}</div>
+                        
+                        <div class="d-md-none mt-1 small">
+                            <span class="small border">{{.Marca}}</span>
+                            <span class="small ms-2 border">{{.Modelo}}</span>
+                        </div>
+                    </td>
+
+                    <td class="d-none d-md-table-cell">
+                        <div class="fw-bold">{{.Modelo}}</div>
+                        <div class="small text-muted">{{.Version}}</div>
+                    </td>
+
+                    <td class="d-none d-md-table-cell">
+                        {{.Marca}}
+                    </td>
+
+                    <td class="d-none d-md-table-cell">
+                        {{.Tipo}}
+                    </td>
+
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2">
+                            <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm amarillo" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                                <span class="d-none d-lg-inline ms-1">Editar</span>
+                            </a>
+                            <form action="/eliminar/{{.IDProducto}}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar producto?')">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <button type="submit" class="btn btn-sm rojo" title="Eliminar">
+                                    <i class="fa-regular fa-circle-xmark"></i>
+                                    <span class="d-none d-lg-inline ms-1">Eliminar</span>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
 </div>
 {{end}}

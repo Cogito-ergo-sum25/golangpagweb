@@ -452,6 +452,64 @@ func (m *Repository) ObtenerTodosProductos() ([]models.Producto, error) {
 	return productos, nil
 }
 
+func (m *Repository) ObtenerProductosParaInventario() ([]models.Producto, error) {
+	// Preparamos la consulta con todos los JOINs necesarios
+	query := `
+    SELECT 
+        p.id_producto,
+        p.sku, 
+        COALESCE(m.nombre, '') as marca,
+        COALESCE(c.nombre, '') as clasificacion,
+        COALESCE(t.nombre, '') as tipo,
+        p.nombre_corto,
+        p.modelo,
+        p.nombre,
+        p.version,
+        p.serie,
+        p.codigo_fabricante,
+        p.descripcion
+    FROM productos p
+    LEFT JOIN marcas m ON p.id_marca = m.id_marca
+    LEFT JOIN clasificaciones c ON p.id_clasificacion = c.id_clasificacion
+    LEFT JOIN tipos_producto t ON p.id_tipo = t.id_tipo
+    ORDER BY p.id_producto DESC`
+
+	rows, err := m.App.DB.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var productos []models.Producto
+	for rows.Next() {
+		var p models.Producto
+		err := rows.Scan(
+			&p.IDProducto,
+			&p.SKU,
+			&p.Marca,
+			&p.Clasificacion,
+			&p.Tipo,
+			&p.NombreCorto,
+			&p.Modelo,
+			&p.Nombre,
+			&p.Version,
+			&p.Serie,
+			&p.CodigoFabricante,
+			&p.Descripcion,
+		)
+		if err != nil {
+			return nil, err
+		}
+		productos = append(productos, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return productos, nil
+}
+
 func (m *Repository) ObtenerLicitacionesParaSelect() ([]models.Licitacion, error) {
 	query := `SELECT id_licitacion, nombre, num_contratacion FROM licitaciones ORDER BY id_licitacion DESC`
 

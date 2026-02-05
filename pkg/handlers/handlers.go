@@ -102,66 +102,59 @@ func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 
 // PANTALLA INICIO INVENTARIO
 func (m *Repository) Inventario(w http.ResponseWriter, r *http.Request) {
-    rows, err := m.App.DB.Query(`
-    SELECT 
-        p.id_producto,
-        p.sku, 
-        m.nombre as marca,
-        c.nombre as clasificacion,
-        p.nombre_corto,
-        p.modelo,
-        p.nombre,
-        p.version,
-        p.serie,
-        p.codigo_fabricante,
-        p.descripcion
-    FROM productos p
-    LEFT JOIN marcas m ON p.id_marca = m.id_marca
-    LEFT JOIN clasificaciones c ON p.id_clasificacion = c.id_clasificacion
-    ORDER BY p.id_producto DESC`)
+    // 1. Obtener parámetros de la URL
+    marca := r.URL.Query().Get("marca")
+    clasificacion := r.URL.Query().Get("clasificacion")
+    busqueda := r.URL.Query().Get("busqueda")
 
+    // 2. Obtener todos los productos (reutilizando tu lógica de consulta)
+    // Aquí puedes llamar a una función que haga el SELECT con los JOINs
+    productos, err := m.ObtenerProductosParaInventario() 
     if err != nil {
-        m.App.Session.Put(r.Context(), "error", "Error al consultar productos: "+err.Error())
+        m.App.Session.Put(r.Context(), "error", "Error al obtener productos")
         http.Redirect(w, r, "/", http.StatusSeeOther)
         return
     }
-    defer rows.Close()
 
-    var productos []models.Producto
-    for rows.Next() {
-        var p models.Producto
-        err := rows.Scan(
-            &p.IDProducto,
-            &p.SKU,
-            &p.Marca,       // Nuevo campo
-            &p.Clasificacion, // Nuevo campo
-            &p.NombreCorto,
-            &p.Modelo,
-            &p.Nombre,
-            &p.Version,
-            &p.Serie,
-            &p.CodigoFabricante,
-            &p.Descripcion,
-        )
-        if err != nil {
-            m.App.Session.Put(r.Context(), "error", "Error al leer producto: "+err.Error())
-            http.Redirect(w, r, "/", http.StatusSeeOther)
-            return
+    // 3. Aplicar filtros en memoria (Tu lógica de Catalogo)
+    var filteredProductos []models.Producto
+    for _, p := range productos {
+        if marca != "" && p.Marca != marca {
+            continue
         }
-        productos = append(productos, p)
+        if clasificacion != "" && p.Clasificacion != clasificacion {
+            continue
+        }
+        // Buscamos en Nombre o SKU
+        if busqueda != "" {
+            term := strings.ToLower(busqueda)
+            if !strings.Contains(strings.ToLower(p.Nombre), term) && 
+               !strings.Contains(strings.ToLower(p.SKU), term) {
+                continue
+            }
+        }
+        filteredProductos = append(filteredProductos, p)
     }
 
-    if err = rows.Err(); err != nil {
-        m.App.Session.Put(r.Context(), "error", "Error después de leer productos: "+err.Error())
-        http.Redirect(w, r, "/", http.StatusSeeOther)
-        return
-    }
+    // 4. Obtener listas para los selectores (reutilizando tu función obtenerDatosUnicos)
+    marcas, _ := m.obtenerDatosUnicos("SELECT DISTINCT nombre FROM marcas WHERE nombre != ''")
+    clasificaciones, _ := m.obtenerDatosUnicos("SELECT DISTINCT nombre FROM clasificaciones WHERE nombre != ''")
 
+    // 5. Preparar datos para la plantilla
     data := &models.TemplateData{
-        Productos: productos,
+        Productos: filteredProductos,
+        Data: map[string]interface{}{
+            "Marcas":         marcas,
+            "Clasificaciones": clasificaciones,
+            "Filtros": map[string]interface{}{
+                "Marca":         marca,
+                "Clasificacion": clasificacion,
+                "Busqueda":      busqueda,
+            },
+        },
         CSRFToken: nosurf.Token(r),
     }
-    
+
     render.RenderTemplate(w, "inventario/inventario.page.tmpl", data)
 }
 
