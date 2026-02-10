@@ -4,9 +4,8 @@
 ![MySQL Version](https://img.shields.io/badge/MySQL-8.0.41-orange?logo=mysql)
 ![Bootstrap](https://img.shields.io/badge/Bootstrap-5.1.3-purple?logo=bootstrap)
 ![FontAwesome](https://img.shields.io/badge/FontAwesome-6.5.1-black?logo=fontawesome)
-![Badge en Desarrollo](https://img.shields.io/badge/STATUS-PRIMERA%20VERSI%C3%93N-green)
-<img src="https://badges.ws/badge/Licencia-Personal-red" />
-
+![Badge en Desarrollo](https://img.shields.io/badge/STATUS-SEGUNDA%20VERSION-green)
+![Badge Licencia](https://img.shields.io/badge/Licencia-MIT-DarkGreen)
 
 Este proyecto es un sistema integral para administrar **licitaciones públicas**, con un enfoque especial en la organización de productos de inventario, proyectos asociados y procesos licitatorios complejos como aclaraciones, propuestas, fallos y requerimientos técnicos.
 
