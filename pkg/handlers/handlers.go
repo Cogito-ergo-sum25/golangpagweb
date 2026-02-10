@@ -1773,6 +1773,28 @@ func (m *Repository) CrearNuevaPartida(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, fmt.Sprintf("/mostrar-partidas/%d", idLicitacion), http.StatusSeeOther)
 }
 
+func (m *Repository) PostEliminarPartida(w http.ResponseWriter, r *http.Request) {
+    // 1. Obtener el ID de la partida
+    idPartida, _ := strconv.Atoi(chi.URLParam(r, "id"))
+    
+    // 2. Obtener el ID de la licitación
+    idLicitacion := r.FormValue("id_licitacion")
+
+    // 3. Eliminar
+    err := m.EliminarPartida(idPartida)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No se pudo eliminar la partida")
+        // Si falla, regresa a la edición de esa partida
+        http.Redirect(w, r, fmt.Sprintf("/editar-partida/%d", idPartida), http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "flash", "Partida eliminada exitosamente")
+    
+    // REDIRECT CORREGIDO: Usamos "/mostrar-partidas/" que es tu ruta real
+    http.Redirect(w, r, fmt.Sprintf("/mostrar-partidas/%s", idLicitacion), http.StatusSeeOther)
+}
+
 func (m *Repository) ObtenerRequerimientos(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
@@ -2792,6 +2814,7 @@ func (m *Repository) ObtenerFalloPropuestaJSON(w http.ResponseWriter, r *http.Re
         "observaciones":         fallo.Observaciones,
     })
 }
+
 func (m *Repository) GuardarFalloPropuesta(w http.ResponseWriter, r *http.Request) {
     err := r.ParseForm()
     if err != nil {

@@ -2292,6 +2292,20 @@ func (m *Repository) EliminarUsuarioUnico(id int) error { // <- ¡Asegúrate que
 	return err 
 }
 
+func (m *Repository) EliminarPartida(id int) error {
+    ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+    defer cancel()
+
+    query := "DELETE FROM partidas WHERE id_partida = ?"
+
+    _, err := m.App.DB.ExecContext(ctx, query, id)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
 
 //FUNCIONES AUXILIARES
 

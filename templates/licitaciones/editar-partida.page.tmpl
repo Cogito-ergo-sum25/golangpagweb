@@ -2,100 +2,78 @@
 
 {{define "content"}}
 <div class="container mt-4">
-
-    <!-- Encabezado -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-edit me-2"></i> Editar Partida</h2>
-    </div>
-
-    <!-- Formulario principal -->
-    <form method="POST" action="/editar-partida/{{.Partida.IDPartida}}" class="needs-validation" novalidate>
+    <form method="POST" action="/editar-partida/{{.Partida.IDPartida}}" id="form-editar-partida" class="needs-validation" novalidate>
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
 
-        <!-- Sección de Información Básica -->
         <div class="card shadow mb-4">
             <div class="card-header bg-primary text-white card-header azul">
                 <i class="fas fa-info-circle me-1"></i> Información Básica
             </div>
 
             <div class="card-body">
-                <!-- Primera fila -->
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Licitación *</label>
                         <p><strong>{{.Licitacion.Nombre}} - {{.Licitacion.NumContratacion}}</strong></p>
                         <input type="hidden" name="id_licitacion" value="{{.Licitacion.IDLicitacion}}">
                     </div>
-
                     <div class="col-md-2">
                         <label for="numero_partida_convocatoria" class="form-label">Número Partida*</label>
                         <input type="number" class="form-control" id="numero_partida_convocatoria" name="numero_partida_convocatoria" required value="{{.Partida.NumPartidaConvocatoria}}">
                     </div>
-
                     <div class="col-md-4">
                         <label for="nombre_descripcion" class="form-label">Nombre / Descripción *</label>
                         <input type="text" class="form-control" id="nombre_descripcion" name="nombre_descripcion" required value="{{.Partida.NombreDescripcion}}">
                     </div>
                 </div>
 
-                <!-- Segunda fila -->
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="clave_compendio" class="form-label">Clave Compendio</label>
                         <input type="text" class="form-control" id="clave_compendio" name="clave_compendio" required value="{{.Partida.ClaveCompendio}}">
                     </div>
-
                     <div class="col-md-3">
                         <label for="clave_cucop" class="form-label">Clave CUCoP</label>
                         <input type="text" class="form-control" id="clave_cucop" name="clave_cucop" required value="{{.Partida.ClaveCucop}}">
                     </div>
-
                     <div class="col-md-3">
                         <label for="unidad_medida" class="form-label">Unidad Medida</label>
                         <input type="text" class="form-control" id="unidad_medida" name="unidad_medida" required value="{{.Partida.UnidadMedida}}">
                     </div>
-
                     <div class="col-md-3">
                         <label for="tipo_de_bien" class="form-label">Tipo de Bien</label>
                         <input type="text" class="form-control" id="tipo_de_bien" name="tipo_de_bien" required value="{{.Partida.TipoDeBien}}">
                     </div>
                 </div>
 
-                <!-- Tercera fila -->
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="cantidad" class="form-label">Cantidad</label>
                         <input type="number" class="form-control" id="cantidad" name="cantidad" required value="{{.Partida.Cantidad}}">
                     </div>
-
                     <div class="col-md-4">
                         <label for="cantidad_minima" class="form-label">Cantidad Mínima</label>
                         <input type="number" class="form-control" id="cantidad_minima" name="cantidad_minima" required value="{{.Partida.CantidadMinima}}">
                     </div>
-
                     <div class="col-md-4">
                         <label for="cantidad_maxima" class="form-label">Cantidad Máxima</label>
                         <input type="number" class="form-control" id="cantidad_maxima" name="cantidad_maxima" required value="{{.Partida.CantidadMaxima}}">
                     </div>
                 </div>
 
-                <!-- Quinta fila -->
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="no_ficha_tecnica" class="form-label">No. Ficha Técnica</label>
                         <input type="text" class="form-control" id="no_ficha_tecnica" name="no_ficha_tecnica" required value="{{.Partida.NoFichaTecnica}}">
                     </div>
-
                     <div class="col-md-3">
                         <label for="garantia" class="form-label">Garantía (días)</label>
                         <input type="number" class="form-control" id="garantia" name="garantia" required value="{{.Partida.Garantia}}">
                     </div>
-
                     <div class="col-md-3">
                         <label for="dias_de_entrega" class="form-label">Días de Entrega</label>
                         <input type="text" class="form-control" id="dias_de_entrega" name="dias_de_entrega" required value="{{.Partida.DiasDeEntrega}}">
                     </div>
-
                     <div class="col-md-3">
                         <label for="fecha_de_entrega" class="form-label">Fecha de Entrega</label>
                         <input type="date" class="form-control" id="fecha_de_entrega" name="fecha_de_entrega" required value="{{.Partida.FechaDeEntrega.Format "2006-01-02"}}">
@@ -103,13 +81,22 @@
                 </div>
             </div>
         </div>
+    </form>
 
-        <!-- Botón de envío -->
-        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-            <button type="submit" class="btn btn-primary verde">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <form action="/eliminar-partida/{{.Partida.IDPartida}}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta partida? Esta acción eliminará también sus productos asociados.');">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="hidden" name="id_licitacion" value="{{.Licitacion.IDLicitacion}}">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="fas fa-trash-alt me-1"></i> Eliminar Partida
+            </button>
+        </form>
+
+        <div class="d-flex gap-2">
+            <button type="submit" form="form-editar-partida" class="btn btn-secondary verde">
                 <i class="fas fa-save me-1"></i> Guardar Cambios
             </button>
         </div>
-    </form>
+    </div>
 </div>
 {{end}}
