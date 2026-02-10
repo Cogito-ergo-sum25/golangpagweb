@@ -60,6 +60,11 @@ func routes(app *config.AppConfig) http.Handler {
 		// CALENDARIO
 		r.Get("/calendario", handlers.Repo.Calendario)
 
+		// LICITACIONES - ARCHIVOS
+		mux.Get("/archivos-licitacion/{id}", handlers.Repo.GetArchivosLicitacion)
+		mux.Post("/guardar-enlace-licitacion", handlers.Repo.PostGuardarEnlace)
+		mux.Post("/eliminar-archivo-licitacion", handlers.Repo.PostEliminarEnlace)
+
 		// PARTIDAS
 		r.Get("/mostrar-partidas/{id}", handlers.Repo.MostrarPartidasPorID)
 		r.Get("/nueva-partida/{id}", handlers.Repo.MostrarNuevaPartida)

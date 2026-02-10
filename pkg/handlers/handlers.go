@@ -1108,6 +1108,72 @@ func (m *Repository) EditarLicitacion(w http.ResponseWriter, r *http.Request) {
     http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
 }
 
+func (m *Repository) GetArchivosLicitacion(w http.ResponseWriter, r *http.Request) {
+    // 1. Identificar de qué licitación hablamos
+    idStr := chi.URLParam(r, "id")
+    idLicitacion, _ := strconv.Atoi(idStr)
+
+    // 2. Llamar al Helper 1: Datos de la Licitación
+    lic, err := m.ObtenerLicitacionPorID(idLicitacion)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No pudimos encontrar esa licitación")
+        http.Redirect(w, r, "/licitaciones", http.StatusSeeOther)
+        return
+    }
+
+    // 3. Llamar al Helper 2: Lista de archivos
+    archivos, err := m.ObtenerArchivosLicitacion(idLicitacion)
+    if err != nil {
+        // Si no hay archivos o falla, mandamos una lista vacía para que el template no sufra
+        archivos = []models.ArchivoLicitacion{}
+    }
+
+    // 4. Cargar la vista con todo listo
+    data := &models.TemplateData{
+        Licitacion: lic,
+        Archivos:   archivos, // El campo que acabamos de agregar al struct
+        CSRFToken:  nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/archivos.page.tmpl", data)
+}
+
+func (m *Repository) PostGuardarEnlace(w http.ResponseWriter, r *http.Request) {
+    _ = r.ParseForm()
+
+    idLicitacion, _ := strconv.Atoi(r.FormValue("id_licitacion"))
+    nombre := r.FormValue("nombre_archivo")
+    link := r.FormValue("link_servidor")
+    tipo := r.FormValue("tipo_archivo") // Capturamos el tipo del form
+    comentarios := r.FormValue("comentarios")
+
+    query := `INSERT INTO archivos_licitacion (id_licitacion, nombre_archivo, link_servidor, tipo_archivo, comentarios)
+              VALUES (?, ?, ?, ?, ?)`
+
+    _, err := m.App.DB.Exec(query, idLicitacion, nombre, link, tipo, comentarios)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al guardar: " + err.Error())
+    }
+
+    http.Redirect(w, r, fmt.Sprintf("/archivos-licitacion/%d", idLicitacion), http.StatusSeeOther)
+}
+
+func (m *Repository) PostEliminarEnlace(w http.ResponseWriter, r *http.Request) {
+    _ = r.ParseForm()
+    idArchivo, _ := strconv.Atoi(r.FormValue("id_archivo"))
+    idLicitacion, _ := strconv.Atoi(r.FormValue("id_licitacion"))
+
+    query := `DELETE FROM archivos_licitacion WHERE id_archivo = ?`
+    _, err := m.App.DB.Exec(query, idArchivo)
+
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No se pudo eliminar")
+    }
+
+    http.Redirect(w, r, fmt.Sprintf("/archivos-licitacion/%d", idLicitacion), http.StatusSeeOther)
+}
+
+
 // CALENDARIO
 func (m *Repository) Calendario(w http.ResponseWriter, r *http.Request) {
     licitaciones, err := m.ObtenerTodasLicitaciones()
@@ -1185,7 +1251,6 @@ func (m *Repository) Calendario(w http.ResponseWriter, r *http.Request) {
 
     render.RenderTemplate(w, "calendario/calendario-vista.page.tmpl", data)
 }
-
 
 
 // TODO LO DE PARTIDAS

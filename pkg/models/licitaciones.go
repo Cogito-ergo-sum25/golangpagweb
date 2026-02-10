@@ -56,3 +56,14 @@ type AclaracionesLicitacion struct {
     Partida    *Partida    `json:"partida,omitempty"`    // Relación
     Empresa    *Empresas   `json:"empresa,omitempty"`    // Relación con la empresa que hace la pregunta
 }
+
+type ArchivoLicitacion struct {
+    IDArchivo     int       `json:"id_archivo"`
+    IDLicitacion  int       `json:"id_licitacion"`
+    NombreArchivo string    `json:"nombre_archivo"`
+    LinkServidor  string    `json:"link_servidor"`
+    TipoArchivo   string    `json:"tipo_archivo"`
+    Comentarios   string    `json:"comentarios"`
+    CreatedAt     time.Time `json:"created_at"`
+    UpdatedAt     time.Time `json:"updated_at"`
+}

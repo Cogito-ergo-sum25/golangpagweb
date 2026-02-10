@@ -47,6 +47,10 @@ type TemplateData struct {
 	Empresas []Empresas
 	Empresa  Empresas
 
+	// --- Datos de archivos de licitación ---
+	Archivos []ArchivoLicitacion
+	Archivo  ArchivoLicitacion
+
 	// --- Datos de requerimientos ---
 	Requerimientos RequerimientosPartida
 

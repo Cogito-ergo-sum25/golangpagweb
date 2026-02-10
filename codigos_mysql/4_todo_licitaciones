@@ -22,5 +22,14 @@ CREATE TABLE licitaciones (
   FOREIGN KEY (id_entidad) REFERENCES entidades(id_entidad)
 )
 
-
-
+CREATE TABLE archivos_licitacion (
+    id_archivo INT AUTO_INCREMENT PRIMARY KEY,
+    id_licitacion INT NOT NULL,
+    nombre_archivo VARCHAR(255) NOT NULL, -- "Etiqueta" o nombre del documento
+    link_servidor TEXT NOT NULL,           -- Aquí pegas la URL completa (Drive, Dropbox, etc.)
+    tipo_archivo VARCHAR(100) DEFAULT 'url',
+    comentarios TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_licitacion) REFERENCES licitaciones(id_licitacion) ON DELETE CASCADE
+);

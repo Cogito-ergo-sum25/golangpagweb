@@ -1837,6 +1837,59 @@ func (m *Repository) BuscarProductosExternosPorNombre(nombre string) ([]models.P
     return productos, nil
 }
 
+func (m *Repository) ObtenerArchivosLicitacion(idLicitacion int) ([]models.ArchivoLicitacion, error) {
+	// Usamos un contexto con tiempo límite para seguridad (opcional pero recomendado)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var archivos []models.ArchivoLicitacion
+
+	// Consulta SQL ordenada por fecha de subida (lo más nuevo arriba)
+	query := `
+		SELECT 
+			id_archivo, 
+			id_licitacion, 
+			nombre_archivo, 
+			link_servidor, 
+			tipo_archivo, 
+			comentarios, 
+			created_at, 
+			updated_at
+		FROM archivos_licitacion
+		WHERE id_licitacion = ?
+		ORDER BY created_at DESC`
+
+	rows, err := m.App.DB.QueryContext(ctx, query, idLicitacion)
+	if err != nil {
+		return archivos, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var a models.ArchivoLicitacion
+		err := rows.Scan(
+			&a.IDArchivo,
+			&a.IDLicitacion,
+			&a.NombreArchivo,
+			&a.LinkServidor,
+			&a.TipoArchivo,
+			&a.Comentarios,
+			&a.CreatedAt,
+			&a.UpdatedAt,
+		)
+		if err != nil {
+			return archivos, err
+		}
+		archivos = append(archivos, a)
+	}
+
+	if err = rows.Err(); err != nil {
+		return archivos, err
+	}
+
+	return archivos, nil
+}
+
 
 
 
