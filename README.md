@@ -152,7 +152,7 @@ Proyecto privado de uso interno para fines administrativos. No distribuible sin 
 
 ## ✍️ Autor
 
-| [<img src="https://scontent.fmex3-2.fna.fbcdn.net/v/t1.6435-9/123342783_1622730034575416_3218249410147359747_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeFF9stKC6W5PC1_mo27zeV5c_dbhoV4A1dz91uGhXgDV4Pg734Ea22qZ_fZPZ8SyGai_i6kNCOUv_UtL9IbwUIp&_nc_ohc=EN8ZyLP8YIoQ7kNvwGCTT7C&_nc_oc=AdmQhLcLbUEv5GXib4q4xMyiYtJaJgLhhj_yrMUReo9KSmsk9gaCGNeJsVDxMFjKb67WxMcApST9-IrZqbfRNHui&_nc_zt=23&_nc_ht=scontent.fmex3-2.fna&_nc_gid=7o4d5kgeQ-Vt4kuFkHcHzg&oh=00_AffbZ5iwyuXzVxJcjURCy4h8DzMFvxVUqRsFqt9p9giSRw&oe=6906AF82" width=115><br><sub>**Jose Luis Valencia** Ingeniero Biomedico</sub>](https://github.com/Cogito-ergo-sum25) |
+| [<img src="https://avatars.githubusercontent.com/u/187525995?s=400&u=47c70aa412cfa1fb40227e1effd7f7115d3190d3&v=4" width=115><br><sub>**Jose Luis Valencia** Ingeniero Biomedico</sub>](https://github.com/Cogito-ergo-sum25) |
 | :---: |
 
 Contacto: valencia.rivera.jose.luis@gmail.com
