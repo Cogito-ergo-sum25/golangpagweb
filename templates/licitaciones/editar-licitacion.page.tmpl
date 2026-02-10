@@ -1,16 +1,19 @@
 {{template "base" .}}
+
 {{define "content"}}
+
 <div class="container mt-4">
     <h1><i class="fa-regular fa-pen-to-square"></i> Editar Licitación</h1>
+
     <div class="card shadow">
         <div class="card-header bg-primary text-white card-header azul">
             <i class="fas fa-info-circle me-1 "></i> Información Básica
         </div>
+
         <div class="card-body">
-            <form action="/editar-licitacion/{{.Licitacion.IDLicitacion}}" method="POST">
+            <form action="/editar-licitacion/{{.Licitacion.IDLicitacion}}" method="POST" id="form-licitacion">
                 <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                 
-                <!-- Sección 1: Datos Principales -->
                 <div class="row mb-3">
                     <div class="col-md-5">
                         <label for="id_entidad" class="form-label">Unidad Compradora</label>
@@ -31,7 +34,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="nombre" class="form-label">Nombre de la Licitación *</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre" value="{{.Licitacion.Nombre}}"required>
+                        <input type="text" class="form-control" id="nombre" name="nombre" value="{{.Licitacion.Nombre}}" required>
                     </div>
                      <div class="col-md-4">
                         <label for="num_contratacion" class="form-label">Número de Contratación</label>
@@ -75,7 +78,6 @@
                     </div>
                 </div>
 
-                <!-- Sección 2: Fechas Importantes -->
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="fecha_junta" class="form-label">Fecha Junta</label>
@@ -95,7 +97,6 @@
                     </div>
                 </div>
 
-                <!-- Sección 3: Información Adicional -->
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="estado" class="form-label">Estado</label>
@@ -106,13 +107,11 @@
                         <input type="text" class="form-control" id="municipio" name="municipio" readonly>
                     </div>
                     <div class="col-md-4">
-                        <label for="tiempo_entrega" class="form-label">Tiempo de Entrega</label>
-                        <input type="text" class="form-control" id="tiempo_entrega" name="tiempo_entrega" value="{{.Licitacion.TiempoEntrega}}">
+                        <label for="tiempo_entrega" class="form-label">Tiempo de Entrega (días)</label>
+                        <input type="number" class="form-control" id="tiempo_entrega" name="tiempo_entrega" value="{{.Licitacion.TiempoEntrega}}">
                     </div>
                 </div>
 
-
-                <!-- Sección 4: Checkboxes -->
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <div class="form-check form-switch">
@@ -128,19 +127,16 @@
                     </div>
                 </div>
 
-                <!-- Observaciones -->
                 <div class="mb-3">
                     <label for="observaciones_generales" class="form-label">Observaciones</label>
                     <textarea class="form-control" id="observaciones_generales" name="observaciones_generales" rows="3">{{.Licitacion.ObservacionesGenerales}}</textarea>
                 </div>      
 
-                <!-- Botón de envío -->
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="/licitaciones" class="btn btn-lg rojo">
-                                <i class="fa-regular fa-circle-xmark"></i> Cancelar</a>
-                            <button type="submit" class="btn btn-lg verde">
-                                <i class="fas fa-save me-2"></i> Guardar Cambios</button>
-                            
+                    <a href="/licitaciones" class="btn btn-lg rojo">
+                        <i class="fa-regular fa-circle-xmark"></i> Cancelar</a>
+                    <button type="submit" class="btn btn-lg verde">
+                        <i class="fas fa-save me-2"></i> Guardar Cambios</button>
                 </div>       
             </form>
         </div>
@@ -151,32 +147,60 @@
 {{define "js"}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Ubicación
     const selectEntidad = document.getElementById('id_entidad');
     const inputEstado = document.getElementById('estado');
     const inputMunicipio = document.getElementById('municipio');
 
+    // Fechas
+    const inputFechaFallo = document.getElementById('fecha_fallo');
+    const inputTiempoEntrega = document.getElementById('tiempo_entrega');
+    const inputFechaEntrega = document.getElementById('fecha_entrega');
+
     function actualizarUbicacion() {
         const selectedOption = selectEntidad.options[selectEntidad.selectedIndex];
+        if (!selectedOption) return;
         const estado = selectedOption.getAttribute('data-estado');
         const municipio = selectedOption.getAttribute('data-municipio');
 
-        inputEstado.value = estado || '';  // Muestra estado si está definido
-        inputMunicipio.value = municipio ? municipio : 'No especificado';  // Muestra mensaje si falta
+        inputEstado.value = estado || '';
+        inputMunicipio.value = municipio ? municipio : 'No especificado';
+    }
+
+    function calcularFechaEntrega() {
+        const fechaFalloValue = inputFechaFallo.value; 
+        const diasExtra = parseInt(inputTiempoEntrega.value);
+
+        if (fechaFalloValue && !isNaN(diasExtra)) {
+            const fecha = new Date(fechaFalloValue);
+            // Sumar días (compensando zona horaria local del navegador)
+            fecha.setDate(fecha.getDate() + diasExtra + 1); 
+
+            const yyyy = fecha.getFullYear();
+            const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dd = String(fecha.getDate()).padStart(2, '0');
+            
+            inputFechaEntrega.value = `${yyyy}-${mm}-${dd}`;
+        }
     }
 
     if (selectEntidad) {
         selectEntidad.addEventListener('change', actualizarUbicacion);
-        actualizarUbicacion(); // ejecutar una vez al cargar
+        actualizarUbicacion(); 
+    }
+
+    if (inputFechaFallo && inputTiempoEntrega) {
+        inputFechaFallo.addEventListener('change', calcularFechaEntrega);
+        inputTiempoEntrega.addEventListener('input', calcularFechaEntrega);
     }
 
     const form = document.getElementById('form-licitacion');
     if (form) {
         form.addEventListener('submit', function(e) {
             const nombre = document.getElementById('nombre').value;
-            const tipo = document.getElementById('tipo').value;
             const idEntidad = selectEntidad.value;
 
-            if (!nombre || !tipo || !idEntidad) {
+            if (!nombre || !idEntidad) {
                 e.preventDefault();
                 alert('Por favor complete los campos requeridos');
             }
