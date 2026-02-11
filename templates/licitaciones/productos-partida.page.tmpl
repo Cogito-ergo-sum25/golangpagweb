@@ -2,12 +2,42 @@
 {{define "content"}}
 <div class="container mt-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Productos de la partida #{{.Partida.NumPartidaConvocatoria}}</h2>
-        <a href="/nuevo-producto-partida/{{ .Partida.IDPartida }}" class="btn mt-2 verde">
-            <i class="fas fa-plus"></i> Agregar Productos
-        </a>
-    </div> 
+    <div class="card shadow-sm mb-4 border-start border-4 border-primary">
+    <div class="card-body py-3 px-3">
+        <div class="row align-items-center">
+            <div class="col-md-1 text-center border-end">
+                <span class="text-muted small d-block">Partida</span>
+                <span class="h5 mb-0 fw-bold">#{{.Partida.NumPartidaConvocatoria}}</span>
+            </div>
+            
+            <div class="col-md-3 border-end">
+                <span class="text-muted d-block" style="font-size: 0.75rem;">Descripción de la Convocatoria</span>
+                <span class="h8 mb-0 fw-bold" style="font-size: 0.85rem; line-height: 1.2;">{{.Partida.NombreDescripcion}}</span>
+            </div>
+            
+            <div class="col-md-2 border-end text-center">
+                <span class="text-muted d-block" style="font-size: 0.75rem;">Clave Compendio</span>
+                <span class="fw-bold">{{.Partida.ClaveCompendio}}</span>
+            </div>
+            
+            <div class="col-md-2 border-end text-center">
+                <span class="text-muted d-block" style="font-size: 0.75rem;">Cantidad Solicitada</span>
+                <span class="fw-bold">{{.Partida.Cantidad}}</span> <small class="text-muted">{{.Partida.UnidadMedida}}</small>
+            </div>
+            
+            <div class="col-md-2 border-end text-center">
+                <span class="text-muted d-block" style="font-size: 0.75rem;">Ficha Técnica No.</span>
+                <span class="h8 mb-0 fw-bold">{{.Partida.NoFichaTecnica}}</span>
+            </div>
+            
+            <div class="col-md-2 text-center">
+                <a href="/nuevo-producto-partida/{{ .Partida.IDPartida }}" class="btn btn-sm verde">
+                    <i class="fas fa-plus"></i> Agregar Productos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
         {{range .ProductosPartida}}
