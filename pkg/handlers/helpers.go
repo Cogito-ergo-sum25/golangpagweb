@@ -250,9 +250,9 @@ func (m *Repository) ObtenerInventarioPorID(idProducto int) (models.ProductoInve
     // Usamos COALESCE para evitar que los NULL rompan el Scan
     query := `
         SELECT 
-            COALESCE(unidad_base, ''), 
-            COALESCE(unidad_medida_almacen, ''), 
-            COALESCE(metodo_costeo, ''), 
+            COALESCE(unidad_base, 'PIEZA'), 
+			COALESCE(unidad_medida_almacen, 'PIEZAS'), 
+			COALESCE(metodo_costeo, 'COSTO PROMEDIO'),
             COALESCE(largo, 0.0), 
             COALESCE(ancho, 0.0), 
             COALESCE(alto, 0.0), 

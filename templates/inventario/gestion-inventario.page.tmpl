@@ -24,12 +24,32 @@
                         <h6 class="form-label fw-bold border-bottom pb-2">Unidades y Costeo</h6>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Unidad Base</label>
-                        <input type="text" class="form-control" name="unidad_base" value="{{.Producto.Inventario.UnidadBase}}" placeholder="PZA">
+                        <label class="form-label fw-bold">Unidad Base</label>
+                        <select class="form-select" name="unidad_base">
+                            <option value="PIEZA" {{if eq .Producto.Inventario.UnidadBase "PIEZA"}}selected{{end}}>PIEZA</option>
+                            <option value="HORA" {{if eq .Producto.Inventario.UnidadBase "HORA"}}selected{{end}}>HORA</option>
+                            <option value="KILOGRAMO" {{if eq .Producto.Inventario.UnidadBase "KILOGRAMO"}}selected{{end}}>KILOGRAMO</option>
+                            <option value="LITROS" {{if eq .Producto.Inventario.UnidadBase "LITROS"}}selected{{end}}>LITROS</option>
+                            <option value="METRO" {{if eq .Producto.Inventario.UnidadBase "METRO"}}selected{{end}}>METRO</option>
+                            <option value="METRO CUADRADO" {{if eq .Producto.Inventario.UnidadBase "METRO CUADRADO"}}selected{{end}}>METRO CUADRADO</option>
+                            <option value="METRO CÚBICO" {{if eq .Producto.Inventario.UnidadBase "METRO CÚBICO"}}selected{{end}}>METRO CÚBICO</option>
+                            <option value="SERVICIOS" {{if eq .Producto.Inventario.UnidadBase "SERVICIOS"}}selected{{end}}>SERVICIOS</option>
+                            <option value="NO APLICA" {{if eq .Producto.Inventario.UnidadBase "NO APLICA"}}selected{{end}}>NO APLICA</option>
+                        </select>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Unidad Medida Almacén</label>
-                        <input type="text" class="form-control" name="unidad_medida_almacen" value="{{.Producto.Inventario.UnidadMedidaAlmacen}}" placeholder="CAJA">
+                        <label class="form-label fw-bold">Unidad de medida almacén</label>
+                        <select class="form-select" name="unidad_medida_almacen">
+                            <option value="PIEZAS" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "PIEZAS"}}selected{{end}}>PIEZAS</option>
+                            <option value="BLOQUE" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "BLOQUE"}}selected{{end}}>BLOQUE</option>
+                            <option value="BOLSA" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "BOLSA"}}selected{{end}}>BOLSA</option>
+                            <option value="CAJA" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "CAJA"}}selected{{end}}>CAJA</option>
+                            <option value="COMBO" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "COMBO"}}selected{{end}}>COMBO</option>
+                            <option value="DOCENA" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "DOCENA"}}selected{{end}}>DOCENA</option>
+                            <option value="KIT" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "KIT"}}selected{{end}}>KIT</option>
+                            <option value="PAQUETE" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "PAQUETE"}}selected{{end}}>PAQUETE</option>
+                            <option value="UNIDAD" {{if eq .Producto.Inventario.UnidadMedidaAlmacen "UNIDAD"}}selected{{end}}>UNIDAD</option>
+                        </select>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Método de Costeo</label>
