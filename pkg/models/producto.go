@@ -36,6 +36,9 @@ type Producto struct {
     
     // Certificaciones (para mostrar)
     Certificaciones  []Certificacion `json:"certificaciones"`
+
+    // Campos de CROL
+    Inventario *ProductoInventario `json:"inventario,omitempty"`
 }
 
 // Modelos auxiliares para las relaciones
@@ -64,4 +67,30 @@ type Certificacion struct {
     IDCertificacion int    `json:"id_certificacion"`
     Nombre          string `json:"nombre"`
     OrganismoEmisor string `json:"organismo_emisor"`
+}
+
+type ProductoInventario struct {
+    IDProducto                  int     `json:"id_producto"`
+    
+    // Unidades y Costeo
+    UnidadBase                  string  `json:"unidad_base"`
+    UnidadMedidaAlmacen         string  `json:"unidad_medida_almacen"`
+    MetodoCosteo                string  `json:"metodo_costeo"`
+    
+    // Dimensiones Físicas
+    Largo                       float64 `json:"largo"`
+    Ancho                       float64 `json:"ancho"`
+    Alto                        float64 `json:"alto"`
+    Peso                        float64 `json:"peso"`
+    Volumen                     float64 `json:"volumen"`
+    
+    // Control Logístico
+    RequierePesaje              bool    `json:"requiere_pesaje"`
+    ConsiderarCompraProgramada  bool    `json:"considerar_compra_programada"`
+    ProduccionFabricacion       bool    `json:"produccion_fabricacion"`
+    VentasSinExistencia         bool    `json:"ventas_sin_existencia"`
+    ManejaSerie                 bool    `json:"maneja_serie"`
+    ManejaLote                  bool    `json:"maneja_lote"`
+    ManejaFechaCaducidad        bool    `json:"maneja_fecha_caducidad"`
+    LoteAutomatico              bool    `json:"lote_automatico"`
 }

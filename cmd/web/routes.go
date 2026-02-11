@@ -43,6 +43,10 @@ func routes(app *config.AppConfig) http.Handler {
 		r.Post("/editar-producto/{id}", handlers.Repo.EditarProducto)
 		r.Post("/eliminar/{id}", handlers.Repo.EliminarProducto)
 
+		// TABLAS EXTRA CROL
+			r.Get("/producto/inventario/{id}", handlers.Repo.MostrarInventarioProducto)
+			r.Post("/producto/inventario/{id}", handlers.Repo.GuardarInventarioProducto)
+
 		// PROYECTOS
 		r.Get("/proyectos-vista", handlers.Repo.ProyectosVista)
 		r.Get("/nuevo-proyecto", handlers.Repo.MostrarNuevoProyecto)

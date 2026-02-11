@@ -499,6 +499,115 @@ func (m *Repository) EditarProducto(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/inventario", http.StatusSeeOther)
 }
 
+// TABLAS HIJAS DE CROL
+func (m *Repository) MostrarInventarioProducto(w http.ResponseWriter, r *http.Request) {
+    // 1. Extraer y validar el ID de la URL
+    idStr := chi.URLParam(r, "id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "ID de producto inválido")
+        http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+        return
+    }
+
+    // 2. Obtener los datos básicos (Nombre, SKU, Marca) para el encabezado
+    // Usamos el helper que creamos antes
+    producto, err := m.ObtenerProductoPorID(id)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No se encontró el producto")
+        http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+        return
+    }
+
+    // 3. LAZY LOADING: Intentar cargar la tabla hija
+    // Usamos el helper blindado con COALESCE para evitar errores por NULLs
+    inv, err := m.ObtenerInventarioPorID(id)
+    if err != nil {
+        // Si no existe registro en la BD (sql.ErrNoRows), 
+        // inicializamos un struct limpio con el ID vinculado
+        inv = models.ProductoInventario{
+            IDProducto: id,
+            UnidadBase: "PIEZA",
+            MetodoCosteo: "COSTO PROMEDIO",
+        }
+    }
+    
+    // 4. ASIGNACIÓN DEL PUNTERO
+    // Es vital que p.Inventario en tu struct sea *models.ProductoInventario
+    producto.Inventario = &inv
+
+    // 5. Preparar datos para el template
+    data := &models.TemplateData{
+        Producto:  producto,
+        CSRFToken: nosurf.Token(r),
+    }
+
+    // 6. Renderizar la nueva página dedicada
+    render.RenderTemplate(w, "inventario/gestion-inventario.page.tmpl", data)
+}
+
+func (m *Repository) GuardarInventarioProducto(w http.ResponseWriter, r *http.Request) {
+    idStr := chi.URLParam(r, "id")
+    id, _ := strconv.Atoi(idStr)
+
+    // 1. Parsear el formulario
+    err := r.ParseForm()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/producto/inventario/"+idStr, http.StatusSeeOther)
+        return
+    }
+
+    // --- INICIO DEL PARSEO LOCAL ---
+    // Helper local para convertir los inputs de texto a float64
+    parseFloat := func(key string) float64 {
+        val, _ := strconv.ParseFloat(r.Form.Get(key), 64)
+        return val
+    }
+
+    // Construimos el struct con los datos del form siguiendo el orden de tu tabla
+    inv := models.ProductoInventario{
+        IDProducto:                 id,
+        UnidadBase:                 r.Form.Get("unidad_base"),
+        UnidadMedidaAlmacen:        r.Form.Get("unidad_medida_almacen"), // Agregado
+        MetodoCosteo:               r.Form.Get("metodo_costeo"),
+        Largo:                      parseFloat("largo"),
+        Ancho:                      parseFloat("ancho"),
+        Alto:                       parseFloat("alto"),
+        Peso:                       parseFloat("peso"),
+        Volumen:                    parseFloat("volumen"),
+        
+        // Los switches/checkboxes: si están marcados valen "on", si no, valen false (0 en tinyint)
+        RequierePesaje:             r.Form.Get("requiere_pesaje") == "on",
+        ConsiderarCompraProgramada: r.Form.Get("considerar_compra_programada") == "on",
+        ProduccionFabricacion:      r.Form.Get("produccion_fabricacion") == "on", // Agregado
+        VentasSinExistencia:        r.Form.Get("ventas_sin_existencia") == "on",
+        ManejaSerie:                r.Form.Get("maneja_serie") == "on",
+        ManejaLote:                 r.Form.Get("maneja_lote") == "on",
+        ManejaFechaCaducidad:       r.Form.Get("maneja_fecha_caducidad") == "on",
+        LoteAutomatico:             r.Form.Get("lote_automatico") == "on",
+    }
+    // --- FIN DEL PARSEO LOCAL ---
+
+    // 2. Ejecutar el Upsert (usando tu método del repositorio)
+    err = m.UpsertInventario(inv)
+    
+    if err != nil {
+        log.Println("Error al guardar inventario:", err)
+        m.App.Session.Put(r.Context(), "error", "No se pudieron guardar los cambios técnicos: " + err.Error())
+        http.Redirect(w, r, "/producto/inventario/"+idStr, http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "flash", "¡Configuración de inventario actualizada!")
+    
+    // Regresamos a la vista de edición principal para que el flujo sea fluido
+    http.Redirect(w, r, "/editar-producto/"+idStr, http.StatusSeeOther)
+}
+
+
+
+
 // Handler para eliminar producto
 func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {

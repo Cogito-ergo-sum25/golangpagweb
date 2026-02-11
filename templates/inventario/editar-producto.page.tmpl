@@ -16,14 +16,12 @@
         <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         
         <div class="row">
-            <!-- Columna izquierda - Información básica -->
             <div class="col-md-6">
                 <div class="card mb-4">
                     <div class="card-header azul">
                         Información Básica
                     </div>
                     <div class="card-body">
-                        <!-- SKU -->
                         <div class="mb-3">
                             <label for="sku" class="form-label">SKU *</label>
                             <input type="text" class="form-control" id="sku" name="sku" 
@@ -31,7 +29,6 @@
                             <div class="invalid-feedback">Por favor ingresa el SKU</div>
                         </div>
                         
-                        <!-- Nombre -->
                         <div class="mb-3">
                             <label for="nombre" class="form-label">Nombre *</label>
                             <input type="text" class="form-control" id="nombre" name="nombre" 
@@ -39,14 +36,12 @@
                             <div class="invalid-feedback">Por favor ingresa el nombre</div>
                         </div>
                         
-                        <!-- Nombre Corto -->
                         <div class="mb-3">
                             <label for="nombre_corto" class="form-label">Nombre Corto</label>
                             <input type="text" class="form-control" id="nombre_corto" name="nombre_corto"
                                    value="{{.Producto.NombreCorto}}">
                         </div>
                         
-                        <!-- Descripción -->
                         <div class="mb-3">
                             <label for="descripcion" class="form-label">Descripción</label>
                             <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{.Producto.Descripcion}}</textarea>
@@ -54,34 +49,29 @@
                     </div>
                 </div>
                 
-                <!-- Especificaciones técnicas -->
                 <div class="card mb-4">
                     <div class="card-header azul">
                         Especificaciones Técnicas
                     </div>
                     <div class="card-body">
-                        <!-- Modelo -->
                         <div class="mb-3">
                             <label for="modelo" class="form-label">Modelo</label>
                             <input type="text" class="form-control" id="modelo" name="modelo"
                                    value="{{.Producto.Modelo}}">
                         </div>
                         
-                        <!-- Versión -->
                         <div class="mb-3">
                             <label for="version" class="form-label">Versión</label>
                             <input type="text" class="form-control" id="version" name="version"
                                    value="{{.Producto.Version}}">
                         </div>
                         
-                        <!-- Serie -->
                         <div class="mb-3">
                             <label for="serie" class="form-label">Serie</label>
                             <input type="text" class="form-control" id="serie" name="serie"
                                    value="{{.Producto.Serie}}">
                         </div>
                         
-                        <!-- Código Fabricante -->
                         <div class="mb-3">
                             <label for="codigo_fabricante" class="form-label">Código del Fabricante</label>
                             <input type="text" class="form-control" id="codigo_fabricante" name="codigo_fabricante"
@@ -91,15 +81,52 @@
                 </div>
             </div>
             
-            <!-- Columna derecha - Relaciones y documentos -->
             <div class="col-md-6">
-                <!-- Relaciones -->
+                <div class="card mb-4">
+                    <div class="card-header azul">
+                        <i class="fas fa-layer-group me-2"></i> Configuración Avanzada (Tablas Hijo)
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <a href="/producto/inventario/{{.Producto.IDProducto}}" class="btn btn-outline-primary w-100 text-start">
+                                    <i class="fas fa-boxes me-2"></i> Inventario
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="/producto/caracteristicas/{{.Producto.IDProducto}}" class="btn btn-outline-primary w-100 text-start">
+                                    <i class="fas fa-tags me-2"></i> Características
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="/producto/impuestos-compra/{{.Producto.IDProducto}}" class="btn btn-outline-success w-100 text-start">
+                                    <i class="fas fa-cart-arrow-down me-2"></i> Impuestos Compra
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="/producto/impuestos-venta/{{.Producto.IDProducto}}" class="btn btn-outline-success w-100 text-start">
+                                    <i class="fas fa-hand-holding-usd me-2"></i> Impuestos Venta
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="/producto/ieps/{{.Producto.IDProducto}}" class="btn btn-outline-info w-100 text-start">
+                                    <i class="fas fa-percent me-2"></i> Multi IEPS
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="/producto/comercio-exterior/{{.Producto.IDProducto}}" class="btn btn-outline-danger w-100 text-start">
+                                    <i class="fas fa-globe-americas me-2"></i> Comercio Exterior
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card mb-4">
                     <div class="card-header azul">
                         Clasificación y Origen
                     </div>
                     <div class="card-body">
-                        <!-- Marca -->
                         <div class="mb-3">
                             <label for="id_marca" class="form-label">Marca *</label>
                             <select class="form-select" id="id_marca" name="id_marca" required>
@@ -108,10 +135,8 @@
                                 <option value="{{.IDMarca}}" {{if eq .IDMarca $.Producto.IDMarca}}selected{{end}}>{{.Nombre}}</option>
                                 {{end}}
                             </select>
-                            <div class="invalid-feedback">Por favor selecciona una marca</div>
                         </div>
                         
-                        <!-- Tipo de Producto -->
                         <div class="mb-3">
                             <label for="id_tipo" class="form-label">Tipo de Producto *</label>
                             <select class="form-select" id="id_tipo" name="id_tipo" required>
@@ -120,10 +145,8 @@
                                 <option value="{{.IDTipo}}" {{if eq .IDTipo $.Producto.IDTipo}}selected{{end}}>{{.Nombre}}</option>
                                 {{end}}
                             </select>
-                            <div class="invalid-feedback">Por favor selecciona un tipo</div>
                         </div>
                         
-                        <!-- Clasificación -->
                         <div class="mb-3">
                             <label for="id_clasificacion" class="form-label">Clasificación *</label>
                             <select class="form-select" id="id_clasificacion" name="id_clasificacion" required>
@@ -132,10 +155,8 @@
                                 <option value="{{.IDClasificacion}}" {{if eq .IDClasificacion $.Producto.IDClasificacion}}selected{{end}}>{{.Nombre}}</option>
                                 {{end}}
                             </select>
-                            <div class="invalid-feedback">Por favor selecciona una clasificación</div>
                         </div>
                         
-                        <!-- País de Origen -->
                         <div class="mb-3">
                             <label for="id_pais_origen" class="form-label">País de Origen *</label>
                             <select class="form-select" id="id_pais_origen" name="id_pais_origen" required>
@@ -144,12 +165,10 @@
                                 <option value="{{.IDPais}}" {{if eq .IDPais $.Producto.IDPaisOrigen}}selected{{end}}>{{.Nombre}}</option>
                                 {{end}}
                             </select>
-                            <div class="invalid-feedback">Por favor selecciona un país</div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Certificaciones -->
                 <div class="card mb-4">
                     <div class="card-header azul">
                         Certificaciones
@@ -175,20 +194,16 @@
                     </div>
                 </div>
                 
-                <!-- Documentación -->
                 <div class="card mb-4">
                     <div class="card-header azul">
                         Documentación
                     </div>
                     <div class="card-body">
-                        <!-- Imagen URL -->
                         <div class="mb-3">
                             <label for="imagen_url" class="form-label">URL de Imagen</label>
                             <input type="url" class="form-control" id="imagen_url" name="imagen_url"
                                    value="{{.Producto.ImagenURL}}">
                         </div>
-                        
-                        <!-- Ficha Técnica URL -->
                         <div class="mb-3">
                             <label for="ficha_tecnica_url" class="form-label">URL de Ficha Técnica</label>
                             <input type="url" class="form-control" id="ficha_tecnica_url" name="ficha_tecnica_url"
@@ -199,27 +214,19 @@
             </div>
         </div>
         
-        <!-- Botones de acción -->
         <div class="d-flex justify-content-end gap-2 mb-4">
             <a href="/inventario" class="btn btn-lg rojo">
                 <i class="fa-regular fa-circle-xmark"></i> Cancelar</a>
             <button type="submit" class="btn btn-lg verde">
-                <i class="fas fa-save me-2"></i>Actualizar Producto</button>
-            
+                <i class="fas fa-save me-2"></i>Actualizar Información Base</button>
         </div>
     </form>
 </div>
 
-<!-- Validación del formulario -->
 <script>
-// Ejemplo de JavaScript para deshabilitar el envío de formularios si hay campos no válidos
 (function() {
   'use strict'
-  
-  // Obtener todos los formularios a los que queremos aplicar estilos de validación de Bootstrap personalizados
   var forms = document.querySelectorAll('.needs-validation')
-  
-  // Bucle sobre ellos y evitar el envío
   Array.prototype.slice.call(forms)
     .forEach(function(form) {
       form.addEventListener('submit', function(event) {
@@ -227,7 +234,6 @@
           event.preventDefault()
           event.stopPropagation()
         }
-        
         form.classList.add('was-validated')
       }, false)
     })

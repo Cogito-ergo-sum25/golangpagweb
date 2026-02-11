@@ -244,6 +244,87 @@ func (m *Repository) ActualizarAclaracion(a models.AclaracionesLicitacion) error
 
 // GETTERS
 
+func (m *Repository) ObtenerInventarioPorID(idProducto int) (models.ProductoInventario, error) {
+    var inv models.ProductoInventario
+    
+    // Usamos COALESCE para evitar que los NULL rompan el Scan
+    query := `
+        SELECT 
+            COALESCE(unidad_base, ''), 
+            COALESCE(unidad_medida_almacen, ''), 
+            COALESCE(metodo_costeo, ''), 
+            COALESCE(largo, 0.0), 
+            COALESCE(ancho, 0.0), 
+            COALESCE(alto, 0.0), 
+            COALESCE(peso, 0.0), 
+            COALESCE(volumen, 0.0),
+            COALESCE(requiere_pesaje, 0), 
+            COALESCE(considerar_compra_programada, 1), 
+            COALESCE(produccion_fabricacion, 0),
+            COALESCE(ventas_sin_existencia, 0), 
+            COALESCE(maneja_serie, 0), 
+            COALESCE(maneja_lote, 0), 
+            COALESCE(maneja_fecha_caducidad, 0), 
+            COALESCE(lote_automatico, 0)
+        FROM producto_inventario 
+        WHERE id_producto = ?`
+    
+    err := m.App.DB.QueryRow(query, idProducto).Scan(
+        &inv.UnidadBase, 
+        &inv.UnidadMedidaAlmacen, 
+        &inv.MetodoCosteo, 
+        &inv.Largo, 
+        &inv.Ancho, 
+        &inv.Alto, 
+        &inv.Peso, 
+        &inv.Volumen,
+        &inv.RequierePesaje, 
+        &inv.ConsiderarCompraProgramada, 
+        &inv.ProduccionFabricacion,
+        &inv.VentasSinExistencia, 
+        &inv.ManejaSerie, 
+        &inv.ManejaLote, 
+        &inv.ManejaFechaCaducidad, 
+        &inv.LoteAutomatico,
+    )
+    
+    if err != nil {
+        return inv, err
+    }
+    
+    inv.IDProducto = idProducto
+    return inv, nil
+}
+
+func (m *Repository) ObtenerProductoPorID(id int) (models.Producto, error) {
+	var p models.Producto
+	
+	query := `
+		SELECT 
+			p.id_producto, p.sku, p.nombre, p.nombre_corto, 
+			p.modelo, p.version, p.serie, p.codigo_fabricante, 
+			p.descripcion, p.imagen_url, p.ficha_tecnica_url,
+			m.nombre as marca,
+			p.id_marca, p.id_tipo, p.id_clasificacion, p.id_pais_origen
+		FROM productos p
+		LEFT JOIN marcas m ON p.id_marca = m.id_marca
+		WHERE p.id_producto = ?`
+
+	err := m.App.DB.QueryRow(query, id).Scan(
+		&p.IDProducto, &p.SKU, &p.Nombre, &p.NombreCorto,
+		&p.Modelo, &p.Version, &p.Serie, &p.CodigoFabricante,
+		&p.Descripcion, &p.ImagenURL, &p.FichaTecnicaURL,
+		&p.Marca, // Este campo debe estar en tu struct Producto como string
+		&p.IDMarca, &p.IDTipo, &p.IDClasificacion, &p.IDPaisOrigen,
+	)
+
+	if err != nil {
+		return p, err
+	}
+
+	return p, nil
+}
+
 // ObtenerMarcas devuelve todas las marcas para los selects
 func (m *Repository) ObtenerMarcas() ([]models.Marca, error) {
 	var marcas []models.Marca
@@ -2307,6 +2388,72 @@ func (m *Repository) EliminarPartida(id int) error {
 }
 
 
+//UPSERTS
+
+func (m *Repository) UpsertInventario(inv models.ProductoInventario) error {
+	query := `
+		INSERT INTO producto_inventario (
+			id_producto, 
+			unidad_base, 
+			unidad_medida_almacen, 
+			metodo_costeo, 
+			largo, 
+			ancho, 
+			alto, 
+			peso, 
+			volumen,
+			requiere_pesaje, 
+			considerar_compra_programada, 
+			produccion_fabricacion,
+			ventas_sin_existencia, 
+			maneja_serie, 
+			maneja_lote, 
+			maneja_fecha_caducidad, 
+			lote_automatico
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			unidad_base = VALUES(unidad_base),
+			unidad_medida_almacen = VALUES(unidad_medida_almacen),
+			metodo_costeo = VALUES(metodo_costeo),
+			largo = VALUES(largo),
+			ancho = VALUES(ancho),
+			alto = VALUES(alto),
+			peso = VALUES(peso),
+			volumen = VALUES(volumen),
+			requiere_pesaje = VALUES(requiere_pesaje),
+			considerar_compra_programada = VALUES(considerar_compra_programada),
+			produccion_fabricacion = VALUES(produccion_fabricacion),
+			ventas_sin_existencia = VALUES(ventas_sin_existencia),
+			maneja_serie = VALUES(maneja_serie),
+			maneja_lote = VALUES(maneja_lote),
+			maneja_fecha_caducidad = VALUES(maneja_fecha_caducidad),
+			lote_automatico = VALUES(lote_automatico)`
+
+	// Ejecutamos pasando los 17 parámetros en el orden exacto del INSERT
+	_, err := m.App.DB.Exec(query,
+		inv.IDProducto,                 // 1
+		inv.UnidadBase,                 // 2
+		inv.UnidadMedidaAlmacen,        // 3
+		inv.MetodoCosteo,               // 4
+		inv.Largo,                      // 5
+		inv.Ancho,                      // 6
+		inv.Alto,                       // 7
+		inv.Peso,                       // 8
+		inv.Volumen,                    // 9
+		inv.RequierePesaje,             // 10
+		inv.ConsiderarCompraProgramada, // 11
+		inv.ProduccionFabricacion,      // 12
+		inv.VentasSinExistencia,        // 13
+		inv.ManejaSerie,                // 14
+		inv.ManejaLote,                 // 15
+		inv.ManejaFechaCaducidad,       // 16
+		inv.LoteAutomatico,             // 17
+	)
+
+	return err
+}
+
+
 //FUNCIONES AUXILIARES
 
 // ExisteID verifica si un ID existe en una tabla específica
@@ -2377,4 +2524,5 @@ func atof(s string) float64 {
     f, _ := strconv.ParseFloat(s, 64)
     return f
 }
+
 

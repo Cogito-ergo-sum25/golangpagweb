@@ -75,3 +75,23 @@ CREATE TABLE productos (
   FOREIGN KEY (id_pais_origen) REFERENCES paises(id_pais)
 );
 
+CREATE TABLE producto_inventario (
+    id_producto INT PRIMARY KEY,
+    unidad_base VARCHAR(50),
+    unidad_medida_almacen VARCHAR(50),
+    metodo_costeo VARCHAR(50),
+    largo DECIMAL(10,2) DEFAULT 0.00,
+    ancho DECIMAL(10,2) DEFAULT 0.00,
+    alto DECIMAL(10,2) DEFAULT 0.00,
+    peso DECIMAL(10,2) DEFAULT 0.00,
+    volumen DECIMAL(10,4) DEFAULT 0.0000,
+    requiere_pesaje TINYINT(1) DEFAULT 0,
+    considerar_compra_programada TINYINT(1) DEFAULT 0,
+    produccion_fabricacion TINYINT(1) DEFAULT 0,
+    ventas_sin_existencia TINYINT(1) DEFAULT 0,
+    maneja_serie TINYINT(1) DEFAULT 0,
+    maneja_lote TINYINT(1) DEFAULT 0,
+    maneja_fecha_caducidad TINYINT(1) DEFAULT 0,
+    lote_automatico TINYINT(1) DEFAULT 0,
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
+);
