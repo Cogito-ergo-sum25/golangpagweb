@@ -109,3 +109,15 @@ CREATE TABLE producto_IEPS (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
 );
+
+CREATE TABLE producto_comercio_exterior (
+    id_producto INT PRIMARY KEY,
+    modelo VARCHAR(100),
+    sub_modelo VARCHAR(100),
+    fraccion_arancelaria VARCHAR(50),
+    unidad_medida_aduana VARCHAR(50),
+    factor_conversion_umt DECIMAL(18,10) DEFAULT 0.0000000000,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
+);

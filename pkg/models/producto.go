@@ -40,6 +40,7 @@ type Producto struct {
     // Campos de CROL
     Inventario *ProductoInventario `json:"inventario,omitempty"`
     IEPS       *IEPS             `json:"ieps,omitempty"`
+    ComercioExterior *ComercioExterior `json:"comercio_exterior,omitempty"`
 }
 
 // Modelos auxiliares para las relaciones
@@ -103,4 +104,13 @@ type IEPS struct {
     Empaque        string
     UnidadMedida   string
     Presentacion   float64
+}
+
+type ComercioExterior struct {
+    IDProducto          int     `json:"id_producto"`
+    Modelo              string  `json:"modelo"`
+    SubModelo           string  `json:"sub_modelo"`
+    FraccionArancelaria string  `json:"fraccion_arancelaria"`
+    UnidadMedidaAduana  string  `json:"unidad_medida_aduana"`
+    FactorConversionUMT float64 `json:"factor_conversion_umt"`
 }

@@ -48,6 +48,8 @@ func routes(app *config.AppConfig) http.Handler {
 			r.Post("/producto/inventario/{id}", handlers.Repo.GuardarInventarioProducto)
 			r.Get("/producto/ieps/{id}", handlers.Repo.MostrarIEPSProducto)
 			r.Post("/producto/ieps/{id}", handlers.Repo.GuardarIEPSProducto)
+			r.Get("/producto/comercio-exterior/{id}", handlers.Repo.MostrarComercioExterior)
+			r.Post("/producto/comercio-exterior/{id}", handlers.Repo.GuardarComercioExterior)
 
 		// PROYECTOS
 		r.Get("/proyectos-vista", handlers.Repo.ProyectosVista)

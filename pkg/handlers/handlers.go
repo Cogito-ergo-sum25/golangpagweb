@@ -670,6 +670,71 @@ func (m *Repository) GuardarIEPSProducto(w http.ResponseWriter, r *http.Request)
 	http.Redirect(w, r, "/editar-producto/"+idStr, http.StatusSeeOther)
 }
 
+// MostrarComercioExterior muestra la página de configuración de aduanas
+func (m *Repository) MostrarComercioExterior(w http.ResponseWriter, r *http.Request) {
+    idStr := chi.URLParam(r, "id")
+    id, _ := strconv.Atoi(idStr)
+
+    // 1. Datos básicos del producto
+    producto, err := m.ObtenerProductoPorID(id)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No se encontró el producto")
+        http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+        return
+    }
+
+    // 2. Cargar datos de Comercio Exterior (Lazy Loading)
+    ce, err := m.ObtenerComercioExteriorPorID(id)
+    if err != nil {
+        // Inicializamos vacío si no existe registro
+        ce = models.ComercioExterior{IDProducto: id}
+    }
+    
+    // 3. Asignar al struct padre (Asegúrate de tener el campo en models.Producto)
+    producto.ComercioExterior = &ce
+
+    data := &models.TemplateData{
+        Producto:  producto,
+        CSRFToken: nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "inventario/gestion-comercio-exterior.page.tmpl", data)
+}
+
+// GuardarComercioExterior procesa el formulario de aduanas
+func (m *Repository) GuardarComercioExterior(w http.ResponseWriter, r *http.Request) {
+    idStr := chi.URLParam(r, "id")
+    id, _ := strconv.Atoi(idStr)
+
+    err := r.ParseForm()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/producto/comercio-exterior/"+idStr, http.StatusSeeOther)
+        return
+    }
+
+    // Parseo del factor UMT con alta precisión
+    factor, _ := strconv.ParseFloat(r.Form.Get("factor_conversion_umt"), 64)
+
+    ce := models.ComercioExterior{
+        IDProducto:          id,
+        Modelo:              r.Form.Get("modelo"),
+        SubModelo:           r.Form.Get("sub_modelo"),
+        FraccionArancelaria: r.Form.Get("fraccion_arancelaria"),
+        UnidadMedidaAduana:  r.Form.Get("unidad_medida_aduana"),
+        FactorConversionUMT: factor,
+    }
+
+    err = m.UpsertComercioExterior(ce)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al guardar datos de comercio exterior")
+        http.Redirect(w, r, "/producto/comercio-exterior/"+idStr, http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "flash", "Datos de Comercio Exterior actualizados")
+    http.Redirect(w, r, "/editar-producto/"+idStr, http.StatusSeeOther)
+}
 
 // Handler para eliminar producto
 func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {

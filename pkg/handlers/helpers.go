@@ -321,6 +321,31 @@ func (m *Repository) ObtenerIEPSPorID(idProducto int) (models.IEPS, error) {
 	return ieps, err
 }
 
+func (m *Repository) ObtenerComercioExteriorPorID(id int) (models.ComercioExterior, error) {
+    var ce models.ComercioExterior
+    query := `
+        SELECT 
+            id_producto, 
+            COALESCE(modelo, ''), 
+            COALESCE(sub_modelo, ''), 
+            COALESCE(fraccion_arancelaria, ''), 
+            COALESCE(unidad_medida_aduana, ''), 
+            COALESCE(factor_conversion_umt, 0.0)
+        FROM producto_comercio_exterior 
+        WHERE id_producto = ?`
+
+    err := m.App.DB.QueryRow(query, id).Scan(
+        &ce.IDProducto,
+        &ce.Modelo,
+        &ce.SubModelo,
+        &ce.FraccionArancelaria,
+        &ce.UnidadMedidaAduana,
+        &ce.FactorConversionUMT,
+    )
+
+    return ce, err
+}
+
 
 
 func (m *Repository) ObtenerProductoPorID(id int) (models.Producto, error) {
@@ -2503,6 +2528,30 @@ func (m *Repository) UpsertIEPS(ieps models.IEPS) error {
 	)
 
 	return err
+}
+
+func (m *Repository) UpsertComercioExterior(ce models.ComercioExterior) error {
+    query := `
+        INSERT INTO producto_comercio_exterior (
+            id_producto, modelo, sub_modelo, fraccion_arancelaria, 
+            unidad_medida_aduana, factor_conversion_umt
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            modelo = VALUES(modelo),
+            sub_modelo = VALUES(sub_modelo),
+            fraccion_arancelaria = VALUES(fraccion_arancelaria),
+            unidad_medida_aduana = VALUES(unidad_medida_aduana),
+            factor_conversion_umt = VALUES(factor_conversion_umt)`
+
+    _, err :=  m.App.DB.Exec(query,
+        ce.IDProducto,
+        ce.Modelo,
+        ce.SubModelo,
+        ce.FraccionArancelaria,
+        ce.UnidadMedidaAduana,
+        ce.FactorConversionUMT,
+    )
+    return err
 }
 
 //FUNCIONES AUXILIARES
