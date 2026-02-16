@@ -605,7 +605,70 @@ func (m *Repository) GuardarInventarioProducto(w http.ResponseWriter, r *http.Re
     http.Redirect(w, r, "/editar-producto/"+idStr, http.StatusSeeOther)
 }
 
+func (m *Repository) MostrarIEPSProducto(w http.ResponseWriter, r *http.Request) {
+	// 1. Obtener ID de la URL
+	idStr := chi.URLParam(r, "id")
+	id, _ := strconv.Atoi(idStr)
 
+	// 2. Obtener datos del producto (para el título y breadcrumbs)
+	producto, err := m.ObtenerProductoPorID(id)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se encontró el producto")
+		http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+		return
+	}
+
+	// 3. Cargar datos de IEPS (Lazy Loading)
+	ieps, err := m.ObtenerIEPSPorID(id)
+	if err != nil {
+		// Si no hay registro, creamos uno vacío con el ID para el formulario
+		ieps = models.IEPS{IDProducto: id}
+	}
+	
+	// 4. Asignar el puntero (Asegúrate que en el struct Producto tengas: IEPS *MultiIEPS)
+	producto.IEPS = &ieps
+
+	data := &models.TemplateData{
+		Producto:  producto,
+		CSRFToken: nosurf.Token(r),
+	}
+
+	render.RenderTemplate(w, "inventario/gestion-ieps.page.tmpl", data)
+}
+
+func (m *Repository) GuardarIEPSProducto(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, _ := strconv.Atoi(idStr)
+
+	err := r.ParseForm()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+		http.Redirect(w, r, "/producto/ieps/"+idStr, http.StatusSeeOther)
+		return
+	}
+
+	// Parseo de presentación
+	pres, _ := strconv.ParseFloat(r.Form.Get("presentacion"), 64)
+
+	ieps := models.IEPS{
+		IDProducto:    id,
+		TipoProducto:  r.Form.Get("tipo_producto"),
+		ClaveProducto: r.Form.Get("clave_producto"),
+		Empaque:       r.Form.Get("empaque"),
+		UnidadMedida:  r.Form.Get("unidad_medida"),
+		Presentacion:  pres,
+	}
+
+	err = m.UpsertIEPS(ieps)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se pudo guardar la configuración fiscal")
+		http.Redirect(w, r, "/producto/ieps/"+idStr, http.StatusSeeOther)
+		return
+	}
+
+	m.App.Session.Put(r.Context(), "flash", "Configuración Multi IEPS actualizada")
+	http.Redirect(w, r, "/editar-producto/"+idStr, http.StatusSeeOther)
+}
 
 
 // Handler para eliminar producto

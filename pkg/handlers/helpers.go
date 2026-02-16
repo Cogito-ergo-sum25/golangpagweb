@@ -296,6 +296,33 @@ func (m *Repository) ObtenerInventarioPorID(idProducto int) (models.ProductoInve
     return inv, nil
 }
 
+// ObtenerIEPSPorID busca los datos fiscales por ID de producto
+func (m *Repository) ObtenerIEPSPorID(idProducto int) (models.IEPS, error) {
+	var ieps models.IEPS
+	query := `
+		SELECT 
+			COALESCE(tipo_producto, ''), 
+			COALESCE(clave_producto, ''), 
+			COALESCE(empaque, ''), 
+			COALESCE(unidad_medida, ''), 
+			COALESCE(presentacion, 0.00)
+		FROM producto_IEPS 
+		WHERE id_producto = ?`
+
+	err := m.App.DB.QueryRow(query, idProducto).Scan(
+		&ieps.TipoProducto, 
+		&ieps.ClaveProducto, 
+		&ieps.Empaque, 
+		&ieps.UnidadMedida, 
+		&ieps.Presentacion,
+	)
+
+	ieps.IDProducto = idProducto
+	return ieps, err
+}
+
+
+
 func (m *Repository) ObtenerProductoPorID(id int) (models.Producto, error) {
 	var p models.Producto
 	
@@ -2453,6 +2480,30 @@ func (m *Repository) UpsertInventario(inv models.ProductoInventario) error {
 	return err
 }
 
+// UpsertIEPS inserta o actualiza la configuración fiscal
+func (m *Repository) UpsertIEPS(ieps models.IEPS) error {
+	query := `
+		INSERT INTO producto_IEPS (
+			id_producto, tipo_producto, clave_producto, empaque, unidad_medida, presentacion
+		) VALUES (?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			tipo_producto = VALUES(tipo_producto),
+			clave_producto = VALUES(clave_producto),
+			empaque = VALUES(empaque),
+			unidad_medida = VALUES(unidad_medida),
+			presentacion = VALUES(presentacion)`
+
+	_, err := m.App.DB.Exec(query,
+		ieps.IDProducto,
+		ieps.TipoProducto,
+		ieps.ClaveProducto,
+		ieps.Empaque,
+		ieps.UnidadMedida,
+		ieps.Presentacion,
+	)
+
+	return err
+}
 
 //FUNCIONES AUXILIARES
 

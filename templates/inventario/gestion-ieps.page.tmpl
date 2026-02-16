@@ -1,0 +1,105 @@
+{{template "base" .}}
+{{define "content"}}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/inventario">Catálogo</a></li>
+            <li class="breadcrumb-item"><a href="/editar-producto/{{.Producto.IDProducto}}">Editar Producto</a></li>
+            <li class="breadcrumb-item active">Multi IEPS</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-lg border-0">
+        <div class="card-header azul text-white">
+            <h5 class="mb-0"><i class="fas fa-percent me-2"></i> Configuración Multi IEPS: {{.Producto.Nombre}}</h5>
+            <small>SKU: {{.Producto.SKU}} | Marca: {{.Producto.Marca}}</small>
+        </div>
+        
+        <form method="POST" action="/producto/ieps/{{.Producto.IDProducto}}" class="needs-validation" novalidate>
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            
+            <div class="card-body bg-light">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <h6 class="form-label fw-bold border-bottom pb-2">Detalles Fiscales del IEPS</h6>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted">Tipo de producto</label>
+                        <select class="form-select" name="tipo_producto">
+                            <option value="" {{if eq .Producto.IEPS.TipoProducto ""}}selected{{end}}>Sin seleccionar</option>
+                            <option value="BEBIDAS_ALCOHOLICAS" {{if eq .Producto.IEPS.TipoProducto "BEBIDAS_ALCOHOLICAS"}}selected{{end}}>Bebidas Alcohólicas</option>
+                            <option value="TABACOS" {{if eq .Producto.IEPS.TipoProducto "TABACOS"}}selected{{end}}>Tabacos Labrados</option>
+                            <option value="ALIMENTOS_DENSIDAD" {{if eq .Producto.IEPS.TipoProducto "ALIMENTOS_DENSIDAD"}}selected{{end}}>Alimentos Densidad Calórica</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted">Clave del producto</label>
+                        <select class="form-select" name="clave_producto">
+                            <option value="" {{if eq .Producto.IEPS.ClaveProducto ""}}selected{{end}}>Sin seleccionar</option>
+                            <option value="CAT1" {{if eq .Producto.IEPS.ClaveProducto "CAT1"}}selected{{end}}>Categoría 1</option>
+                            <option value="CAT2" {{if eq .Producto.IEPS.ClaveProducto "CAT2"}}selected{{end}}>Categoría 2</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted">Empaque</label>
+                        <select class="form-select" name="empaque">
+                            <option value="" {{if eq .Producto.IEPS.Empaque ""}}selected{{end}}>Sin seleccionar</option>
+                            <option value="CAJA" {{if eq .Producto.IEPS.Empaque "CAJA"}}selected{{end}}>Caja</option>
+                            <option value="BOTELLA" {{if eq .Producto.IEPS.Empaque "BOTELLA"}}selected{{end}}>Botella</option>
+                            <option value="SOBRE" {{if eq .Producto.IEPS.Empaque "SOBRE"}}selected{{end}}>Sobre</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted">Unidad de medida</label>
+                        <select class="form-select" name="unidad_medida">
+                            <option value="" {{if eq .Producto.IEPS.UnidadMedida ""}}selected{{end}}>Sin seleccionar</option>
+                            <option value="MILILITROS" {{if eq .Producto.IEPS.UnidadMedida "MILILITROS"}}selected{{end}}>Mililitros</option>
+                            <option value="GRAMOS" {{if eq .Producto.IEPS.UnidadMedida "GRAMOS"}}selected{{end}}>Gramos</option>
+                            <option value="PIEZAS" {{if eq .Producto.IEPS.UnidadMedida "PIEZAS"}}selected{{end}}>Piezas</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 mt-4">
+                        <label class="form-label fw-bold small text-muted">Presentación</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control text-end" name="presentacion" 
+                                   value="{{if .Producto.IEPS.Presentacion}}{{.Producto.IEPS.Presentacion}}{{else}}0.00{{end}}">
+                            <span class="input-group-text bg-white border-start-0 text-muted small">Qnty</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer py-3 d-flex justify-content-between">
+                <a href="/editar-producto/{{.Producto.IDProducto}}" class="btn azul px-4 text-white shadow-sm">
+                    <i class="fas fa-arrow-left me-2"></i> Volver a Producto
+                </a>
+                <button type="submit" class="btn verde px-5 text-white shadow-sm">
+                    <i class="fas fa-save me-2"></i> Guardar Multi IEPS
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Validación de Bootstrap básica
+(function() {
+  'use strict'
+  var forms = document.querySelectorAll('.needs-validation')
+  Array.prototype.slice.call(forms).forEach(function(form) {
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
+{{end}}

@@ -93,5 +93,19 @@ CREATE TABLE producto_inventario (
     maneja_lote TINYINT(1) DEFAULT 0,
     maneja_fecha_caducidad TINYINT(1) DEFAULT 0,
     lote_automatico TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
+);
+
+CREATE TABLE producto_IEPS (
+    id_producto INT PRIMARY KEY,
+    tipo_producto VARCHAR(100),
+    clave_producto VARCHAR(50),
+    empaque VARCHAR(100),
+    unidad_medida VARCHAR(50),
+    presentacion DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
 );

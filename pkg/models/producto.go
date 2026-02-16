@@ -39,6 +39,7 @@ type Producto struct {
 
     // Campos de CROL
     Inventario *ProductoInventario `json:"inventario,omitempty"`
+    IEPS       *IEPS             `json:"ieps,omitempty"`
 }
 
 // Modelos auxiliares para las relaciones
@@ -93,4 +94,13 @@ type ProductoInventario struct {
     ManejaLote                  bool    `json:"maneja_lote"`
     ManejaFechaCaducidad        bool    `json:"maneja_fecha_caducidad"`
     LoteAutomatico              bool    `json:"lote_automatico"`
+}
+
+type IEPS struct {
+    IDProducto     int
+    TipoProducto   string
+    ClaveProducto  string
+    Empaque        string
+    UnidadMedida   string
+    Presentacion   float64
 }
