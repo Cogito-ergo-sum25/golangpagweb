@@ -736,6 +736,126 @@ func (m *Repository) GuardarComercioExterior(w http.ResponseWriter, r *http.Requ
     http.Redirect(w, r, "/editar-producto/"+idStr, http.StatusSeeOther)
 }
 
+func (m *Repository) MostrarCatalogosProducto(w http.ResponseWriter, r *http.Request) {
+    idStr := chi.URLParam(r, "id")
+    id, _ := strconv.Atoi(idStr)
+
+    producto, err := m.ObtenerProductoPorID(id)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Producto no encontrado")
+        http.Redirect(w, r, "/inventario", http.StatusSeeOther)
+        return
+    }
+
+    catalogos, _ := m.ObtenerCatalogosPorProductoID(id)
+
+    // NUEVO: Traemos directamente las combinaciones Licitación-Partida del producto
+    partidasAsignadas, err := m.ObtenerTodasLasPartidasDelProducto(id)
+    if err != nil {
+        log.Println("Error al obtener partidas asignadas:", err)
+    }
+
+    data := &models.TemplateData{
+        Producto:         producto,
+        Catalogos:        catalogos,
+        PartidasProducto: partidasAsignadas, // Enviamos las partidas filtradas al modal
+        CSRFToken:        nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "inventario/gestion-catalogos.page.tmpl", data)
+}
+
+func (m *Repository) GuardarCatalogoProducto(w http.ResponseWriter, r *http.Request) {
+    idStr := chi.URLParam(r, "id")
+    idProducto, _ := strconv.Atoi(idStr)
+
+    err := r.ParseForm()
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+        http.Redirect(w, r, "/producto/catalogos/"+idStr, http.StatusSeeOther)
+        return
+    }
+
+    // Capturamos el ID de la relación Partida-Producto del nuevo select
+    idPartidaProducto, _ := strconv.Atoi(r.Form.Get("id_partida_producto"))
+    
+    // Nueva lógica: Si hay una partida, obtenemos su ID de licitación real
+    idLicitacion := 0
+    if idPartidaProducto > 0 {
+        // Query rápido para obtener la licitación de esa partida específica
+        query := `SELECT id_licitacion FROM licitacion_partidas lp 
+                  INNER JOIN partida_productos pp ON lp.id_partida = pp.id_partida 
+                  WHERE pp.id_partida_producto = ? LIMIT 1`
+        _ = m.App.DB.QueryRow(query, idPartidaProducto).Scan(&idLicitacion)
+    }
+
+    catalogo := models.ProductoCatalogo{
+        IDProducto:        idProducto,
+        IDLicitacion:      idLicitacion,      // Ya no viene del form, se deduce de la partida
+        IDPartidaProducto: idPartidaProducto, 
+        NombreVersion:     r.Form.Get("nombre_version"),
+        ArchivoURL:        r.Form.Get("archivo_url"),
+        Descripcion:       r.Form.Get("descripcion"),
+    }
+
+    err = m.InsertarCatalogo(catalogo)
+    if err != nil {
+        log.Println("Error al insertar catálogo:", err)
+        m.App.Session.Put(r.Context(), "error", "No se pudo vincular el catálogo")
+        http.Redirect(w, r, "/producto/catalogos/"+idStr, http.StatusSeeOther)
+        return
+    }
+
+    m.App.Session.Put(r.Context(), "flash", "Catálogo vinculado correctamente")
+    http.Redirect(w, r, "/producto/catalogos/"+idStr, http.StatusSeeOther)
+}
+
+// Handler para eliminar
+func (m *Repository) EliminarCatalogo(w http.ResponseWriter, r *http.Request) {
+	idCatalogo, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	
+	// Necesitamos el ID del producto para saber a dónde regresar después de borrar
+	var idProducto int
+	query := "SELECT id_producto FROM producto_catalogos WHERE id_catalogo = ?"
+	_ = m.App.DB.QueryRow(query, idCatalogo).Scan(&idProducto)
+
+	err := m.EliminarCatalogoUnico(idCatalogo)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se pudo eliminar el catálogo")
+	} else {
+		m.App.Session.Put(r.Context(), "flash", "Catálogo eliminado correctamente")
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/producto/catalogos/%d", idProducto), http.StatusSeeOther)
+}
+
+// Handler para editar (vía POST desde un modal o formulario)
+func (m *Repository) EditarCatalogo(w http.ResponseWriter, r *http.Request) {
+	idCatalogo, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	_ = r.ParseForm()
+
+	catalogo := models.ProductoCatalogo{
+		IDCatalogo:    idCatalogo,
+		NombreVersion: r.Form.Get("nombre_version"),
+		ArchivoURL:    r.Form.Get("archivo_url"),
+		Descripcion:   r.Form.Get("descripcion"),
+	}
+
+	err := m.ActualizarCatalogo(catalogo)
+	
+    // Recuperamos el ID del producto para redireccionar
+    var idProducto int
+	_ = m.App.DB.QueryRow("SELECT id_producto FROM producto_catalogos WHERE id_catalogo = ?", idCatalogo).Scan(&idProducto)
+
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al actualizar")
+	} else {
+		m.App.Session.Put(r.Context(), "flash", "Cambios guardados con éxito")
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/producto/catalogos/%d", idProducto), http.StatusSeeOther)
+}
+
 // Handler para eliminar producto
 func (m *Repository) EliminarProducto(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {

@@ -121,3 +121,21 @@ CREATE TABLE producto_comercio_exterior (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE
 );
+
+CREATE TABLE producto_catalogos (
+    id_catalogo INT AUTO_INCREMENT PRIMARY KEY,
+    id_producto INT NOT NULL,
+    -- Opcionales: solo si el catálogo es para una licitación específica
+    id_licitacion INT DEFAULT NULL, 
+    id_partida_producto INT DEFAULT NULL, 
+    
+    nombre_version VARCHAR(100), -- Ej: "Version Licitación IMSS 2026"
+    archivo_url VARCHAR(255),
+    descripcion TEXT,
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON DELETE CASCADE,
+    FOREIGN KEY (id_partida_producto) REFERENCES partida_productos(id_partida_producto) ON DELETE SET NULL
+);

@@ -114,3 +114,17 @@ type ComercioExterior struct {
     UnidadMedidaAduana  string  `json:"unidad_medida_aduana"`
     FactorConversionUMT float64 `json:"factor_conversion_umt"`
 }
+
+type ProductoCatalogo struct {
+    IDCatalogo        int       `json:"id_catalogo"`
+    IDProducto        int       `json:"id_producto"`
+    IDLicitacion      int       `json:"id_licitacion"`      // <--- AGREGA ESTA LÍNEA
+    IDPartidaProducto int       `json:"id_partida_producto"` 
+    NombreVersion     string    `json:"nombre_version"`
+    ArchivoURL        string    `json:"archivo_url"`
+    Descripcion       string    `json:"descripcion"`
+    UpdatedAt         time.Time `json:"updated_at"`
+    CreatedAt         time.Time `json:"created_at"`
+    ContextoLicitacion string    // Para mostrar el NumContratacion
+    ContextoPartida    int       // Para mostrar el número de partida
+}

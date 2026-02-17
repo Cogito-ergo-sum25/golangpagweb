@@ -242,6 +242,16 @@ func (m *Repository) ActualizarAclaracion(a models.AclaracionesLicitacion) error
     return err
 }
 
+func (m *Repository) ActualizarCatalogo(c models.ProductoCatalogo) error {
+	query := `
+		UPDATE producto_catalogos 
+		SET nombre_version = ?, archivo_url = ?, descripcion = ?, updated_at = NOW()
+		WHERE id_catalogo = ?`
+
+	_, err := m.App.DB.Exec(query, c.NombreVersion, c.ArchivoURL, c.Descripcion, c.IDCatalogo)
+	return err
+}
+
 // GETTERS
 
 func (m *Repository) ObtenerInventarioPorID(idProducto int) (models.ProductoInventario, error) {
@@ -346,7 +356,107 @@ func (m *Repository) ObtenerComercioExteriorPorID(id int) (models.ComercioExteri
     return ce, err
 }
 
+func (m *Repository) ObtenerCatalogosPorProductoID(idProducto int) ([]models.ProductoCatalogo, error) {
+    var catalogos []models.ProductoCatalogo
+    
+    // Cambiamos created_at por updated_at para reflejar la última actividad
+    query := `
+        SELECT 
+            c.id_catalogo, 
+            c.id_producto, 
+            COALESCE(c.id_partida_producto, 0), 
+            c.nombre_version, 
+            c.archivo_url, 
+            c.descripcion, 
+            c.updated_at,
+            COALESCE(l.num_contratacion, 'Catálogo General') as num_contratacion,
+            COALESCE(p.numero_partida_convocatoria, 0) as num_partida
+        FROM producto_catalogos c
+        LEFT JOIN licitaciones l ON c.id_licitacion = l.id_licitacion
+        LEFT JOIN partida_productos pp ON c.id_partida_producto = pp.id_partida_producto
+        LEFT JOIN partidas p ON pp.id_partida = p.id_partida
+        WHERE c.id_producto = ?
+        ORDER BY c.updated_at DESC`
 
+    rows, err := m.App.DB.Query(query, idProducto)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var c models.ProductoCatalogo
+        var numContratacion string
+        var numPartida int
+
+        // Escaneamos c.UpdatedAt en lugar de CreatedAt
+        err := rows.Scan(
+            &c.IDCatalogo, 
+            &c.IDProducto, 
+            &c.IDPartidaProducto,
+            &c.NombreVersion, 
+            &c.ArchivoURL, 
+            &c.Descripcion, 
+            &c.UpdatedAt,
+            &numContratacion, 
+            &numPartida,
+        )
+        if err != nil {
+            return nil, err
+        }
+        
+        // Mapeamos los datos de contexto para las tablas de Intevi
+        c.ContextoLicitacion = numContratacion
+        c.ContextoPartida = numPartida
+        
+        catalogos = append(catalogos, c)
+    }
+
+    return catalogos, nil
+}
+
+func (m *Repository) ObtenerTodasLasPartidasDelProducto(idProducto int) ([]models.PartidaProductos, error) {
+    var relaciones []models.PartidaProductos
+
+    query := `
+        SELECT 
+            pp.id_partida_producto, 
+            p.numero_partida_convocatoria, 
+            p.nombre_descripcion,
+            l.num_contratacion
+        FROM partida_productos pp
+        INNER JOIN partidas p ON pp.id_partida = p.id_partida
+        INNER JOIN licitacion_partidas lp ON p.id_partida = lp.id_partida
+        INNER JOIN licitaciones l ON lp.id_licitacion = l.id_licitacion
+        WHERE pp.id_producto = ?
+        ORDER BY l.created_at DESC, p.numero_partida_convocatoria ASC`
+
+    rows, err := m.App.DB.Query(query, idProducto)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var pp models.PartidaProductos
+        var p models.Partida
+        var l models.Licitacion
+
+        err := rows.Scan(
+            &pp.IDPartidaProducto, 
+            &p.NumPartidaConvocatoria, 
+            &p.NombreDescripcion,
+            &l.NumContratacion,
+        )
+        if err != nil {
+            return nil, err
+        }
+        pp.Partida = &p
+        pp.NumeroContratacion = l.NumContratacion
+        relaciones = append(relaciones, pp)
+    }
+    return relaciones, nil
+}
 
 func (m *Repository) ObtenerProductoPorID(id int) (models.Producto, error) {
 	var p models.Producto
@@ -2035,7 +2145,6 @@ func (m *Repository) ObtenerArchivosLicitacion(idLicitacion int) ([]models.Archi
 
 
 
-
 // SETTERS
 
 // AgregarMarca inserta una nueva marca en la base de datos
@@ -2372,6 +2481,36 @@ func (m *Repository) CrearProyectoEnDB(proyecto models.Proyecto) (int64, error) 
 	return id, nil
 }
 
+func (m *Repository) InsertarCatalogo(c models.ProductoCatalogo) error {
+    query := `
+        INSERT INTO producto_catalogos (
+            id_producto, id_licitacion, id_partida_producto, 
+            nombre_version, archivo_url, descripcion
+        ) VALUES (?, ?, ?, ?, ?, ?)`
+
+    // Manejo de Nulos: Si es 0, enviamos nil para que MySQL guarde NULL
+    var lic interface{} = nil
+    if c.IDLicitacion > 0 {
+        lic = c.IDLicitacion
+    }
+
+    var part interface{} = nil
+    if c.IDPartidaProducto > 0 {
+        part = c.IDPartidaProducto
+    }
+
+    _, err := m.App.DB.Exec(query, 
+        c.IDProducto, 
+        lic, 
+        part, 
+        c.NombreVersion, 
+        c.ArchivoURL, 
+        c.Descripcion,
+    )
+
+    return err
+}
+
 
 
 
@@ -2439,6 +2578,11 @@ func (m *Repository) EliminarPartida(id int) error {
     return nil
 }
 
+func (m *Repository) EliminarCatalogoUnico(idCatalogo int) error {
+	query := `DELETE FROM producto_catalogos WHERE id_catalogo = ?`
+	_, err := m.App.DB.Exec(query, idCatalogo)
+	return err
+}
 
 //UPSERTS
 

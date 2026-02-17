@@ -51,6 +51,12 @@ func routes(app *config.AppConfig) http.Handler {
 			r.Get("/producto/comercio-exterior/{id}", handlers.Repo.MostrarComercioExterior)
 			r.Post("/producto/comercio-exterior/{id}", handlers.Repo.GuardarComercioExterior)
 
+		// CATALOGOS DE PRODUCTOS
+		r.Get("/producto/catalogos/{id}", handlers.Repo.MostrarCatalogosProducto)
+		r.Post("/producto/catalogos/{id}", handlers.Repo.GuardarCatalogoProducto)
+		r.Post("/producto/catalogos/editar/{id}", handlers.Repo.EditarCatalogo)
+		r.Get("/producto/catalogos/eliminar/{id}", handlers.Repo.EliminarCatalogo)
+
 		// PROYECTOS
 		r.Get("/proyectos-vista", handlers.Repo.ProyectosVista)
 		r.Get("/nuevo-proyecto", handlers.Repo.MostrarNuevoProyecto)
@@ -69,9 +75,9 @@ func routes(app *config.AppConfig) http.Handler {
 		r.Get("/calendario", handlers.Repo.Calendario)
 
 		// LICITACIONES - ARCHIVOS
-		mux.Get("/archivos-licitacion/{id}", handlers.Repo.GetArchivosLicitacion)
-		mux.Post("/guardar-enlace-licitacion", handlers.Repo.PostGuardarEnlace)
-		mux.Post("/eliminar-archivo-licitacion", handlers.Repo.PostEliminarEnlace)
+		r.Get("/archivos-licitacion/{id}", handlers.Repo.GetArchivosLicitacion)
+		r.Post("/guardar-enlace-licitacion", handlers.Repo.PostGuardarEnlace)
+		r.Post("/eliminar-archivo-licitacion", handlers.Repo.PostEliminarEnlace)
 
 		// PARTIDAS
 		r.Get("/mostrar-partidas/{id}", handlers.Repo.MostrarPartidasPorID)

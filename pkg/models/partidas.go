@@ -49,6 +49,11 @@ type PartidaProductos struct {
 	PrecioOfertado    float64 `json:"precio_ofertado"`
 	Observaciones     string  `json:"observaciones"`
 
+	// Campos auxiliares para el JOIN dinámico
+    NumeroPartida      int      `json:"numero_partida"`
+    NumeroContratacion string   `json:"numero_contratacion"`
+    LicitacionNombre   string   `json:"licitacion_nombre"`
+
 	Partida  *Partida  `json:"partida"`
 	Producto *Producto `json:"producto"`
 

@@ -1,0 +1,235 @@
+{{template "base" .}}
+
+{{define "content"}}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/inventario">Productos</a></li>
+            <li class="breadcrumb-item"><a href="/editar-producto/{{.Producto.IDProducto}}">Editar Producto</a></li>
+            <li class="breadcrumb-item active">Catálogos y Versiones</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-0">Repositorio Técnico: {{.Producto.Nombre}}</h4>
+            <span class="text-muted small">SKU: {{.Producto.SKU}} | Marca: {{.Producto.Marca}}</span>
+        </div>
+        <button class="btn verde text-white shadow-sm" data-bs-toggle="modal" data-bs-target="#modalSubirCatalogo">
+            <i class="fas fa-plus me-1"></i> Nueva Versión
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="card-header bg-info text-white">
+            <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i> Catálogos Generales (Uso Global)</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 bg-white">
+                <thead class="table-light">
+                    <tr>
+                        <th>Versión</th>
+                        <th>Descripción</th>
+                        <th>Última Actualización</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{$hasGeneral := false}}
+                    {{range .Catalogos}}
+                        {{if eq .IDPartidaProducto 0}}
+                        {{$hasGeneral = true}}
+                        <tr>
+                            <td class="fw-bold">{{.NombreVersion}}</td>
+                            <td><small>{{.Descripcion}}</small></td>
+                            <td>{{.UpdatedAt.Format "02/01/2006 15:04"}}</td>
+                            <td class="text-center">
+                                <div class="btn-group shadow-sm">
+                                    <a href="{{.ArchivoURL}}" target="_blank" class="btn btn-sm btn-outline-primary" title="Ver PDF">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    <button class="btn btn-sm btn-outline-warning" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalEditarCatalogo"
+                                            onclick="llenarModalEditar('{{.IDCatalogo}}', '{{.NombreVersion}}', '{{.ArchivoURL}}', '{{.Descripcion}}')"
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <a href="/producto/catalogos/eliminar/{{.IDCatalogo}}" 
+                                    class="btn btn-sm btn-outline-danger" 
+                                    onclick="return confirm('¿Estás seguro de eliminar esta versión? Esta acción no se puede deshacer.')"
+                                    title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    {{end}}
+                    {{if not $hasGeneral}}
+                        <tr><td colspan="4" class="text-center py-4 text-muted">No hay catálogos generales registrados.</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header azul text-white">
+            <h6 class="mb-0"><i class="fas fa-gavel me-2"></i> Catálogos por Licitación / Partida (Específicos)</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 bg-white">
+                <thead class="table-light">
+                    <tr>
+                        <th>Versión</th>
+                        <th>Licitación / Partida</th>
+                        <th>Descripción</th>
+                        <th>Última Actualización</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{$hasLicitacion := false}}
+                    {{range .Catalogos}}
+                        {{if gt .IDPartidaProducto 0}}
+                        {{$hasLicitacion = true}}
+                        <tr>
+                            <td class="fw-bold">{{.NombreVersion}}</td>
+                            <td>
+                                <span class="badge bg-warning text-dark">
+                                    {{.ContextoLicitacion}} | Partida #{{.ContextoPartida}}
+                                </span>
+                            </td>
+                            <td><small>{{.Descripcion}}</small></td>
+                            <td>{{.UpdatedAt.Format "02/01/2006 15:04"}}</td>
+                            <td class="text-center">
+                                <div class="btn-group shadow-sm">
+                                    <a href="{{.ArchivoURL}}" target="_blank" class="btn btn-sm btn-outline-primary" title="Ver PDF">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    <button class="btn btn-sm btn-outline-warning" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalEditarCatalogo"
+                                            onclick="llenarModalEditar('{{.IDCatalogo}}', '{{.NombreVersion}}', '{{.ArchivoURL}}', '{{.Descripcion}}')"
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+
+                                    <a href="/producto/catalogos/eliminar/{{.IDCatalogo}}" 
+                                    class="btn btn-sm btn-outline-danger" 
+                                    onclick="return confirm('¿Estás seguro de eliminar esta versión? Esta acción no se puede deshacer.')"
+                                    title="Eliminar">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {{end}}
+                    {{end}}
+                    {{if not $hasLicitacion}}
+                        <tr><td colspan="4" class="text-center py-4 text-muted">No hay catálogos vinculados a licitaciones.</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSubirCatalogo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="/producto/catalogos/{{.Producto.IDProducto}}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="modal-content">
+                <div class="modal-header azul text-white">
+                    <h5 class="modal-title"><i class="fas fa-link me-2"></i> Vincular Nueva Versión</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nombre de la Versión</label>
+                        <input type="text" name="nombre_version" class="form-control" placeholder="Ej: Catálogo Técnico IMSS 2026" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">URL del Catálogo (Link Externo)</label>
+                        <input type="url" name="archivo_url" class="form-control" placeholder="https://ejemplo.com/archivo.pdf" required>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Asignar a Licitación / Partida</label>
+                        <select name="id_partida_producto" class="form-select">
+                            <option value="0">-- Catálogo General (Sin Licitación) --</option>
+                            {{range .PartidasProducto}}
+                                <option value="{{.IDPartidaProducto}}">
+                                    {{.NumeroContratacion}} | Partida #{{.Partida.NumPartidaConvocatoria}} - {{.Partida.NombreDescripcion}}
+                                </option>
+                            {{end}}
+                        </select>
+                        <div class="form-text small">Solo aparecen las partidas de <strong>Intevi</strong> donde este producto ya está ofertado.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Descripción / Notas</label>
+                        <textarea name="descripcion" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn verde text-white">Registrar Enlace</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarCatalogo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="formEditarCatalogo" method="POST">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i> Editar Versión de Catálogo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nombre de la Versión</label>
+                        <input type="text" name="nombre_version" id="edit_nombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">URL del Catálogo</label>
+                        <input type="url" name="archivo_url" id="edit_url" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Descripción / Notas</label>
+                        <textarea name="descripcion" id="edit_desc" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function llenarModalEditar(id, nombre, url, desc) {
+    // Cambiamos el action del form dinámicamente
+    document.getElementById('formEditarCatalogo').action = '/producto/catalogos/editar/' + id;
+    
+    // Llenamos los campos
+    document.getElementById('edit_nombre').value = nombre;
+    document.getElementById('edit_url').value = url;
+    document.getElementById('edit_desc').value = desc;
+}
+</script>
+
+
+{{end}}

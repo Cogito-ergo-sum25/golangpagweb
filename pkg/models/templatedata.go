@@ -51,6 +51,10 @@ type TemplateData struct {
 	Archivos []ArchivoLicitacion
 	Archivo  ArchivoLicitacion
 
+	// --- Datos de catálogos de productos ---
+    Catalogos []ProductoCatalogo // Para listar todas las versiones
+    Catalogo  ProductoCatalogo   // Para edición o visualización individual
+
 	// --- Datos de requerimientos ---
 	Requerimientos RequerimientosPartida
 
@@ -73,6 +77,8 @@ type TemplateData struct {
 	// Fallos de propuestas
 	Fallo *FallosPropuesta
 	Fallos []FallosPropuesta
+
+	PartidasProducto []PartidaProductos
 
 	// Listas para formularios
 	Marcas          []Marca
