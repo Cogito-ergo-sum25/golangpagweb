@@ -252,6 +252,11 @@ func (m *Repository) ActualizarCatalogo(c models.ProductoCatalogo) error {
 	return err
 }
 
+
+
+
+
+
 // GETTERS
 
 func (m *Repository) ObtenerInventarioPorID(idProducto int) (models.ProductoInventario, error) {
@@ -2133,6 +2138,90 @@ func (m *Repository) ObtenerArchivosLicitacion(idLicitacion int) ([]models.Archi
 	return archivos, nil
 }
 
+func (m *Repository) ObtenerCatalogosPorLicitacionID(idLicitacion int) ([]models.ProductoCatalogo, error) {
+	var catalogos []models.ProductoCatalogo
+
+	// Unimos catálogos con productos y partidas para dar contexto completo
+	query := `
+		SELECT 
+			c.id_catalogo, c.id_producto, c.id_licitacion, COALESCE(c.id_partida_producto, 0), 
+			c.nombre_version, c.archivo_url, c.descripcion, c.updated_at,
+			p.nombre as nombre_producto,
+			COALESCE(pa.numero_partida_convocatoria, 0) as num_partida
+		FROM producto_catalogos c
+		INNER JOIN productos p ON c.id_producto = p.id_producto
+		LEFT JOIN partida_productos pp ON c.id_partida_producto = pp.id_partida_producto
+		LEFT JOIN partidas pa ON pp.id_partida = pa.id_partida
+		WHERE c.id_licitacion = ?
+		ORDER BY pa.numero_partida_convocatoria ASC, c.updated_at DESC`
+
+	rows, err := m.App.DB.Query(query, idLicitacion)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var c models.ProductoCatalogo
+		// Usamos campos temporales para el JOIN que guardaremos en el contexto del struct
+		var nombreProd string
+		var numPartida int
+
+		err := rows.Scan(
+			&c.IDCatalogo, &c.IDProducto, &c.IDLicitacion, &c.IDPartidaProducto,
+			&c.NombreVersion, &c.ArchivoURL, &c.Descripcion, &c.UpdatedAt,
+			&nombreProd, &numPartida,
+		)
+		if err != nil {
+			return nil, err
+		}
+		
+		c.NombreProducto = nombreProd // Asegúrate de agregar este campo al struct o usarlo en el Map
+		c.ContextoPartida = numPartida
+		catalogos = append(catalogos, c)
+	}
+
+	return catalogos, nil
+}
+
+func (m *Repository) ObtenerPartidasConProductoPorLicitacion(idLicitacion int) ([]models.PartidaProductos, error) {
+    var lista []models.PartidaProductos
+
+    query := `
+        SELECT 
+			pp.id_partida_producto, 
+			pp.id_producto, 
+			p.numero_partida_convocatoria, 
+			p.nombre_descripcion,
+			prod.nombre AS nombre_producto
+		FROM partida_productos pp
+		INNER JOIN partidas p ON pp.id_partida = p.id_partida
+		INNER JOIN productos prod ON pp.id_producto = prod.id_producto
+		-- Necesitamos unir con la tabla intermedia para filtrar por licitación
+		INNER JOIN licitacion_partidas lp ON p.id_partida = lp.id_partida
+		WHERE lp.id_licitacion = ?
+		ORDER BY p.numero_partida_convocatoria ASC;`
+
+    rows, err := m.App.DB.Query(query, idLicitacion)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var pp models.PartidaProductos
+        var p models.Partida
+        var pr models.Producto
+        err := rows.Scan(&pp.IDPartidaProducto, &pp.IDProducto, &p.NumPartidaConvocatoria, &p.NombreDescripcion, &pr.Nombre)
+        if err != nil {
+            return nil, err
+        }
+        pp.Partida = &p
+        pp.Producto = &pr // Para mostrar qué producto es en el select
+        lista = append(lista, pp)
+    }
+    return lista, nil
+}
 
 
 
@@ -2510,6 +2599,8 @@ func (m *Repository) InsertarCatalogo(c models.ProductoCatalogo) error {
 
     return err
 }
+
+
 
 
 

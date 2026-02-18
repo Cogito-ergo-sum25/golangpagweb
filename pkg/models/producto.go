@@ -118,8 +118,9 @@ type ComercioExterior struct {
 type ProductoCatalogo struct {
     IDCatalogo        int       `json:"id_catalogo"`
     IDProducto        int       `json:"id_producto"`
-    IDLicitacion      int       `json:"id_licitacion"`      // <--- AGREGA ESTA LÍNEA
+    IDLicitacion      int       `json:"id_licitacion"`
     IDPartidaProducto int       `json:"id_partida_producto"` 
+    NombreProducto    string    `json:"nombre_producto"`
     NombreVersion     string    `json:"nombre_version"`
     ArchivoURL        string    `json:"archivo_url"`
     Descripcion       string    `json:"descripcion"`

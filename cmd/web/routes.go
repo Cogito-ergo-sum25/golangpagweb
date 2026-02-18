@@ -70,6 +70,11 @@ func routes(app *config.AppConfig) http.Handler {
 		r.Post("/nueva-licitacion", handlers.Repo.CrearNuevaLicitacion)
 		r.Get("/editar-licitacion/{id}", handlers.Repo.MostrarFormularioEditarLicitacion)
 		r.Post("/editar-licitacion/{id}", handlers.Repo.EditarLicitacion)
+		r.Get("/licitacion/catalogos/{id}", handlers.Repo.MostrarCatalogosLicitacion)
+		r.Post("/licitacion/catalogos/guardar-desde-licitacion", handlers.Repo.GuardarCatalogoDesdeLicitacion)
+		r.Post("/licitacion/catalogos/editar/{id}", handlers.Repo.EditarCatalogoDesdeLicitacion)
+		r.Get("/licitacion/catalogos/eliminar/{id}", handlers.Repo.EliminarCatalogoDesdeLicitacion)
+
 
 		// CALENDARIO
 		r.Get("/calendario", handlers.Repo.Calendario)

@@ -60,6 +60,24 @@ body {
     color: white !important;
 }
 
+.celeste {
+    background-color: #00bcd4 !important; /* Un celeste vibrante y profesional */
+    color: white !important;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: none;
+}
+
+.celeste-header {
+    background-color: #00bcd4 !important;
+    color: white !important;
+}
+
+.celeste:hover {
+    background-color: #00acc1 !important; /* Un tono más oscuro para el feedback visual */
+    color: white !important;
+}
+
 .hero-about {
     background: linear-gradient(135deg, #88ab3e 0%, #769933 100%);
     color: white;
@@ -224,6 +242,17 @@ body.dark-mode {
 .dark-mode .btn.rojo:hover {
     background-color: #ff2d00 !important;  /* Fondo rojo al hover */
     color: white !important;               /* Texto blanco al hover */
+}
+
+.dark-mode .btn.celeste {
+    background-color: transparent !important;
+    border: 1px solid #00bcd4 !important;
+    color: #00bcd4 !important;
+}
+
+.dark-mode .btn.celeste:hover {
+    background-color: #00bcd4 !important;
+    color: white !important;
 }
 
 /* ===== BOTÓN AMARILLO (MODO OSCURO) ===== */

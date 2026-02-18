@@ -1,0 +1,151 @@
+{{template "base" .}}
+
+{{define "content"}}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold"><i class="fas fa-book celeste-text"></i> Catálogos Licitación</h4>
+        <button class="btn celeste shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoCatalogoLicitacion">
+            <i class="fas fa-plus me-1"></i> Vincular Documento
+        </button>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header celeste-header text-white">
+            <h6 class="mb-0">Expediente de la Licitación: {{.Licitacion.NumContratacion}}</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Partida</th>
+                        <th>Producto Ofertado</th>
+                        <th>Versión</th>
+                        <th>Actualizado</th>
+                        <th>Descripción</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .Catalogos}}
+                    <tr>
+                        <td><span class="badge bg-warning text-dark">#{{.ContextoPartida}}</span></td>
+                        <td class="small"><strong>{{.NombreProducto}}</strong></td>
+                        <td>{{.NombreVersion}}</td>
+                        <td><small>{{.UpdatedAt.Format "02/01/2006"}}</small></td>
+                        <td><small>{{.Descripcion}}</small></td>
+                        <td class="text-center">
+                            <div class="btn-group shadow-sm">
+                                <a href="{{.ArchivoURL}}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a>
+                                <button class="btn btn-sm btn-outline-warning" 
+                                    onclick="abrirModalEditar('{{.IDCatalogo}}', '{{.NombreVersion}}', '{{.ArchivoURL}}', '{{.Descripcion}}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="/licitacion/catalogos/eliminar/{{.IDCatalogo}}" 
+                                    class="btn btn-sm btn-outline-danger" 
+                                    onclick="return confirm('¿Seguro que deseas eliminar este catálogo?')">
+                                        <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr><td colspan="6" class="text-center py-4">No hay documentos técnicos vinculados a esta licitación.</td></tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevoCatalogoLicitacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form action="/licitacion/catalogos/guardar-desde-licitacion" method="POST">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="hidden" name="id_licitacion" value="{{.Licitacion.IDLicitacion}}">
+            
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header celeste-header text-white">
+                    <h5 class="modal-title"><i class="fas fa-link me-2"></i> Vincular Archivo Técnico</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">1. Seleccionar Partida y Producto</label>
+                        <select name="id_partida_producto" class="form-select" required>
+                            <option value="">-- Seleccionar Partida --</option>
+                            {{range .PartidasProducto}}
+                                <option value="{{.IDPartidaProducto}}">
+                                    Partida #{{.Partida.NumPartidaConvocatoria}} - {{.Producto.Nombre}}
+                                </option>
+                            {{end}}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">2. Nombre de la Versión</label>
+                        <input type="text" name="nombre_version" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">3. URL del Documento</label>
+                        <input type="url" name="archivo_url" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">4. Notas adicionales</label>
+                        <textarea name="descripcion" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn celeste">Guardar Documento</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarCatalogo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="formEditarCatalogo" method="POST">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+            <input type="hidden" name="id_licitacion" value="{{.Licitacion.IDLicitacion}}">
+            
+            <div class="modal-content">
+                <div class="modal-header celeste text-white">
+                    <h5 class="modal-title">Editar Catálogo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la Versión</label>
+                        <input type="text" name="nombre_version" id="edit_nombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL del Documento</label>
+                        <input type="url" name="archivo_url" id="edit_url" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea name="descripcion" id="edit_desc" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn celeste">Actualizar Cambios</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalEditar(id, nombre, url, desc) {
+    // Seteamos el action del form dinámicamente para usar la ruta de edición correcta
+    document.getElementById('formEditarCatalogo').action = "/licitacion/catalogos/editar/" + id;
+    
+    document.getElementById('edit_nombre').value = nombre;
+    document.getElementById('edit_url').value = url;
+    document.getElementById('edit_desc').value = desc;
+    
+    var myModal = new bootstrap.Modal(document.getElementById('modalEditarCatalogo'));
+    myModal.show();
+}
+</script>
+{{end}}

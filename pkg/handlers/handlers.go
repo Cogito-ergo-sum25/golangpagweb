@@ -810,7 +810,6 @@ func (m *Repository) GuardarCatalogoProducto(w http.ResponseWriter, r *http.Requ
     http.Redirect(w, r, "/producto/catalogos/"+idStr, http.StatusSeeOther)
 }
 
-// Handler para eliminar
 func (m *Repository) EliminarCatalogo(w http.ResponseWriter, r *http.Request) {
 	idCatalogo, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	
@@ -829,7 +828,6 @@ func (m *Repository) EliminarCatalogo(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/producto/catalogos/%d", idProducto), http.StatusSeeOther)
 }
 
-// Handler para editar (vía POST desde un modal o formulario)
 func (m *Repository) EditarCatalogo(w http.ResponseWriter, r *http.Request) {
 	idCatalogo, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	_ = r.ParseForm()
@@ -1530,6 +1528,113 @@ func (m *Repository) PostEliminarEnlace(w http.ResponseWriter, r *http.Request) 
     http.Redirect(w, r, fmt.Sprintf("/archivos-licitacion/%d", idLicitacion), http.StatusSeeOther)
 }
 
+func (m *Repository) MostrarCatalogosLicitacion(w http.ResponseWriter, r *http.Request) {
+    idLicitacion, _ := strconv.Atoi(chi.URLParam(r, "id"))
+
+    licitacion, _ := m.ObtenerLicitacionPorID(idLicitacion)
+    catalogos, _ := m.ObtenerCatalogosPorLicitacionID(idLicitacion)
+    
+    // Traemos las opciones válidas para el nuevo catálogo
+    opciones, _ := m.ObtenerPartidasConProductoPorLicitacion(idLicitacion)
+
+    data := &models.TemplateData{
+        Licitacion:       licitacion,
+        Catalogos:        catalogos,
+        PartidasProducto: opciones, // Usamos el campo que ya tienes en TemplateData
+        CSRFToken:        nosurf.Token(r),
+    }
+
+    render.RenderTemplate(w, "licitaciones/licitacion-catalogos.page.tmpl", data)
+}
+
+func (m *Repository) GuardarCatalogoDesdeLicitacion(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "Error al procesar el formulario")
+		http.Redirect(w, r, "/calendario", http.StatusSeeOther)
+		return
+	}
+
+	// Recuperamos los IDs del formulario
+	idLicitacion, _ := strconv.Atoi(r.Form.Get("id_licitacion"))
+	idPartidaProducto, _ := strconv.Atoi(r.Form.Get("id_partida_producto"))
+
+	// 1. Necesitamos el id_producto asociado a esa partida_producto
+	var idProducto int
+	queryProducto := "SELECT id_producto FROM partida_productos WHERE id_partida_producto = ?"
+	err = m.App.DB.QueryRow(queryProducto, idPartidaProducto).Scan(&idProducto)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se encontró el producto asociado a la partida")
+		http.Redirect(w, r, fmt.Sprintf("/licitacion/catalogos/%d", idLicitacion), http.StatusSeeOther)
+		return
+	}
+
+	// 2. Preparamos el modelo con los datos del formulario
+	nuevoCatalogo := models.ProductoCatalogo{
+		IDProducto:        idProducto,
+		IDLicitacion:      idLicitacion,
+		IDPartidaProducto: idPartidaProducto,
+		NombreVersion:     r.Form.Get("nombre_version"),
+		ArchivoURL:        r.Form.Get("archivo_url"),
+		Descripcion:       r.Form.Get("descripcion"),
+	}
+
+	// 3. Insertamos en la base de datos (usando tu función de inserción existente)
+	err = m.InsertarCatalogo(nuevoCatalogo)
+	if err != nil {
+		m.App.Session.Put(r.Context(), "error", "No se pudo guardar el catálogo")
+	} else {
+		m.App.Session.Put(r.Context(), "flash", "Catálogo vinculado correctamente a la partida")
+	}
+
+	// 4. Redireccionamos de vuelta a la vista celeste de la licitación
+	http.Redirect(w, r, fmt.Sprintf("/licitacion/catalogos/%d", idLicitacion), http.StatusSeeOther)
+}
+
+func (m *Repository) EliminarCatalogoDesdeLicitacion(w http.ResponseWriter, r *http.Request) {
+    idCatalogo, _ := strconv.Atoi(chi.URLParam(r, "id"))
+    
+    // IMPORTANTE: Obtenemos el id_licitacion antes de borrar para saber a dónde volver
+    var idLicitacion int
+    query := "SELECT id_licitacion FROM producto_catalogos WHERE id_catalogo = ?"
+    _ = m.App.DB.QueryRow(query, idCatalogo).Scan(&idLicitacion)
+
+    err := m.EliminarCatalogoUnico(idCatalogo)
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No se pudo eliminar")
+    } else {
+        m.App.Session.Put(r.Context(), "flash", "Catálogo eliminado")
+    }
+
+    // Redireccionamos a la vista celeste de la licitación
+    http.Redirect(w, r, fmt.Sprintf("/licitacion/catalogos/%d", idLicitacion), http.StatusSeeOther)
+}
+
+func (m *Repository) EditarCatalogoDesdeLicitacion(w http.ResponseWriter, r *http.Request) {
+    idCatalogo, _ := strconv.Atoi(chi.URLParam(r, "id"))
+    _ = r.ParseForm()
+
+    catalogo := models.ProductoCatalogo{
+        IDCatalogo:    idCatalogo,
+        NombreVersion: r.Form.Get("nombre_version"),
+        ArchivoURL:    r.Form.Get("archivo_url"),
+        Descripcion:   r.Form.Get("descripcion"),
+    }
+
+    err := m.ActualizarCatalogo(catalogo)
+    
+    // Recuperamos el ID de la licitación para el redirect
+    var idLicitacion int
+    _ = m.App.DB.QueryRow("SELECT id_licitacion FROM producto_catalogos WHERE id_catalogo = ?", idCatalogo).Scan(&idLicitacion)
+
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "Error al actualizar")
+    } else {
+        m.App.Session.Put(r.Context(), "flash", "Cambios guardados")
+    }
+
+    http.Redirect(w, r, fmt.Sprintf("/licitacion/catalogos/%d", idLicitacion), http.StatusSeeOther)
+}
 
 // CALENDARIO
 func (m *Repository) Calendario(w http.ResponseWriter, r *http.Request) {
