@@ -1578,19 +1578,17 @@ func (m *Repository) ObtenerTodasEmpresas() ([]models.Empresas, error) {
 func (m *Repository) ObtenerProductosDePartida(idPartida int) ([]models.PartidaProductos, error) {
     query := `
         SELECT 
-            pp.id_partida_producto,
-            pp.id_producto,
-            p.nombre,
-            p.modelo,
-            p.sku,
-            pp.precio_ofertado,
-            pp.observaciones,
-            pp.created_at
+            pp.id_partida_producto, pp.id_producto, p.nombre, p.modelo, p.sku,
+            pp.precio_ofertado, pp.observaciones, pp.created_at,
+            COALESCE(pc.id_catalogo, 0),
+            COALESCE(pc.nombre_version, ''),
+            COALESCE(pc.archivo_url, ''),
+            COALESCE(pc.descripcion, '')
         FROM partida_productos pp
         INNER JOIN productos p ON pp.id_producto = p.id_producto
+        LEFT JOIN producto_catalogos pc ON pp.id_partida_producto = pc.id_partida_producto
         WHERE pp.id_partida = ?
-        ORDER BY pp.created_at DESC;
-    `
+        ORDER BY pp.created_at DESC`
 
     rows, err := m.App.DB.Query(query, idPartida)
     if err != nil {
@@ -1602,25 +1600,20 @@ func (m *Repository) ObtenerProductosDePartida(idPartida int) ([]models.PartidaP
     for rows.Next() {
         var p models.PartidaProductos
         var prod models.Producto
-
+        
         err := rows.Scan(
-            &p.IDPartidaProducto,
-            &p.IDProducto,
-            &prod.Nombre,
-            &prod.Modelo,
-            &prod.SKU,
-            &p.PrecioOfertado,
-            &p.Observaciones,
-            &p.CreatedAt,
+            &p.IDPartidaProducto, &p.IDProducto, &prod.Nombre, &prod.Modelo, &prod.SKU,
+            &p.PrecioOfertado, &p.Observaciones, &p.CreatedAt,
+            &p.IDCatalogo, &p.NombreVersion, &p.ArchivoURL, &p.Descripcion,
         )
         if err != nil {
             return nil, err
         }
 
         p.Producto = &prod
+        p.TieneCatalogo = p.IDCatalogo > 0
         productos = append(productos, p)
     }
-
     return productos, nil
 }
 
@@ -2223,6 +2216,19 @@ func (m *Repository) ObtenerPartidasConProductoPorLicitacion(idLicitacion int) (
     return lista, nil
 }
 
+// obtenerIDProductoDesdePP busca el ID del producto vinculado a una relación Partida-Producto
+func (m *Repository) obtenerIDProductoDesdePP(idPartidaProducto int) int {
+	var idProducto int
+	query := "SELECT id_producto FROM partida_productos WHERE id_partida_producto = ?"
+	
+	err := m.App.DB.QueryRow(query, idPartidaProducto).Scan(&idProducto)
+	if err != nil {
+		log.Println("Error al obtener ID de producto desde PartidaProducto:", err)
+		return 0
+	}
+	
+	return idProducto
+}
 
 
 

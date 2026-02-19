@@ -255,6 +255,35 @@ body.dark-mode {
     color: white !important;
 }
 
+.naranja {
+    background-color: #ff9800 !important; /* Naranja vibrante y profesional */
+    color: white !important;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: none;
+}
+
+.naranja-header {
+    background-color: #ff9800 !important;
+    color: white !important;
+}
+
+.naranja:hover {
+    background-color: #f57c00 !important; /* Un naranja más profundo para el hover */
+    color: white !important;
+}
+
+.dark-mode .btn.naranja {
+    background-color: transparent !important;
+    border: 1px solid #ff9800 !important;
+    color: #ff9800 !important;
+}
+
+.dark-mode .btn.naranja:hover {
+    background-color: #ff9800 !important;
+    color: white !important;
+}
+
 /* ===== BOTÓN AMARILLO (MODO OSCURO) ===== */
 .dark-mode .btn.amarillo {
     background-color: transparent !important;

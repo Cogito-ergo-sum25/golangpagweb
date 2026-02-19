@@ -54,25 +54,42 @@
                     {{if .Observaciones}}
                     <p class="mb-3"><strong>Observaciones:</strong> {{.Observaciones}}</p>
                     {{end}}
-                    <div class="btn-group">
-                      <button 
-                          type="button" 
-                          class="btn azul flex-fill"
-                          data-bs-toggle="modal" 
-                          data-bs-target="#editarProductoModal"
-                          data-id="{{.IDPartidaProducto}}"
-                          data-precio="{{printf "%.2f" .PrecioOfertado}}"
-                          data-observaciones="{{.Observaciones | html}}"
-                          >
-                          <i class="fa-solid fa-pen-to-square"></i>
-                          Editar
-                      </button>
-                      <form action="/eliminar-producto-partida/{{.IDPartidaProducto}}" method="POST" class="d-inline">
-                          <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
-                          <button type="submit" class="btn rojo flex-fill" onclick="return confirm('¿Estás seguro?')">
-                              <i class="fa-solid fa-trash"></i> Eliminar Producto
-                          </button>
-                      </form>
+                    <div class="card-body p-2">
+                        <div class="btn-group w-100 shadow-sm">
+                            <button type="button" class="btn azul" data-bs-toggle="modal" data-bs-target="#editarProductoModal"
+                                    data-id="{{.IDPartidaProducto}}" data-precio="{{printf "%.2f" .PrecioOfertado}}"
+                                    data-observaciones="{{.Observaciones | html}}">
+                                <i class="fa-solid fa-dollar-sign"></i>
+                            </button>
+
+                            {{if .TieneCatalogo}}
+                                <a href="/ver-archivo/{{.IDCatalogo}}" class="btn naranja" target="_blank" title="Ver Catálogo de Partida">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </a>
+                                <button type="button" class="btn amarillo" 
+                                        onclick="prepararEdicionCatalogo('{{.IDCatalogo}}', '{{.NombreVersion}}', '{{.ArchivoURL}}', '{{.Descripcion}}')" 
+                                        title="Editar Catálogo">
+                                    <i class="fa-solid fa-file-pen"></i>
+                                </button>
+                            {{else}}
+                                <button type="button" class="btn verde" data-bs-toggle="modal" data-bs-target="#modalAltaCatalogo"
+                                        onclick="prepararAlta('{{.IDPartidaProducto}}', '{{.Producto.Nombre}}')">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            {{end}}
+
+                            <a href="/producto/catalogos/{{.IDProducto}}" class="btn celeste" title="Historial General">
+                                <i class="fa-solid fa-book"></i>
+                            </a>
+
+                            <form action="/eliminar-producto-partida/{{.IDPartidaProducto}}" method="POST" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
+                                <button type="submit" class="btn rojo" 
+                                        onclick="return confirm('¿Estás seguro? Se eliminará el producto y cualquier catálogo técnico vinculado a esta partida.')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -112,25 +129,117 @@
       </div>
     </div>
 
+    <div class="modal fade" id="modalAltaCatalogo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="/licitacion/catalogos/guardar-desde-licitacion" method="POST">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <input type="hidden" name="id_licitacion" value="{{.Partida.IDLicitacion}}">
+                <input type="hidden" name="id_partida_producto" id="alta-id-pp">
+                
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header verde text-white">
+                        <h5 class="modal-title"><i class="fas fa-file-upload me-2"></i> Vincular Catálogo Técnico</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="small text-muted mb-3">Producto: <strong id="alta-nombre-producto"></strong></p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nombre de la Versión</label>
+                            <input type="text" name="nombre_version" class="form-control" placeholder="Ej: Anexo Técnico 2026" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">URL del Documento (PDF/Drive)</label>
+                            <input type="url" name="archivo_url" class="form-control" placeholder="https://..." required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Notas / Descripción</label>
+                            <textarea name="descripcion" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="submit" class="btn verde">Guardar y Vincular</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEditarCatalogo" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form action="/licitacion/catalogos/editar-desde-partida" method="POST">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <input type="hidden" name="id_catalogo" id="edit-id-cat">
+                <input type="hidden" name="id_partida" value="{{.Partida.IDPartida}}">
+                
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header amarillo text-dark">
+                        <h5 class="modal-title"><i class="fas fa-edit me-2"></i> Editar Catálogo Técnico</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Nombre de la Versión</label>
+                            <input type="text" name="nombre_version" id="edit-nombre" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">URL del Documento</label>
+                            <input type="url" name="archivo_url" id="edit-url" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Notas / Descripción</label>
+                            <textarea name="descripcion" id="edit-desc" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn amarillo text-dark">Actualizar Cambios</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>
 
 <script>
-    // Cuando se abre el modal, llenar los campos con los datos del botón
-    var editarModal = document.getElementById('editarProductoModal')
-    editarModal.addEventListener('show.bs.modal', function (event) {
-      var button = event.relatedTarget
-      var id = button.getAttribute('data-id')
-      var precio = button.getAttribute('data-precio')
-      var observaciones = button.getAttribute('data-observaciones')
+// Cuando se abre el modal, llenar los campos con los datos del botón
+var editarModal = document.getElementById('editarProductoModal')
+editarModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget
+    var id = button.getAttribute('data-id')
+    var precio = button.getAttribute('data-precio')
+    var observaciones = button.getAttribute('data-observaciones')
 
-      var modalIdInput = editarModal.querySelector('#modal-id-partida-producto')
-      var modalPrecioInput = editarModal.querySelector('#modal-precio-ofertado')
-      var modalObservacionesInput = editarModal.querySelector('#modal-observaciones')
+    var modalIdInput = editarModal.querySelector('#modal-id-partida-producto')
+    var modalPrecioInput = editarModal.querySelector('#modal-precio-ofertado')
+    var modalObservacionesInput = editarModal.querySelector('#modal-observaciones')
 
-      modalIdInput.value = id
-      modalPrecioInput.value = precio
-      modalObservacionesInput.value = observaciones
-    })
+    modalIdInput.value = id
+    modalPrecioInput.value = precio
+    modalObservacionesInput.value = observaciones
+})
+
+function prepararAlta(idPP, nombreProducto) {
+    document.getElementById('alta-id-pp').value = idPP;
+    document.getElementById('alta-nombre-producto').innerText = nombreProducto;
+    
+    var myModal = new bootstrap.Modal(document.getElementById('modalAltaCatalogo'));
+    myModal.show();
+}
+
+function prepararEdicionCatalogo(id, nombre, url, desc) {
+    document.getElementById('edit-id-cat').value = id;
+    document.getElementById('edit-nombre').value = nombre;
+    document.getElementById('edit-url').value = url;
+    document.getElementById('edit-desc').value = desc;
+    
+    var myModal = new bootstrap.Modal(document.getElementById('modalEditarCatalogo'));
+    myModal.show();
+}
+
 </script>
 
 {{end}}

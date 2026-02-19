@@ -2775,7 +2775,6 @@ func (m *Repository) EditarProductoPartida(w http.ResponseWriter, r *http.Reques
 }
 
 func (m *Repository) EliminarProductoPartida(w http.ResponseWriter, r *http.Request) {
-    // Obtener el ID de la relación partida_producto
     idParam := chi.URLParam(r, "id")
     idPartidaProducto, err := strconv.Atoi(idParam)
     if err != nil {
@@ -2784,24 +2783,96 @@ func (m *Repository) EliminarProductoPartida(w http.ResponseWriter, r *http.Requ
         return
     }
 
-    // Primero obtenemos el id_partida para redireccionar después
+    // 1. Obtenemos el id_partida para redireccionar al final
     var idPartida int
     err = m.App.DB.QueryRow("SELECT id_partida FROM partida_productos WHERE id_partida_producto = ?", idPartidaProducto).Scan(&idPartida)
     if err != nil {
-        m.App.Session.Put(r.Context(), "error", "No se pudo encontrar la relación partida-producto")
+        m.App.Session.Put(r.Context(), "error", "No se encontró la partida")
         http.Redirect(w, r, "/", http.StatusSeeOther)
         return
     }
 
-    // Eliminar el producto de la partida
+    // 2. Ejecutamos la eliminación en cadena dentro de una pequeña transacción o secuencial
+    // Primero: Borrar el catálogo asociado (si existe)
+    _, err = m.App.DB.Exec("DELETE FROM producto_catalogos WHERE id_partida_producto = ?", idPartidaProducto)
+    if err != nil {
+        log.Println("Error al borrar catálogo asociado:", err)
+        // Continuamos de todos modos para no dejar la partida bloqueada
+    }
+
+    // Segundo: Borrar el producto de la partida
     err = m.EliminarProductoDePartida(idPartidaProducto)
     if err != nil {
-        m.App.Session.Put(r.Context(), "error", "Error al eliminar el producto de la partida")
-        http.Redirect(w, r, "/", http.StatusSeeOther)
+        m.App.Session.Put(r.Context(), "error", "Error al eliminar el producto")
+        http.Redirect(w, r, fmt.Sprintf("/productos-partida/%d", idPartida), http.StatusSeeOther)
         return
     }
 
-    m.App.Session.Put(r.Context(), "flash", "Producto eliminado de la partida exitosamente")
+    m.App.Session.Put(r.Context(), "flash", "Producto y su catálogo eliminados correctamente")
+    http.Redirect(w, r, fmt.Sprintf("/productos-partida/%d", idPartida), http.StatusSeeOther)
+}
+
+// VerArchivoDirecto busca la URL y abre el PDF en pestaña nueva
+func (m *Repository) VerArchivoDirecto(w http.ResponseWriter, r *http.Request) {
+    idCatalogo, _ := strconv.Atoi(chi.URLParam(r, "id_catalogo"))
+    
+    var url string
+    query := "SELECT archivo_url FROM producto_catalogos WHERE id_catalogo = ?"
+    err := m.App.DB.QueryRow(query, idCatalogo).Scan(&url)
+    
+    if err != nil {
+        m.App.Session.Put(r.Context(), "error", "No se encontró el archivo")
+        http.Redirect(w, r, r.Header.Get("Referer"), http.StatusSeeOther)
+        return
+    }
+
+    http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+// EditarCatalogoVista te manda a la vista de edición que ya tienes configurada
+func (m *Repository) EditarCatalogoVista(w http.ResponseWriter, r *http.Request) {
+    idCatalogo, _ := strconv.Atoi(chi.URLParam(r, "id_catalogo"))
+    
+    // Aquí puedes redirigir a tu vista de gestión de catálogos pasándole el ID
+    // O abrir un modal de edición si prefieres quedarte en la misma página
+    http.Redirect(w, r, fmt.Sprintf("/licitacion/catalogos/editar/%d", idCatalogo), http.StatusSeeOther)
+}
+
+func (m *Repository) PostEditarCatalogoDesdePartida(w http.ResponseWriter, r *http.Request) {
+    _ = r.ParseForm()
+    idCatalogo, _ := strconv.Atoi(r.Form.Get("id_catalogo"))
+    idPartida, _ := strconv.Atoi(r.Form.Get("id_partida")) // Lo pasamos oculto en el modal
+
+    actualizado := models.ProductoCatalogo{
+        IDCatalogo:    idCatalogo,
+        NombreVersion: r.Form.Get("nombre_version"),
+        ArchivoURL:    r.Form.Get("archivo_url"),
+        Descripcion:   r.Form.Get("descripcion"),
+    }
+
+    _ = m.ActualizarCatalogo(actualizado)
+    m.App.Session.Put(r.Context(), "flash", "Catálogo actualizado")
+    http.Redirect(w, r, fmt.Sprintf("/productos-partida/%d", idPartida), http.StatusSeeOther)
+}
+
+func (m *Repository) PostGuardarCatalogoDesdePartida(w http.ResponseWriter, r *http.Request) {
+    _ = r.ParseForm()
+    idPartidaProducto, _ := strconv.Atoi(r.Form.Get("id_partida_producto"))
+    
+    // Obtenemos el id_partida para el redirect final
+    var idPartida int
+    _ = m.App.DB.QueryRow("SELECT id_partida FROM partida_productos WHERE id_partida_producto = ?", idPartidaProducto).Scan(&idPartida)
+
+    nuevo := models.ProductoCatalogo{
+        IDProducto:        m.obtenerIDProductoDesdePP(idPartidaProducto), // Función auxiliar que ya tienes
+        IDPartidaProducto: idPartidaProducto,
+        NombreVersion:     r.Form.Get("nombre_version"),
+        ArchivoURL:        r.Form.Get("archivo_url"),
+        Descripcion:       r.Form.Get("descripcion"),
+    }
+
+    _ = m.InsertarCatalogo(nuevo)
+    m.App.Session.Put(r.Context(), "flash", "Catálogo vinculado a la partida")
     http.Redirect(w, r, fmt.Sprintf("/productos-partida/%d", idPartida), http.StatusSeeOther)
 }
 

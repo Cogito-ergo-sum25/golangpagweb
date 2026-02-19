@@ -78,9 +78,9 @@
 
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-2">
-                            <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm amarillo" title="Editar">
-                                <i class="fas fa-pencil-alt"></i>
-                                <span class="d-none d-lg-inline ms-1">Editar</span>
+                            <a href="/editar-producto/{{.IDProducto}}" class="btn btn-sm amarillo shadow-sm" title="Gestionar Producto">
+                                <i class="fas fa-cog"></i>
+                                <span class="d-none d-lg-inline ms-1">Gestionar</span>
                             </a>
                             <form action="/eliminar/{{.IDProducto}}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar producto?')">
                                 <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">

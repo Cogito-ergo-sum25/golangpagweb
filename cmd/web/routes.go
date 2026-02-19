@@ -44,12 +44,12 @@ func routes(app *config.AppConfig) http.Handler {
 		r.Post("/eliminar/{id}", handlers.Repo.EliminarProducto)
 
 		// TABLAS EXTRA CROL
-			r.Get("/producto/inventario/{id}", handlers.Repo.MostrarInventarioProducto)
-			r.Post("/producto/inventario/{id}", handlers.Repo.GuardarInventarioProducto)
-			r.Get("/producto/ieps/{id}", handlers.Repo.MostrarIEPSProducto)
-			r.Post("/producto/ieps/{id}", handlers.Repo.GuardarIEPSProducto)
-			r.Get("/producto/comercio-exterior/{id}", handlers.Repo.MostrarComercioExterior)
-			r.Post("/producto/comercio-exterior/{id}", handlers.Repo.GuardarComercioExterior)
+		r.Get("/producto/inventario/{id}", handlers.Repo.MostrarInventarioProducto)
+		r.Post("/producto/inventario/{id}", handlers.Repo.GuardarInventarioProducto)
+		r.Get("/producto/ieps/{id}", handlers.Repo.MostrarIEPSProducto)
+		r.Post("/producto/ieps/{id}", handlers.Repo.GuardarIEPSProducto)
+		r.Get("/producto/comercio-exterior/{id}", handlers.Repo.MostrarComercioExterior)
+		r.Post("/producto/comercio-exterior/{id}", handlers.Repo.GuardarComercioExterior)
 
 		// CATALOGOS DE PRODUCTOS
 		r.Get("/producto/catalogos/{id}", handlers.Repo.MostrarCatalogosProducto)
@@ -111,6 +111,8 @@ func routes(app *config.AppConfig) http.Handler {
 		r.Post("/nuevo-producto-partida", handlers.Repo.CrearNuevoProductoPartida)
 		r.Post("/editar-producto-partida", handlers.Repo.EditarProductoPartida)
 		r.Post("/eliminar-producto-partida/{id}", handlers.Repo.EliminarProductoPartida)
+		r.Post("/partida/catalogos/guardar", handlers.Repo.PostGuardarCatalogoDesdePartida)
+		r.Post("/partida/catalogos/editar", handlers.Repo.PostEditarCatalogoDesdePartida)
 
 		// ACLARACIONES
 		r.Get("/aclaraciones/{id}", handlers.Repo.MostrarAclaraciones)
@@ -133,6 +135,9 @@ func routes(app *config.AppConfig) http.Handler {
 		r.Post("/nuevo-producto-externo-contexto", handlers.Repo.NuevoProductoExternoContexto)
 		r.Get("/editar-propuesta/{id}", handlers.Repo.MostrarEditarPropuesta)
 		r.Post("/editar-propuesta/{id}", handlers.Repo.EditarPropuesta)
+		r.Get("/ver-archivo/{id_catalogo}", handlers.Repo.VerArchivoDirecto)
+		r.Get("/editar-catalogo/{id_catalogo}", handlers.Repo.EditarCatalogoVista)
+		r.Post("/licitacion/catalogos/editar-desde-partida", handlers.Repo.PostEditarCatalogoDesdePartida)
 
 
 		// FALLOS

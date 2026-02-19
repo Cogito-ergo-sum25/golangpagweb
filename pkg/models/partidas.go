@@ -49,6 +49,13 @@ type PartidaProductos struct {
 	PrecioOfertado    float64 `json:"precio_ofertado"`
 	Observaciones     string  `json:"observaciones"`
 
+	// --- NUEVOS CAMPOS PARA LÓGICA DE BOTONES ---
+	TieneCatalogo      bool    `json:"tiene_catalogo"`
+    IDCatalogo        int     `json:"id_catalogo"`
+	NombreVersion  string `json:"nombre_version"`
+    ArchivoURL     string `json:"archivo_url"` 
+    Descripcion    string `json:"descripcion"`
+
 	// Campos auxiliares para el JOIN dinámico
     NumeroPartida      int      `json:"numero_partida"`
     NumeroContratacion string   `json:"numero_contratacion"`
